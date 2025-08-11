@@ -1,0 +1,37 @@
+{
+  "name": "image-vault",
+  "version": "1.0.0",
+  "description": "Image curation app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/samvarcoe/cc-image-vault.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/samvarcoe/cc-image-vault/issues"
+  },
+  "homepage": "https://github.com/samvarcoe/cc-image-vault#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.2.1",
+    "@types/uuid": "^10.0.0",
+    "nodemon": "^3.1.10",
+    "typescript": "^5.9.2",
+    "tsx": "^4.20.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "multer": "^2.0.2",
+    "sharp": "^0.34.3",
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0"
+  }
+}
