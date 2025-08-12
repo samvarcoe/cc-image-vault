@@ -6,6 +6,24 @@ Users have accumulated large collections of images across multiple directories t
 ## Solution Overview
 A simple application that lets users upload their images and sort them into "collections". Bulk editing functionality is provided to quickly classify images and archive/restore/delete them as desired. Functionality for viewing and exploring the collections is also provided to allow users to use and enjoy them.
 
+## Project Structure
+image-vault/
+├── docs/                              # Implementation plans and technical notes
+├── requirements/                      # Product requirements and specifications
+│   ├── features/                      # Gherkin feature files defining system behavior
+│   └── guidelines/                    # Requirements documentation standards
+├── public/                            # Static files served
+├── src/                               # Source code for the implementation
+└── tests/                             # Test infrastructure
+    ├── acceptance/                    # End-to-end Playwright tests
+    │   ├── playwright.config.ts       # Playwright configuration
+    │   ├── specs/                     # Test specifications (1:1 with Gherkin scenarios)
+    │   ├── fixtures/                  # Test data collections
+    │   │   └── collections/           # Swappable photo collections for testing
+    │   └── utils/                     # Test utilities
+    └── scripts/                       # Test data generation scripts
+```
+
 ## Architecture Overview
 
 ### File Structure
@@ -156,7 +174,6 @@ CREATE TABLE images (
   aspect_ratio REAL NOT NULL,
   extension TEXT NOT NULL,                                                               -- original file extension
   mime_type TEXT NOT NULL,                                                               -- for proper content serving
-  has_thumbnail BOOLEAN DEFAULT FALSE,                                                   -- optimization flag
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
