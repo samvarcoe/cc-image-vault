@@ -49,23 +49,54 @@ Images follow a clear status progression:
 - **File Naming**: UUID-based filenames with original names preserved in metadata
 - **Upload Processing**: Asynchronous processing with file-based queue for persistence
 
-### Image Meta-Data Schema
-```typescript
-{
-  "id": string,                                 // UUID used for filename
-  "originalName": string,                       // preserved original filename
-  "fileHash": string,                           // SHA256 for duplicate detection
-  "status": "COLLECTION" | "INBOX" | "ARCHIVE",
-  "size": number,                               // file size in bytes
-  "dimensions": {
-    "width": number,
-    "height": number
+## Interfaces
+
+```ts
+type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE';
+
+// Image metadata interface
+interface ImageMetadata {
+  id: string;
+  originalName: string;
+  fileHash: string;
+  status: ImageStatus;
+  size: number,
+  dimensions: {
+    width: number,
+    height: number
   },
-  "aspectRatio": number,
-  "extension": string,                          // original file extension
-  "mimeType": string,                           // for proper content serving
-  "createdAt": timestamp,
-  "updatedAt": timestamp
+  aspectRatio: number,
+  extension: number,
+  mimeType: string,
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Query options for image retrieval
+export interface QueryOptions {
+  status?: ImageStatus;
+  orderBy?: 'created_at' | 'updated_at';
+  orderDirection?: 'ASC' | 'DESC';
+}
+
+// Main Collection interface
+export interface ICollection {
+  // Collection lifecycle methods
+  static create(id: string, path: string): Promise<Collection>;
+  static load(path: string): Promise<Collection>;
+  
+  // Image management methods
+  addImage(filePath: string): Promise<ImageMetadata>;
+  updateImageStatus(imageId: string, newStatus: ImageStatus): Promise<ImageMetadata>;
+  deleteImage(imageId: string): Promise<boolean>;
+  
+  // Image retrieval methods
+  getImages(options?: QueryOptions): Promise<ImageMetadata[]>;
+  getImage(imageId: string): Promise<ImageMetadata>;
+  
+  // Collection properties
+  readonly id: string;
+  readonly basePath: string;
 }
 ```
 
@@ -156,7 +187,6 @@ CREATE TABLE images (
   aspect_ratio REAL NOT NULL,
   extension TEXT NOT NULL,                                                               -- original file extension
   mime_type TEXT NOT NULL,                                                               -- for proper content serving
-  has_thumbnail BOOLEAN DEFAULT FALSE,                                                   -- optimization flag
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
