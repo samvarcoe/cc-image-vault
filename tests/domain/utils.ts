@@ -1,6 +1,8 @@
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
+import crypto from 'crypto';
+import { ImageMetadata, ImageStatus } from '../../src/domain/types';
 
 /**
  * Test utilities for domain layer tests
@@ -89,5 +91,219 @@ export class TestUtils {
     } catch {
       return [];
     }
+  }
+
+  /**
+   * Calculates SHA256 hash of a file for duplicate detection testing
+   */
+  static async calculateFileHash(filePath: string): Promise<string> {
+    const fileBuffer = await fs.readFile(filePath);
+    return crypto.createHash('sha256').update(fileBuffer).digest('hex');
+  }
+
+  /**
+   * Verifies that two files have identical content by comparing hashes
+   */
+  static async filesAreIdentical(filePath1: string, filePath2: string): Promise<boolean> {
+    const hash1 = await this.calculateFileHash(filePath1);
+    const hash2 = await this.calculateFileHash(filePath2);
+    return hash1 === hash2;
+  }
+
+  /**
+   * Validates image metadata structure and required fields
+   */
+  static validateImageMetadata(metadata: ImageMetadata): void {
+    const requiredFields = [
+      'id', 'originalName', 'fileHash', 'status', 'size',
+      'dimensions', 'aspectRatio', 'extension', 'mimeType',
+      'createdAt', 'updatedAt'
+    ];
+
+    for (const field of requiredFields) {
+      if (!(field in metadata)) {
+        throw new Error(`Image metadata missing required field: ${field}`);
+      }
+    }
+
+    // Validate dimensions object
+    if (!metadata.dimensions || typeof metadata.dimensions.width !== 'number' || typeof metadata.dimensions.height !== 'number') {
+      throw new Error('Image metadata dimensions must have numeric width and height');
+    }
+
+    // Validate status is valid enum value
+    const validStatuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
+    if (!validStatuses.includes(metadata.status)) {
+      throw new Error(`Invalid image status: ${metadata.status}`);
+    }
+
+    // Validate dates
+    if (!(metadata.createdAt instanceof Date) || !(metadata.updatedAt instanceof Date)) {
+      throw new Error('Image metadata createdAt and updatedAt must be Date objects');
+    }
+  }
+
+  /**
+   * Filters images by status for testing retrieval operations
+   */
+  static filterImagesByStatus(images: ImageMetadata[], status: ImageStatus): ImageMetadata[] {
+    return images.filter(image => image.status === status);
+  }
+
+  /**
+   * Sorts images by specified field for testing ordering
+   */
+  static sortImages(images: ImageMetadata[], orderBy: 'created_at' | 'updated_at' = 'updated_at', direction: 'ASC' | 'DESC' = 'DESC'): ImageMetadata[] {
+    const sorted = [...images].sort((a, b) => {
+      const aValue = orderBy === 'created_at' ? a.createdAt : a.updatedAt;
+      const bValue = orderBy === 'created_at' ? b.createdAt : b.updatedAt;
+      
+      if (direction === 'ASC') {
+        return aValue.getTime() - bValue.getTime();
+      } else {
+        return bValue.getTime() - aValue.getTime();
+      }
+    });
+
+    return sorted;
+  }
+
+  /**
+   * Verifies collection directory structure exists
+   */
+  static async verifyCollectionStructure(collectionPath: string): Promise<boolean> {
+    try {
+      const requiredPaths = [
+        path.join(collectionPath, 'images'),
+        path.join(collectionPath, 'images', 'original'),
+        path.join(collectionPath, 'images', 'thumbnails'),
+        path.join(collectionPath, 'collection.db')
+      ];
+
+      for (const requiredPath of requiredPaths) {
+        const isDirectory = requiredPath.endsWith('.db') ? false : true;
+        const exists = isDirectory 
+          ? await this.directoryExists(requiredPath)
+          : await this.fileExists(requiredPath);
+        
+        if (!exists) {
+          return false;
+        }
+      }
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Simulates file system storage failure by making image storage directories read-only
+   */
+  static async simulateStorageFailure(collectionBasePath: string): Promise<() => Promise<void>> {
+    const originalPermissions: Array<{ path: string; mode: number; isFile?: boolean }> = [];
+    
+    try {
+      // Find the collection directory (look for directories that have an images subdirectory)
+      const entries = await fs.readdir(collectionBasePath, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const collectionDir = path.join(collectionBasePath, entry.name);
+          const imagesDir = path.join(collectionDir, 'images');
+          
+          // Check if this looks like a collection directory
+          if (await this.directoryExists(imagesDir)) {
+            const originalDir = path.join(imagesDir, 'original');
+            const thumbnailsDir = path.join(imagesDir, 'thumbnails');
+            
+            // Make the original and thumbnails directories read-only
+            const dirsToBlock = [originalDir, thumbnailsDir];
+            
+            for (const dir of dirsToBlock) {
+              try {
+                if (await this.directoryExists(dir)) {
+                  // Store original state for restoration
+                  originalPermissions.push({ path: dir, mode: 0o755, isFile: false });
+                  
+                  // Replace directory with a file to block access
+                  await fs.rm(dir, { recursive: true });
+                  await fs.writeFile(dir, 'blocking file for storage failure simulation');
+                }
+              } catch (error) {
+                console.warn('Failed to block directory:', dir, error);
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Storage failure simulation warning:', error);
+    }
+
+    // Return cleanup function
+    return async () => {
+      try {
+        // Restore original state
+        for (const { path: dirPath, mode, isFile } of originalPermissions) {
+          try {
+            if (isFile === false) {
+              // Remove blocking file and recreate directory
+              await fs.unlink(dirPath);
+              await fs.mkdir(dirPath, { mode, recursive: true });
+            } else {
+              // Restore directory permissions if needed
+              await fs.chmod(dirPath, mode);
+            }
+          } catch (error) {
+            // Ignore cleanup errors
+          }
+        }
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    };
+  }
+
+  private static async findAllDirectories(basePath: string): Promise<string[]> {
+    const directories: string[] = [basePath];
+    
+    try {
+      const items = await fs.readdir(basePath, { withFileTypes: true });
+      
+      for (const item of items) {
+        if (item.isDirectory()) {
+          const fullPath = path.join(basePath, item.name);
+          directories.push(fullPath);
+          const subDirs = await this.findAllDirectories(fullPath);
+          directories.push(...subDirs);
+        }
+      }
+    } catch (error) {
+      // Ignore errors
+    }
+    
+    return directories;
+  }
+
+  /**
+   * Verifies that filesystem state remains unchanged after failed operations
+   */
+  static async captureFilesystemState(dirPath: string): Promise<string[]> {
+    return this.listContents(dirPath);
+  }
+
+  /**
+   * Compares two filesystem states to ensure they are identical
+   */
+  static compareFilesystemStates(stateBefore: string[], stateAfter: string[]): boolean {
+    if (stateBefore.length !== stateAfter.length) {
+      return false;
+    }
+
+    const sortedBefore = [...stateBefore].sort();
+    const sortedAfter = [...stateAfter].sort();
+
+    return sortedBefore.every((path, index) => path === sortedAfter[index]);
   }
 }
