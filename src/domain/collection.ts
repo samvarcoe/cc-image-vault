@@ -1,6 +1,10 @@
 import { promises as fs } from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { Database } from 'sqlite3';
+import sharp from 'sharp';
+import { v4 as uuidv4 } from 'uuid';
+import { ImageMetadata, ImageStatus, QueryOptions } from './types';
 
 export class Collection {
   public readonly id: string;
@@ -98,16 +102,50 @@ export class Collection {
   private static async initializeDatabase(databasePath: string): Promise<Database> {
     return new Promise((resolve, reject) => {
       try {
-        const db = new Database(databasePath, (err) => {
+        const db = new Database(databasePath, async (err) => {
           if (err) {
             reject(new Error('Database initialization failed: ' + err.message));
           } else {
-            resolve(db);
+            try {
+              await Collection.createSchema(db);
+              resolve(db);
+            } catch (schemaError: any) {
+              reject(new Error('Database schema creation failed: ' + schemaError.message));
+            }
           }
         });
       } catch (error: any) {
         reject(new Error('Database initialization failed: ' + error.message));
       }
+    });
+  }
+
+  private static async createSchema(db: Database): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const createImageTable = `
+        CREATE TABLE IF NOT EXISTS images (
+          id TEXT PRIMARY KEY,
+          original_name TEXT NOT NULL,
+          file_hash TEXT UNIQUE NOT NULL,
+          status TEXT NOT NULL DEFAULT 'INBOX',
+          size INTEGER NOT NULL,
+          width INTEGER NOT NULL,
+          height INTEGER NOT NULL,
+          aspect_ratio REAL NOT NULL,
+          extension TEXT NOT NULL,
+          mime_type TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `;
+
+      db.run(createImageTable, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
     });
   }
 
@@ -141,5 +179,351 @@ export class Collection {
     } catch {
       return false;
     }
+  }
+
+  // Image processing utilities
+  private async calculateFileHash(filePath: string): Promise<string> {
+    try {
+      const fileBuffer = await fs.readFile(filePath);
+      return crypto.createHash('sha256').update(fileBuffer).digest('hex');
+    } catch (error: any) {
+      throw new Error('Unable to process image: failed to calculate hash - ' + error.message);
+    }
+  }
+
+  private async extractImageMetadata(filePath: string): Promise<{ width: number; height: number; size: number; mimeType: string; extension: string }> {
+    try {
+      const stats = await fs.stat(filePath);
+      const metadata = await sharp(filePath).metadata();
+      
+      if (!metadata.width || !metadata.height) {
+        throw new Error('Unable to process image: invalid image dimensions');
+      }
+
+      const extension = path.extname(filePath).toLowerCase();
+      const mimeType = this.getMimeTypeFromExtension(extension);
+
+      return {
+        width: metadata.width,
+        height: metadata.height,
+        size: stats.size,
+        mimeType,
+        extension
+      };
+    } catch (error: any) {
+      if (error.message.includes('Unable to process image')) {
+        throw error;
+      }
+      throw new Error('Unable to process image: failed to extract metadata - ' + error.message);
+    }
+  }
+
+  private getMimeTypeFromExtension(extension: string): string {
+    const mimeTypes: { [key: string]: string } = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.tiff': 'image/tiff',
+      '.tif': 'image/tiff'
+    };
+    return mimeTypes[extension] || 'application/octet-stream';
+  }
+
+  private async generateThumbnail(originalPath: string, thumbnailPath: string, maxDimension: number = 300): Promise<void> {
+    try {
+      await sharp(originalPath)
+        .resize(maxDimension, maxDimension, {
+          fit: 'inside',
+          withoutEnlargement: true
+        })
+        .jpeg({ quality: 80 })
+        .toFile(thumbnailPath);
+    } catch (error: any) {
+      throw new Error('Unable to process image: failed to generate thumbnail - ' + error.message);
+    }
+  }
+
+  private async isDuplicateHash(fileHash: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        'SELECT id FROM images WHERE file_hash = ?',
+        [fileHash],
+        (err, row) => {
+          if (err) {
+            reject(new Error('Unable to retrieve images: database query failed - ' + err.message));
+          } else {
+            resolve(!!row);
+          }
+        }
+      );
+    });
+  }
+
+  // Main public methods
+  async addImage(filePath: string): Promise<ImageMetadata> {
+    if (!filePath) {
+      throw new Error('Unable to process image: file path is required');
+    }
+
+    // Verify file exists
+    try {
+      await fs.access(filePath);
+    } catch (error) {
+      throw new Error('Unable to process image: file not found');
+    }
+
+    const fileHash = await this.calculateFileHash(filePath);
+    
+    // Check for duplicates
+    if (await this.isDuplicateHash(fileHash)) {
+      throw new Error('Duplicate Image: an image with this hash already exists in the collection');
+    }
+
+    const metadata = await this.extractImageMetadata(filePath);
+    const imageId = uuidv4();
+    const originalName = path.basename(filePath);
+    
+    // Define file paths
+    const originalDir = path.join(this.basePath, this.id, 'images', 'original');
+    const thumbnailDir = path.join(this.basePath, this.id, 'images', 'thumbnails');
+    const originalDestPath = path.join(originalDir, `${imageId}${metadata.extension}`);
+    const thumbnailDestPath = path.join(thumbnailDir, `${imageId}.jpg`);
+
+    const createdFiles: string[] = [];
+
+    try {
+      // Copy original file
+      await fs.copyFile(filePath, originalDestPath);
+      createdFiles.push(originalDestPath);
+
+      // Generate thumbnail
+      await this.generateThumbnail(filePath, thumbnailDestPath);
+      createdFiles.push(thumbnailDestPath);
+
+      // Insert into database
+      const now = new Date();
+      const aspectRatio = metadata.width / metadata.height;
+
+      await this.insertImageRecord({
+        id: imageId,
+        originalName,
+        fileHash,
+        status: 'INBOX',
+        size: metadata.size,
+        width: metadata.width,
+        height: metadata.height,
+        aspectRatio,
+        extension: metadata.extension,
+        mimeType: metadata.mimeType,
+        createdAt: now,
+        updatedAt: now
+      });
+
+      return {
+        id: imageId,
+        originalName,
+        fileHash,
+        status: 'INBOX' as ImageStatus,
+        size: metadata.size,
+        dimensions: {
+          width: metadata.width,
+          height: metadata.height
+        },
+        aspectRatio,
+        extension: metadata.extension,
+        mimeType: metadata.mimeType,
+        createdAt: now,
+        updatedAt: now
+      };
+
+    } catch (error: any) {
+      // Rollback: remove any created files
+      for (const file of createdFiles) {
+        try {
+          await fs.unlink(file);
+        } catch (cleanupError) {
+          // Ignore cleanup errors
+        }
+      }
+
+      if (error.message.includes('Unable to process image')) {
+        throw error;
+      }
+      if (error.message.includes('ENOSPC') || error.message.includes('no space left')) {
+        throw new Error('Unable to save image: insufficient disk space');
+      }
+      if (error.message.includes('EACCES') || error.message.includes('EPERM') || error.message.includes('ENOTDIR')) {
+        throw new Error('Unable to save image: insufficient permissions');
+      }
+      
+      throw new Error('Unable to save image: ' + error.message);
+    }
+  }
+
+  private async insertImageRecord(imageData: any): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const sql = `
+        INSERT INTO images (
+          id, original_name, file_hash, status, size, width, height,
+          aspect_ratio, extension, mime_type, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      this.db.run(sql, [
+        imageData.id,
+        imageData.originalName,
+        imageData.fileHash,
+        imageData.status,
+        imageData.size,
+        imageData.width,
+        imageData.height,
+        imageData.aspectRatio,
+        imageData.extension,
+        imageData.mimeType,
+        imageData.createdAt.toISOString(),
+        imageData.updatedAt.toISOString()
+      ], function(err) {
+        if (err) {
+          reject(new Error('Database insert failed: ' + err.message));
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  async getImages(options?: QueryOptions): Promise<ImageMetadata[]> {
+    try {
+      let sql = 'SELECT * FROM images';
+      const params: any[] = [];
+
+      if (options?.status) {
+        sql += ' WHERE status = ?';
+        params.push(options.status);
+      }
+
+      const orderBy = options?.orderBy || 'updated_at';
+      const orderDirection = options?.orderDirection || 'DESC';
+      sql += ` ORDER BY ${orderBy} ${orderDirection}`;
+
+      return new Promise((resolve, reject) => {
+        // Check if database connection is still valid
+        if (!this.db || this.db === null) {
+          reject(new Error('Unable to retrieve images: database connection lost'));
+          return;
+        }
+
+        this.db.all(sql, params, (err, rows: any[]) => {
+          if (err) {
+            if (err.message.includes('SQLITE_MISUSE') || err.message.includes('closed') || err.message.includes('cannot operate')) {
+              reject(new Error('Unable to retrieve images: database connection issues - database connection closed'));
+            } else {
+              reject(new Error('Unable to retrieve images: database connection issues - ' + err.message));
+            }
+          } else {
+            const images = rows.map(row => ({
+              id: row.id,
+              originalName: row.original_name,
+              fileHash: row.file_hash,
+              status: row.status as ImageStatus,
+              size: row.size,
+              dimensions: {
+                width: row.width,
+                height: row.height
+              },
+              aspectRatio: row.aspect_ratio,
+              extension: row.extension,
+              mimeType: row.mime_type,
+              createdAt: new Date(row.created_at),
+              updatedAt: new Date(row.updated_at)
+            }));
+            resolve(images);
+          }
+        });
+      });
+    } catch (error: any) {
+      throw new Error('Unable to retrieve images: ' + error.message);
+    }
+  }
+
+  async updateImageStatus(imageId: string, newStatus: ImageStatus): Promise<ImageMetadata> {
+    if (!imageId || !newStatus) {
+      throw new Error('Image ID and status are required');
+    }
+
+    const validStatuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error(`Invalid status: ${newStatus}`);
+    }
+
+    try {
+      const now = new Date();
+      
+      return new Promise((resolve, reject) => {
+        this.db.run(
+          'UPDATE images SET status = ?, updated_at = ? WHERE id = ?',
+          [newStatus, now.toISOString(), imageId],
+          function(err) {
+            if (err) {
+              reject(new Error('Unable to update image status: database error - ' + err.message));
+            } else if (this.changes === 0) {
+              reject(new Error('Unable to update image status: image not found'));
+            } else {
+              // Fetch and return updated image
+              resolve();
+            }
+          }
+        );
+      }).then(() => {
+        return new Promise<ImageMetadata>((resolve, reject) => {
+          this.db.get(
+            'SELECT * FROM images WHERE id = ?',
+            [imageId],
+            (err, row: any) => {
+              if (err) {
+                reject(new Error('Unable to retrieve updated image: ' + err.message));
+              } else if (!row) {
+                reject(new Error('Image not found after status update'));
+              } else {
+                resolve({
+                  id: row.id,
+                  originalName: row.original_name,
+                  fileHash: row.file_hash,
+                  status: row.status as ImageStatus,
+                  size: row.size,
+                  dimensions: {
+                    width: row.width,
+                    height: row.height
+                  },
+                  aspectRatio: row.aspect_ratio,
+                  extension: row.extension,
+                  mimeType: row.mime_type,
+                  createdAt: new Date(row.created_at),
+                  updatedAt: new Date(row.updated_at)
+                });
+              }
+            }
+          );
+        });
+      });
+    } catch (error: any) {
+      throw new Error('Unable to update image status: ' + error.message);
+    }
+  }
+
+  async close(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.db.close((err) => {
+        if (err) {
+          reject(new Error('Failed to close database connection: ' + err.message));
+        } else {
+          // Set database reference to null to trigger connection errors
+          (this.db as any) = null;
+          resolve();
+        }
+      });
+    });
   }
 }
