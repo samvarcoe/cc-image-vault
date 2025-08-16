@@ -6,24 +6,6 @@ Users have accumulated large collections of images across multiple directories t
 ## Solution Overview
 A simple application that lets users upload their images and sort them into "collections". Bulk editing functionality is provided to quickly classify images and archive/restore/delete them as desired. Functionality for viewing and exploring the collections is also provided to allow users to use and enjoy them.
 
-## Project Structure
-image-vault/
-├── docs/                              # Implementation plans and technical notes
-├── requirements/                      # Product requirements and specifications
-│   ├── features/                      # Gherkin feature files defining system behavior
-│   └── guidelines/                    # Requirements documentation standards
-├── public/                            # Static files served
-├── src/                               # Source code for the implementation
-└── tests/                             # Test infrastructure
-    ├── acceptance/                    # End-to-end Playwright tests
-    │   ├── playwright.config.ts       # Playwright configuration
-    │   ├── specs/                     # Test specifications (1:1 with Gherkin scenarios)
-    │   ├── fixtures/                  # Test data collections
-    │   │   └── collections/           # Swappable photo collections for testing
-    │   └── utils/                     # Test utilities
-    └── scripts/                       # Test data generation scripts
-```
-
 ## Architecture Overview
 
 ### File Structure
@@ -67,23 +49,54 @@ Images follow a clear status progression:
 - **File Naming**: UUID-based filenames with original names preserved in metadata
 - **Upload Processing**: Asynchronous processing with file-based queue for persistence
 
-### Image Meta-Data Schema
-```typescript
-{
-  "id": string,                                 // UUID used for filename
-  "originalName": string,                       // preserved original filename
-  "fileHash": string,                           // SHA256 for duplicate detection
-  "status": "COLLECTION" | "INBOX" | "ARCHIVE",
-  "size": number,                               // file size in bytes
-  "dimensions": {
-    "width": number,
-    "height": number
+## Interfaces
+
+```ts
+type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE';
+
+// Image metadata interface
+interface ImageMetadata {
+  id: string;
+  originalName: string;
+  fileHash: string;
+  status: ImageStatus;
+  size: number,
+  dimensions: {
+    width: number,
+    height: number
   },
-  "aspectRatio": number,
-  "extension": string,                          // original file extension
-  "mimeType": string,                           // for proper content serving
-  "createdAt": timestamp,
-  "updatedAt": timestamp
+  aspectRatio: number,
+  extension: number,
+  mimeType: string,
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Query options for image retrieval
+export interface QueryOptions {
+  status?: ImageStatus;
+  orderBy?: 'created_at' | 'updated_at';
+  orderDirection?: 'ASC' | 'DESC';
+}
+
+// Main Collection interface
+export interface ICollection {
+  // Collection lifecycle methods
+  static create(id: string, path: string): Promise<Collection>;
+  static load(path: string): Promise<Collection>;
+  
+  // Image management methods
+  addImage(filePath: string): Promise<ImageMetadata>;
+  updateImageStatus(imageId: string, newStatus: ImageStatus): Promise<ImageMetadata>;
+  deleteImage(imageId: string): Promise<boolean>;
+  
+  // Image retrieval methods
+  getImages(options?: QueryOptions): Promise<ImageMetadata[]>;
+  getImage(imageId: string): Promise<ImageMetadata>;
+  
+  // Collection properties
+  readonly id: string;
+  readonly basePath: string;
 }
 ```
 
