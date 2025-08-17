@@ -306,4 +306,153 @@ export class TestUtils {
 
     return sortedBefore.every((path, index) => path === sortedAfter[index]);
   }
+
+  /**
+   * Captures database state by reading all image records for rollback verification
+   */
+  static async captureDatabaseState(collection: any): Promise<ImageMetadata[]> {
+    try {
+      return await collection.getImages();
+    } catch (error) {
+      // If database is inaccessible, return empty state
+      return [];
+    }
+  }
+
+  /**
+   * Compares two database states to ensure they are identical
+   */
+  static compareDatabaseStates(stateBefore: ImageMetadata[], stateAfter: ImageMetadata[]): boolean {
+    if (stateBefore.length !== stateAfter.length) {
+      return false;
+    }
+
+    // Sort by ID for consistent comparison
+    const sortedBefore = [...stateBefore].sort((a, b) => a.id.localeCompare(b.id));
+    const sortedAfter = [...stateAfter].sort((a, b) => a.id.localeCompare(b.id));
+
+    return sortedBefore.every((imageBefore, index) => {
+      const imageAfter = sortedAfter[index];
+      return (
+        imageBefore.id === imageAfter.id &&
+        imageBefore.status === imageAfter.status &&
+        imageBefore.fileHash === imageAfter.fileHash &&
+        imageBefore.originalName === imageAfter.originalName &&
+        imageBefore.size === imageAfter.size
+      );
+    });
+  }
+
+  /**
+   * Simulates database constraint violation by corrupting the database during an operation
+   */
+  static async simulateConstraintViolation(collection: any): Promise<() => Promise<void>> {
+    // Get the database path from the collection
+    const collectionPath = path.join(collection.basePath, collection.id);
+    const dbPath = path.join(collectionPath, 'collection.db');
+    
+    // Create a backup of the database
+    const backupPath = `${dbPath}.backup`;
+    await fs.copyFile(dbPath, backupPath);
+    
+    // Corrupt the database to trigger constraint violations
+    await fs.writeFile(dbPath, 'CORRUPTED_CONSTRAINT_VIOLATION_TEST');
+    
+    // Return cleanup function to restore database
+    return async () => {
+      try {
+        await fs.copyFile(backupPath, dbPath);
+        await fs.unlink(backupPath);
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    };
+  }
+
+  /**
+   * Creates a scenario where file deletion will fail
+   */
+  static async simulateFileDeletionFailure(collectionPath: string, imageId: string): Promise<() => Promise<void>> {
+    const imagesDir = path.join(collectionPath, 'images');
+    const originalDir = path.join(imagesDir, 'original');
+    const thumbnailPath = path.join(imagesDir, 'thumbnails', `${imageId}.jpg`);
+    
+    // Find the actual original file (it could have any extension)
+    let originalPath = '';
+    let originalBackupPath = '';
+    try {
+      const originalFiles = await fs.readdir(originalDir);
+      const matchingFile = originalFiles.find(file => file.startsWith(imageId));
+      if (matchingFile) {
+        originalPath = path.join(originalDir, matchingFile);
+        originalBackupPath = originalPath + '.backup-for-failure-test';
+      }
+    } catch (error) {
+      // Directory might not exist or be accessible
+    }
+    
+    const originalExists = originalPath && await this.fileExists(originalPath);
+    const thumbnailExists = await this.fileExists(thumbnailPath);
+    const thumbnailBackupPath = thumbnailPath + '.backup-for-failure-test';
+    
+    // Replace files with directories to make fs.unlink() fail
+    if (originalExists) {
+      // Backup the original file and replace it with a directory
+      await fs.rename(originalPath, originalBackupPath);
+      await fs.mkdir(originalPath, { recursive: true });
+    }
+    if (thumbnailExists) {
+      // Backup the thumbnail file and replace it with a directory
+      await fs.rename(thumbnailPath, thumbnailBackupPath);
+      await fs.mkdir(thumbnailPath, { recursive: true });
+    }
+    
+    // Return cleanup function to restore files
+    return async () => {
+      try {
+        if (originalExists) {
+          // Remove directory and restore original file
+          await fs.rm(originalPath, { recursive: true, force: true });
+          if (await this.fileExists(originalBackupPath)) {
+            await fs.rename(originalBackupPath, originalPath);
+          }
+        }
+        if (thumbnailExists) {
+          // Remove directory and restore thumbnail file
+          await fs.rm(thumbnailPath, { recursive: true, force: true });
+          if (await this.fileExists(thumbnailBackupPath)) {
+            await fs.rename(thumbnailBackupPath, thumbnailPath);
+          }
+        }
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    };
+  }
+
+  /**
+   * Verifies that image files (original and thumbnail) exist for a given image ID
+   */
+  static async verifyImageFilesExist(collectionPath: string, imageId: string, extension: string = '.jpg'): Promise<{ originalExists: boolean; thumbnailExists: boolean }> {
+    const imagesDir = path.join(collectionPath, 'images');
+    const originalPath = path.join(imagesDir, 'original', `${imageId}${extension}`);
+    const thumbnailPath = path.join(imagesDir, 'thumbnails', `${imageId}.jpg`);
+    
+    const originalExists = await this.fileExists(originalPath);
+    const thumbnailExists = await this.fileExists(thumbnailPath);
+    
+    return { originalExists, thumbnailExists };
+  }
+
+  /**
+   * Verifies that image files (original and thumbnail) do NOT exist for a given image ID
+   */
+  static async verifyImageFilesDeleted(collectionPath: string, imageId: string, extension: string = '.jpg'): Promise<{ originalDeleted: boolean; thumbnailDeleted: boolean }> {
+    const { originalExists, thumbnailExists } = await this.verifyImageFilesExist(collectionPath, imageId, extension);
+    
+    return { 
+      originalDeleted: !originalExists, 
+      thumbnailDeleted: !thumbnailExists 
+    };
+  }
 }

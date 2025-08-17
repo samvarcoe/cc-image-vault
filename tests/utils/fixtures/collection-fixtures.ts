@@ -252,4 +252,29 @@ export class CollectionFixtures extends Fixtures<Collection> {
     // The collection now has a closed connection and corrupted database
     return collection;
   }
+
+  /**
+   * Creates a collection with specific images in ARCHIVE status for deletion testing
+   */
+  static async createWithArchiveImages(options: {
+    collectionId?: string;
+    archiveImageCount?: number;
+  } = {}): Promise<{ collection: Collection; archiveImageIds: string[] }> {
+
+    const {
+      collectionId = `archive-test-collection-${Date.now()}`,
+      archiveImageCount = 1
+    } = options;
+
+    const collection = await this.create({
+      collectionId,
+      imageCounts: { inbox: 0, collection: 0, archive: archiveImageCount }
+    });
+
+    // Get the archive images that were created
+    const archiveImages = await collection.getImages({ status: 'ARCHIVE' });
+    const archiveImageIds = archiveImages.map(img => img.id);
+
+    return { collection, archiveImageIds };
+  }
 }
