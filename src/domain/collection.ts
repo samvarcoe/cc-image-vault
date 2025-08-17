@@ -455,7 +455,7 @@ export class Collection {
 
     const validStatuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
     if (!validStatuses.includes(newStatus)) {
-      throw new Error(`Invalid status: ${newStatus}`);
+      throw new Error(`Invalid status: ${newStatus}. Valid statuses are: ${validStatuses.join(', ')}`);
     }
 
     try {
@@ -469,7 +469,7 @@ export class Collection {
             if (err) {
               reject(new Error('Unable to update image status: database error - ' + err.message));
             } else if (this.changes === 0) {
-              reject(new Error('Unable to update image status: image not found'));
+              reject(new Error(`image not found: ${imageId}`));
             } else {
               // Fetch and return updated image
               resolve();
@@ -510,6 +510,144 @@ export class Collection {
       });
     } catch (error: any) {
       throw new Error('Unable to update image status: ' + error.message);
+    }
+  }
+
+  async deleteImage(imageId: string): Promise<boolean> {
+    if (!imageId) {
+      throw new Error('Image ID is required');
+    }
+
+    try {
+      // First, get the image metadata to determine file paths and verify existence
+      const imageMetadata = await this.getImageMetadata(imageId);
+      
+      const originalPath = path.join(this.basePath, this.id, 'images', 'original', `${imageId}${imageMetadata.extension}`);
+      const thumbnailPath = path.join(this.basePath, this.id, 'images', 'thumbnails', `${imageId}.jpg`);
+
+      // Start transaction by removing from database first
+      await this.deleteImageRecord(imageId);
+
+      try {
+        // Delete original file
+        await fs.unlink(originalPath);
+      } catch (error: any) {
+        // Rollback database changes if file deletion fails
+        await this.rollbackImageDeletion(imageMetadata);
+        throw new Error('Unable to process file change: failed to delete original file - ' + error.message);
+      }
+
+      try {
+        // Delete thumbnail file
+        await fs.unlink(thumbnailPath);
+      } catch (error: any) {
+        // Rollback database changes and restore original file if thumbnail deletion fails
+        await this.rollbackImageDeletion(imageMetadata);
+        try {
+          // Try to restore the original file by copying it back
+          const originalBackupPath = originalPath + '.backup';
+          if (await this.fileExists(originalBackupPath)) {
+            await fs.copyFile(originalBackupPath, originalPath);
+            await fs.unlink(originalBackupPath);
+          }
+        } catch (restoreError) {
+          // Ignore restore errors
+        }
+        throw new Error('Unable to process file change: failed to delete thumbnail file - ' + error.message);
+      }
+
+      return true;
+
+    } catch (error: any) {
+      if (error.message.includes('Image not found')) {
+        throw new Error(`Image not found: ${imageId}`);
+      }
+      if (error.message.includes('Unable to process file change')) {
+        throw error;
+      }
+      throw new Error('Unable to delete image: ' + error.message);
+    }
+  }
+
+  private async getImageMetadata(imageId: string): Promise<ImageMetadata> {
+    return new Promise((resolve, reject) => {
+      this.db.get(
+        'SELECT * FROM images WHERE id = ?',
+        [imageId],
+        (err, row: any) => {
+          if (err) {
+            reject(new Error('Database query failed: ' + err.message));
+          } else if (!row) {
+            reject(new Error('Image not found'));
+          } else {
+            resolve({
+              id: row.id,
+              originalName: row.original_name,
+              fileHash: row.file_hash,
+              status: row.status as ImageStatus,
+              size: row.size,
+              dimensions: {
+                width: row.width,
+                height: row.height
+              },
+              aspectRatio: row.aspect_ratio,
+              extension: row.extension,
+              mimeType: row.mime_type,
+              createdAt: new Date(row.created_at),
+              updatedAt: new Date(row.updated_at)
+            });
+          }
+        }
+      );
+    });
+  }
+
+  private async deleteImageRecord(imageId: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        'DELETE FROM images WHERE id = ?',
+        [imageId],
+        function(err) {
+          if (err) {
+            reject(new Error('Database deletion failed: ' + err.message));
+          } else if (this.changes === 0) {
+            reject(new Error('Image not found'));
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+  }
+
+  private async rollbackImageDeletion(imageMetadata: ImageMetadata): Promise<void> {
+    try {
+      // Restore the database record
+      await this.insertImageRecord({
+        id: imageMetadata.id,
+        originalName: imageMetadata.originalName,
+        fileHash: imageMetadata.fileHash,
+        status: imageMetadata.status,
+        size: imageMetadata.size,
+        width: imageMetadata.dimensions.width,
+        height: imageMetadata.dimensions.height,
+        aspectRatio: imageMetadata.aspectRatio,
+        extension: imageMetadata.extension,
+        mimeType: imageMetadata.mimeType,
+        createdAt: imageMetadata.createdAt,
+        updatedAt: imageMetadata.updatedAt
+      });
+    } catch (rollbackError) {
+      // Ignore rollback errors - we've already failed
+    }
+  }
+
+  private async fileExists(filePath: string): Promise<boolean> {
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch {
+      return false;
     }
   }
 
