@@ -43,7 +43,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
         // Re-throw for testing error scenarios
         throw error;
       }
-      throw new Error(`Failed to create collection fixture: ${error}`);
+      throw new Error(`Collection fixture creation failed for "${collectionId}": ${error}`);
     }
 
     // Create images for each status
@@ -83,7 +83,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
             // Expected to fail for corrupt images
             continue;
           }
-          throw new Error(`Failed to add image ${i + 1} with status ${status}: ${error}`);
+          throw new Error(`Collection fixture failed to add image ${i + 1} with status ${status}: ${error}`);
         }
       }
     }
@@ -105,7 +105,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
           throw new Error('Duplicate detection should have prevented this addition');
         } catch (error: any) {
           if (!error.message.includes('Duplicate Image')) {
-            throw new Error(`Expected "Duplicate Image" error but got: ${error.message}`);
+            throw new Error(`Duplicate detection test failed: expected "Duplicate Image" error but got "${error.message}"`);
           }
           // Expected duplicate error - continue
         }
@@ -117,7 +117,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
         // Collection cleanup will be handled by its own database connection cleanup
         await fs.rm(basePath, { recursive: true, force: true });
       } catch (error) {
-        console.warn('Collection fixture cleanup warning:', error);
+        // Fixture cleanup errors are non-fatal but should be tracked
       }
     };
 
