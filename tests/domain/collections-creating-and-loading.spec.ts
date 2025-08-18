@@ -28,48 +28,26 @@ test.describe('Collections - Creation and Loading', () => {
   // Positive Scenarios
 
   test('Collection creation with valid parameters', async () => {
-    console.log('Creating new Collection instance with valid collection ID and base path');
-    
     const collectionId = `test-collection-${Date.now()}`;
     const basePath = await createTempDir();
     
     const collection = await Collection.create(collectionId, basePath);
     
-    console.log('Verifying collection initializes with provided ID and path');
-    expect(collection.id, { message: `Collection ID is "${collection.id}" instead of "${collectionId}" after creation` }).toBe(collectionId);
-    expect(collection.basePath, { message: `Collection base path is "${collection.basePath}" instead of "${basePath}" after creation` }).toBe(basePath);
-    console.log('Collection initialized with correct ID and path');
+    expect(collection.id, { 
+      message: `Collection has ID "${collection.id}" instead of "${collectionId}" after creation with valid parameters` 
+    }).toBe(collectionId);
     
-    console.log('Verifying collection creates necessary directory structure');
+    expect(collection.basePath, { 
+      message: `Collection has base path "${collection.basePath}" instead of "${basePath}" after creation with valid parameters` 
+    }).toBe(basePath);
+    
+    console.log(`✓ Collection ${collectionId} created with correct ID and base path`);
+    
     const collectionPath = path.join(basePath, collectionId);
-    const imagesPath = path.join(collectionPath, 'images');
-    const originalPath = path.join(imagesPath, 'original');
-    const thumbnailsPath = path.join(imagesPath, 'thumbnails');
-    
-    const collectionDirExists = await TestUtils.directoryExists(collectionPath);
-    expect(collectionDirExists, { message: `Collection directory "${collectionPath}" does not exist after creation` }).toBe(true);
-    console.log('Collection directory structure created successfully');
-    
-    const imagesDirExists = await TestUtils.directoryExists(imagesPath);
-    expect(imagesDirExists, { message: `Images directory "${imagesPath}" does not exist after collection creation` }).toBe(true);
-    
-    const originalDirExists = await TestUtils.directoryExists(originalPath);
-    expect(originalDirExists, { message: `Original images directory "${originalPath}" does not exist after collection creation` }).toBe(true);
-    
-    const thumbnailsDirExists = await TestUtils.directoryExists(thumbnailsPath);
-    expect(thumbnailsDirExists, { message: `Thumbnails directory "${thumbnailsPath}" does not exist after collection creation` }).toBe(true);
-    console.log('All required subdirectories created successfully');
-    
-    console.log('Verifying collection creates database file');
-    const databasePath = path.join(collectionPath, 'collection.db');
-    const databaseExists = await TestUtils.fileExists(databasePath);
-    expect(databaseExists, { message: `Database file "${databasePath}" does not exist after collection creation` }).toBe(true);
-    console.log('Database file created successfully');
+    await TestUtils.shouldHaveValidStructure(collectionPath);
   });
 
   test('Collection loading from existing directory', async () => {
-    console.log('Setting up existing collection with valid database');
-    
     const collectionId = `existing-collection-${Date.now()}`;
     const basePath = await createTempDir();
     
@@ -77,24 +55,25 @@ test.describe('Collections - Creation and Loading', () => {
     await Collection.create(collectionId, basePath);
     const collectionPath = path.join(basePath, collectionId);
     
-    console.log('Loading collection from existing directory using Collection.load()');
     const loadedCollection = await Collection.load(collectionPath);
     
-    console.log('Verifying loaded collection is a valid Collection instance');
-    expect(loadedCollection, { message: `Collection.load() returned null/undefined for existing collection at "${collectionPath}"` }).toBeTruthy();
-    expect(loadedCollection.id, { message: `Loaded collection ID is "${loadedCollection.id}" instead of "${collectionId}" when loading existing collection` }).toBe(collectionId);
-    console.log('Collection loaded successfully from existing directory');
+    expect(loadedCollection, { 
+      message: `Collection.load() returned null/undefined for existing collection directory at "${collectionPath}"` 
+    }).toBeTruthy();
+    
+    expect(loadedCollection.id, { 
+      message: `Loaded collection has ID "${loadedCollection.id}" instead of "${collectionId}" when loading from existing directory` 
+    }).toBe(collectionId);
+    
+    console.log(`✓ Collection ${collectionId} successfully loaded from existing directory`);
   });
 
   // Negative Scenarios
 
   test('Collection creation with invalid path', async () => {
-    console.log('Attempting to create Collection instance with invalid/inaccessible base path');
-    
     const collectionId = `invalid-path-collection-${Date.now()}`;
     const invalidPath = TestUtils.getInvalidPath();
     
-    console.log('Verifying collection throws meaningful error about invalid path');
     let errorThrown = false;
     let errorMessage = '';
     
@@ -105,24 +84,27 @@ test.describe('Collections - Creation and Loading', () => {
       errorMessage = error.message;
     }
     
-    expect(errorThrown, { message: `Collection creation with invalid path "${invalidPath}" did not throw an error` }).toBe(true);
-    expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate invalid path issue for path "${invalidPath}"` }).toContain('invalid path');
-    console.log('Collection correctly threw meaningful error for invalid path');
+    expect(errorThrown, { 
+      message: `Collection creation with invalid path "${invalidPath}" did not throw error as expected` 
+    }).toBe(true);
     
-    console.log('Verifying no files or directories were created');
+    expect(errorMessage, { 
+      message: `Collection creation error "${errorMessage}" does not indicate invalid path issue for "${invalidPath}"` 
+    }).toContain('invalid path');
+    
     const pathExists = await TestUtils.directoryExists(invalidPath);
-    expect(pathExists, { message: `Invalid path "${invalidPath}" directory was created despite being invalid` }).toBe(false);
-    console.log('No files or directories created for invalid path');
+    expect(pathExists, { 
+      message: `Invalid path "${invalidPath}" was created despite collection creation failure` 
+    }).toBe(false);
+    
+    console.log(`✓ Collection creation properly rejected invalid path "${invalidPath}" with no filesystem changes`);
   });
 
   test('Collection creation with insufficient permissions', async () => {
-    console.log('Setting up path with insufficient write permissions');
-    
     const collectionId = `permission-fail-collection-${Date.now()}`;
     const restrictedPath = await TestUtils.createNoWritePermissionPath();
     tempDirs.push(restrictedPath);
     
-    console.log('Attempting to create Collection instance with insufficient permissions');
     let errorThrown = false;
     let errorMessage = '';
     
@@ -133,21 +115,24 @@ test.describe('Collections - Creation and Loading', () => {
       errorMessage = error.message;
     }
     
-    console.log('Verifying collection throws "Unable to create Collection" error');
-    expect(errorThrown, { message: `Collection creation with insufficient permissions at "${restrictedPath}" did not throw an error` }).toBe(true);
-    expect(errorMessage, { message: `Error message "${errorMessage}" does not contain "Unable to create Collection" for permission failure` }).toContain('Unable to create Collection');
-    console.log('Collection correctly threw "Unable to create Collection" error');
+    expect(errorThrown, { 
+      message: `Collection creation with insufficient permissions at "${restrictedPath}" did not throw error as expected` 
+    }).toBe(true);
     
-    console.log('Verifying no partial directory structure was created');
+    expect(errorMessage, { 
+      message: `Permission error "${errorMessage}" does not contain "Unable to create Collection" message for restricted path "${restrictedPath}"` 
+    }).toContain('Unable to create Collection');
+    
     const collectionPath = path.join(restrictedPath, collectionId);
     const collectionExists = await TestUtils.directoryExists(collectionPath);
-    expect(collectionExists, { message: `Collection directory "${collectionPath}" was created despite insufficient permissions` }).toBe(false);
-    console.log('No partial directory structure created');
+    expect(collectionExists, { 
+      message: `Collection directory "${collectionPath}" was created despite insufficient permissions failure` 
+    }).toBe(false);
+    
+    console.log(`✓ Collection creation properly handled insufficient permissions at "${restrictedPath}" with proper cleanup`);
   });
 
   test('Collection creation with database failure', async () => {
-    console.log('Setting up scenario for database initialization failure');
-    
     const collectionId = `db-fail-collection-${Date.now()}`;
     const basePath = await createTempDir();
     
@@ -155,11 +140,10 @@ test.describe('Collections - Creation and Loading', () => {
     const collectionPath = path.join(basePath, collectionId);
     await fs.mkdir(collectionPath, { recursive: true });
     
-    // Create a file where the database should be to cause database creation to fail
+    // Create a directory where the database should be to cause database creation to fail
     const databasePath = path.join(collectionPath, 'collection.db');
     await fs.mkdir(databasePath); // Create directory instead of file to cause failure
     
-    console.log('Attempting to create Collection instance when database initialization fails');
     let errorThrown = false;
     let errorMessage = '';
     
@@ -170,26 +154,29 @@ test.describe('Collections - Creation and Loading', () => {
       errorMessage = error.message;
     }
     
-    console.log('Verifying collection throws "Unable to create Collection" error');
-    expect(errorThrown, { message: `Collection creation with database failure did not throw an error for "${collectionPath}"` }).toBe(true);
-    expect(errorMessage, { message: `Error message "${errorMessage}" does not contain "Unable to create Collection" for database failure` }).toContain('Unable to create Collection');
-    console.log('Collection correctly threw "Unable to create Collection" error for database failure');
+    expect(errorThrown, { 
+      message: `Collection creation with database initialization failure did not throw error for "${collectionPath}"` 
+    }).toBe(true);
     
-    console.log('Verifying collection removes any partially created directories');
+    expect(errorMessage, { 
+      message: `Database failure error "${errorMessage}" does not contain "Unable to create Collection" message for failed initialization` 
+    }).toContain('Unable to create Collection');
+    
     const collectionExists = await TestUtils.directoryExists(collectionPath);
-    expect(collectionExists, { message: `Collection directory "${collectionPath}" still exists after database failure - should be cleaned up` }).toBe(false);
-    console.log('Partially created directories removed successfully');
+    expect(collectionExists, { 
+      message: `Collection directory "${collectionPath}" still exists after database failure instead of being cleaned up` 
+    }).toBe(false);
     
-    console.log('Verifying filesystem is left in original state');
     const baseContents = await TestUtils.listContents(basePath);
     const hasCollectionItems = baseContents.some(item => item.includes(collectionId));
-    expect(hasCollectionItems, { message: `Base path "${basePath}" contains collection-related items after failed creation cleanup` }).toBe;
-    console.log('Filesystem left in original state');
+    expect(hasCollectionItems, { 
+      message: `Base path "${basePath}" contains collection remnants after database failure cleanup` 
+    }).toBe(false);
+    
+    console.log(`✓ Collection creation with database failure properly cleaned up partial state`);
   });
 
   test('Collection loading with access issues', async () => {
-    console.log('Setting up collection directory with database and permission problems');
-    
     const collectionId = `access-issue-collection-${Date.now()}`;
     const basePath = await createTempDir();
     
@@ -201,7 +188,6 @@ test.describe('Collections - Creation and Loading', () => {
     const databasePath = path.join(collectionPath, 'collection.db');
     await TestUtils.corruptDatabase(databasePath);
     
-    console.log('Attempting to load collection with access issues using Collection.load()');
     let errorThrown = false;
     let errorMessage = '';
     
@@ -212,13 +198,18 @@ test.describe('Collections - Creation and Loading', () => {
       errorMessage = error.message;
     }
     
-    console.log('Verifying collection throws "Unable to load Collection" error');
-    expect(errorThrown, { message: `Collection loading with access issues at "${collectionPath}" did not throw an error` }).toBe(true);
-    expect(errorMessage, { message: `Error message "${errorMessage}" does not contain "Unable to load Collection" for access issues` }).toContain('Unable to load Collection');
-    console.log('Collection correctly threw "Unable to load Collection" error');
+    expect(errorThrown, { 
+      message: `Collection loading with corrupted database at "${collectionPath}" did not throw error as expected` 
+    }).toBe(true);
     
-    console.log('Verifying error message indicates specific access issue');
-    expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate specific access issue details` }).toMatch(/(database|corrupt|access|permission)/i);
-    console.log('Error message indicates specific access issue');
+    expect(errorMessage, { 
+      message: `Access error "${errorMessage}" does not contain "Unable to load Collection" message for corrupted database` 
+    }).toContain('Unable to load Collection');
+    
+    expect(errorMessage, { 
+      message: `Access error "${errorMessage}" does not indicate specific database access issue (database, corrupt, access, or permission)` 
+    }).toMatch(/(database|corrupt|access|permission)/i);
+    
+    console.log(`✓ Collection loading properly rejected corrupted database with specific error details`);
   });
 });

@@ -11,16 +11,18 @@ export abstract class Fixtures<T> {
 
   static async cleanup(): Promise<void> {
     const results = await Promise.allSettled(this.cleanupFunctions.map(fn => fn()));
-    this.cleanupFunctions = [];
     
     const errors = results
       .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
       .map(result => result.reason);
 
     if (errors.length > 0) {
-      console.error('Cleanup errors:', errors.map(e => e.message).join(', '));
-      throw new Error(`Failed to cleanup fixtures: ${errors.length} errors occurred`);
+      const errorMessages = errors.map(e => e.message).join(', ');
+      throw new Error(`Fixture cleanup failed: ${errors.length} errors occurred during resource cleanup (${errorMessages})`);
     }
+
+    console.log(`✓ All ${this.cleanupFunctions.length} fixtures cleaned up successfully`);
+    this.cleanupFunctions = [];
   }
 
   static get count(): number {

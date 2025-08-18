@@ -113,7 +113,7 @@ export class TestUtils {
   /**
    * Validates image metadata structure and required fields
    */
-  static validateImageMetadata(metadata: ImageMetadata): void {
+  static shouldHaveValidMetadata(metadata: ImageMetadata): void {
     const requiredFields = [
       'id', 'originalName', 'fileHash', 'status', 'size',
       'dimensions', 'aspectRatio', 'extension', 'mimeType',
@@ -122,25 +122,27 @@ export class TestUtils {
 
     for (const field of requiredFields) {
       if (!(field in metadata)) {
-        throw new Error(`Image metadata missing required field: ${field}`);
+        throw new Error(`Image ${metadata.id || 'unknown'} missing required field "${field}" in metadata structure`);
       }
     }
 
     // Validate dimensions object
     if (!metadata.dimensions || typeof metadata.dimensions.width !== 'number' || typeof metadata.dimensions.height !== 'number') {
-      throw new Error('Image metadata dimensions must have numeric width and height');
+      throw new Error(`Image ${metadata.id} has invalid dimensions: width=${metadata.dimensions?.width}, height=${metadata.dimensions?.height} (must be numeric)`);
     }
 
     // Validate status is valid enum value
     const validStatuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
     if (!validStatuses.includes(metadata.status)) {
-      throw new Error(`Invalid image status: ${metadata.status}`);
+      throw new Error(`Image ${metadata.id} has invalid status "${metadata.status}" (must be one of: ${validStatuses.join(', ')})`);
     }
 
     // Validate dates
     if (!(metadata.createdAt instanceof Date) || !(metadata.updatedAt instanceof Date)) {
-      throw new Error('Image metadata createdAt and updatedAt must be Date objects');
+      throw new Error(`Image ${metadata.id} has invalid date objects: createdAt=${typeof metadata.createdAt}, updatedAt=${typeof metadata.updatedAt} (must be Date objects)`);
     }
+
+    console.log(`✓ Image ${metadata.id} metadata structure and all required fields`);
   }
 
   /**
@@ -169,32 +171,27 @@ export class TestUtils {
   }
 
   /**
-   * Verifies collection directory structure exists
+   * Validates that collection directory structure exists and is complete
    */
-  static async verifyCollectionStructure(collectionPath: string): Promise<boolean> {
-    try {
-      const requiredPaths = [
-        path.join(collectionPath, 'images'),
-        path.join(collectionPath, 'images', 'original'),
-        path.join(collectionPath, 'images', 'thumbnails'),
-        path.join(collectionPath, 'collection.db')
-      ];
+  static async shouldHaveValidStructure(collectionPath: string): Promise<void> {
+    const requiredPaths = [
+      { path: path.join(collectionPath, 'images'), type: 'directory', name: 'images directory' },
+      { path: path.join(collectionPath, 'images', 'original'), type: 'directory', name: 'original images directory' },
+      { path: path.join(collectionPath, 'images', 'thumbnails'), type: 'directory', name: 'thumbnails directory' },
+      { path: path.join(collectionPath, 'collection.db'), type: 'file', name: 'database file' }
+    ];
 
-      for (const requiredPath of requiredPaths) {
-        const isDirectory = requiredPath.endsWith('.db') ? false : true;
-        const exists = isDirectory 
-          ? await this.directoryExists(requiredPath)
-          : await this.fileExists(requiredPath);
-        
-        if (!exists) {
-          return false;
-        }
+    for (const { path: requiredPath, type, name } of requiredPaths) {
+      const exists = type === 'directory' 
+        ? await this.directoryExists(requiredPath)
+        : await this.fileExists(requiredPath);
+      
+      if (!exists) {
+        throw new Error(`Collection structure incomplete: ${name} missing at "${requiredPath}"`);
       }
-
-      return true;
-    } catch {
-      return false;
     }
+
+    console.log(`✓ Collection directory structure complete at "${collectionPath}"`);
   }
 
   /**
@@ -294,17 +291,24 @@ export class TestUtils {
   }
 
   /**
-   * Compares two filesystem states to ensure they are identical
+   * Validates that filesystem states are identical (no changes occurred)
    */
-  static compareFilesystemStates(stateBefore: string[], stateAfter: string[]): boolean {
+  static shouldHaveUnchangedFilesystem(stateBefore: string[], stateAfter: string[], operation: string): void {
     if (stateBefore.length !== stateAfter.length) {
-      return false;
+      throw new Error(`Filesystem changed after failed ${operation}: ${stateBefore.length} items before, ${stateAfter.length} items after`);
     }
 
     const sortedBefore = [...stateBefore].sort();
     const sortedAfter = [...stateAfter].sort();
 
-    return sortedBefore.every((path, index) => path === sortedAfter[index]);
+    const unchanged = sortedBefore.every((path, index) => path === sortedAfter[index]);
+    
+    if (!unchanged) {
+      const differences = sortedBefore.filter((path, index) => path !== sortedAfter[index]);
+      throw new Error(`Filesystem state changed after failed ${operation}: ${differences.length} files/directories modified`);
+    }
+
+    console.log(`✓ Filesystem unchanged after failed ${operation}`);
   }
 
   /**
@@ -320,18 +324,18 @@ export class TestUtils {
   }
 
   /**
-   * Compares two database states to ensure they are identical
+   * Validates that database states are identical (no changes occurred)
    */
-  static compareDatabaseStates(stateBefore: ImageMetadata[], stateAfter: ImageMetadata[]): boolean {
+  static shouldHaveUnchangedDatabase(stateBefore: ImageMetadata[], stateAfter: ImageMetadata[], operation: string): void {
     if (stateBefore.length !== stateAfter.length) {
-      return false;
+      throw new Error(`Database changed after failed ${operation}: ${stateBefore.length} images before, ${stateAfter.length} images after`);
     }
 
     // Sort by ID for consistent comparison
     const sortedBefore = [...stateBefore].sort((a, b) => a.id.localeCompare(b.id));
     const sortedAfter = [...stateAfter].sort((a, b) => a.id.localeCompare(b.id));
 
-    return sortedBefore.every((imageBefore, index) => {
+    const unchanged = sortedBefore.every((imageBefore, index) => {
       const imageAfter = sortedAfter[index];
       return (
         imageBefore.id === imageAfter.id &&
@@ -341,6 +345,20 @@ export class TestUtils {
         imageBefore.size === imageAfter.size
       );
     });
+
+    if (!unchanged) {
+      const differences = sortedBefore.filter((imageBefore, index) => {
+        const imageAfter = sortedAfter[index];
+        return !(
+          imageBefore.id === imageAfter.id &&
+          imageBefore.status === imageAfter.status &&
+          imageBefore.fileHash === imageAfter.fileHash
+        );
+      });
+      throw new Error(`Database state changed after failed ${operation}: ${differences.length} images modified`);
+    }
+
+    console.log(`✓ Database unchanged after failed ${operation}`);
   }
 
   /**
@@ -431,9 +449,9 @@ export class TestUtils {
   }
 
   /**
-   * Verifies that image files (original and thumbnail) exist for a given image ID
+   * Validates that image files (original and thumbnail) exist for a given image ID
    */
-  static async verifyImageFilesExist(collectionPath: string, imageId: string, extension: string = '.jpg'): Promise<{ originalExists: boolean; thumbnailExists: boolean }> {
+  static async shouldHaveImageFiles(collectionPath: string, imageId: string, extension: string = '.jpg'): Promise<void> {
     const imagesDir = path.join(collectionPath, 'images');
     const originalPath = path.join(imagesDir, 'original', `${imageId}${extension}`);
     const thumbnailPath = path.join(imagesDir, 'thumbnails', `${imageId}.jpg`);
@@ -441,18 +459,108 @@ export class TestUtils {
     const originalExists = await this.fileExists(originalPath);
     const thumbnailExists = await this.fileExists(thumbnailPath);
     
+    if (!originalExists) {
+      throw new Error(`Image ${imageId} original file missing at "${originalPath}" after processing`);
+    }
+    
+    if (!thumbnailExists) {
+      throw new Error(`Image ${imageId} thumbnail file missing at "${thumbnailPath}" after processing`);
+    }
+
+    console.log(`✓ Image ${imageId} files exist (original and thumbnail)`);
+  }
+
+  /**
+   * Validates that image files (original and thumbnail) do NOT exist for a given image ID
+   */
+  static async shouldNotHaveImageFiles(collectionPath: string, imageId: string, extension: string = '.jpg'): Promise<void> {
+    const imagesDir = path.join(collectionPath, 'images');
+    const originalPath = path.join(imagesDir, 'original', `${imageId}${extension}`);
+    const thumbnailPath = path.join(imagesDir, 'thumbnails', `${imageId}.jpg`);
+    
+    const originalExists = await this.fileExists(originalPath);
+    const thumbnailExists = await this.fileExists(thumbnailPath);
+    
+    if (originalExists) {
+      throw new Error(`Image ${imageId} original file still exists at "${originalPath}" after deletion`);
+    }
+    
+    if (thumbnailExists) {
+      throw new Error(`Image ${imageId} thumbnail file still exists at "${thumbnailPath}" after deletion`);
+    }
+
+    console.log(`✓ Image ${imageId} files successfully deleted (original and thumbnail)`);
+  }
+
+  /**
+   * Verifies image files exist and returns existence status for both original and thumbnail
+   */
+  static async verifyImageFilesExist(collectionPath: string, imageId: string): Promise<{ originalExists: boolean; thumbnailExists: boolean }> {
+    const imagesDir = path.join(collectionPath, 'images');
+    const originalDir = path.join(imagesDir, 'original');
+    const thumbnailPath = path.join(imagesDir, 'thumbnails', `${imageId}.jpg`);
+    
+    // Find the original file (could have any extension)
+    let originalExists = false;
+    try {
+      const originalFiles = await fs.readdir(originalDir);
+      originalExists = originalFiles.some(file => file.startsWith(imageId));
+    } catch (error) {
+      originalExists = false;
+    }
+    
+    const thumbnailExists = await this.fileExists(thumbnailPath);
+    
     return { originalExists, thumbnailExists };
   }
 
   /**
-   * Verifies that image files (original and thumbnail) do NOT exist for a given image ID
+   * Verifies image files have been deleted and returns deletion status for both original and thumbnail
    */
-  static async verifyImageFilesDeleted(collectionPath: string, imageId: string, extension: string = '.jpg'): Promise<{ originalDeleted: boolean; thumbnailDeleted: boolean }> {
-    const { originalExists, thumbnailExists } = await this.verifyImageFilesExist(collectionPath, imageId, extension);
+  static async verifyImageFilesDeleted(collectionPath: string, imageId: string): Promise<{ originalDeleted: boolean; thumbnailDeleted: boolean }> {
+    const { originalExists, thumbnailExists } = await this.verifyImageFilesExist(collectionPath, imageId);
     
-    return { 
-      originalDeleted: !originalExists, 
-      thumbnailDeleted: !thumbnailExists 
+    return {
+      originalDeleted: !originalExists,
+      thumbnailDeleted: !thumbnailExists
     };
+  }
+
+  /**
+   * Compares filesystem states to determine if they are identical
+   */
+  static compareFilesystemStates(stateBefore: string[], stateAfter: string[]): boolean {
+    if (stateBefore.length !== stateAfter.length) {
+      return false;
+    }
+
+    const sortedBefore = [...stateBefore].sort();
+    const sortedAfter = [...stateAfter].sort();
+
+    return sortedBefore.every((path, index) => path === sortedAfter[index]);
+  }
+
+  /**
+   * Compares database states to determine if they are identical
+   */
+  static compareDatabaseStates(stateBefore: ImageMetadata[], stateAfter: ImageMetadata[]): boolean {
+    if (stateBefore.length !== stateAfter.length) {
+      return false;
+    }
+
+    // Sort by ID for consistent comparison
+    const sortedBefore = [...stateBefore].sort((a, b) => a.id.localeCompare(b.id));
+    const sortedAfter = [...stateAfter].sort((a, b) => a.id.localeCompare(b.id));
+
+    return sortedBefore.every((imageBefore, index) => {
+      const imageAfter = sortedAfter[index];
+      return (
+        imageBefore.id === imageAfter.id &&
+        imageBefore.status === imageAfter.status &&
+        imageBefore.fileHash === imageAfter.fileHash &&
+        imageBefore.originalName === imageAfter.originalName &&
+        imageBefore.size === imageAfter.size
+      );
+    });
   }
 }
