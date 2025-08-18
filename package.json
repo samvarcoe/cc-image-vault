@@ -4,7 +4,11 @@
   "description": "Image curation app",
   "main": "index.js",
   "scripts": {
-    "domain:tests": "npx playwright test --config tests/domain/playwright.config.ts"
+    "start": "tsx src/api/server.ts",
+    "dev": "nodemon --exec tsx src/api/server.ts",
+    "domain:tests": "npx playwright test --config tests/domain/playwright.config.ts",
+    "api:tests": "npx playwright test --config tests/api/playwright.config.ts",
+    "tests:all": "npm run domain:tests && npm run api:tests"
   },
   "repository": {
     "type": "git",
