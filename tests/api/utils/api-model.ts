@@ -60,9 +60,16 @@ export class APIModel {
         });
       }
 
+      const headers = options.headers || {};
+      
+      // Add Content-Type header for requests with body
+      if (options.body) {
+        headers['Content-Type'] = 'application/json';
+      }
+      
       const init: RequestInit = {
         method,
-        headers: options.headers || {},
+        headers,
         body: options.body ? JSON.stringify(options.body) : undefined,
       };
 

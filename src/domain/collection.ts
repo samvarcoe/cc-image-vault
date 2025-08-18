@@ -1,7 +1,8 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { Database } from 'sqlite3';
+import sqlite3 from 'sqlite3';
+const { Database } = sqlite3;
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { ImageMetadata, ImageStatus, QueryOptions } from './types';
