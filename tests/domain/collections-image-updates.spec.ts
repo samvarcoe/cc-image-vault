@@ -30,15 +30,15 @@ test.describe('Collections - Image Updates', () => {
     
     expect(updatedImageMetadata, { message: `Status update operation returned null metadata instead of updated image data for image ${testImage.id}` }).toBeTruthy();
     expect(updatedImageMetadata.status, { message: `Image ${testImage.id} has status "${updatedImageMetadata.status}" instead of "COLLECTION" after status update operation` }).toBe('COLLECTION');
-    console.log(`Verified: Image ${testImage.id} status updated from INBOX to COLLECTION`);
+    console.log(`✓ Image ${testImage.id} status updated from INBOX to COLLECTION`);
     
     expect(updatedImageMetadata.updatedAt.getTime() > originalUpdatedAt.getTime(), { message: `Image ${testImage.id} updated_at timestamp ${updatedImageMetadata.updatedAt.toISOString()} is not later than original ${originalUpdatedAt.toISOString()}` }).toBe(true);
-    console.log(`Verified: Image ${testImage.id} updated_at timestamp refreshed during status change`);
+    console.log(`✓ Image ${testImage.id} updated_at timestamp refreshed during status change`);
     
     TestUtils.shouldHaveValidMetadata(updatedImageMetadata);
     expect(updatedImageMetadata.id, { message: `Updated image has ID "${updatedImageMetadata.id}" instead of original ID "${testImage.id}"` }).toBe(testImage.id);
     expect(updatedImageMetadata.fileHash, { message: `Updated image has fileHash "${updatedImageMetadata.fileHash}" instead of original fileHash "${testImage.fileHash}"` }).toBe(testImage.fileHash);
-    console.log(`Verified: Image ${testImage.id} metadata integrity preserved during status update`);
+    console.log(`✓ Image ${testImage.id} metadata integrity preserved during status update`);
   });
 
   test('Image deletion from archive status', async () => {
@@ -60,20 +60,20 @@ test.describe('Collections - Image Updates', () => {
     const imagesAfterDeletion = await collection.getImages();
     const deletedImageStillExists = imagesAfterDeletion.some(img => img.id === imageId);
     expect(deletedImageStillExists, { message: `Image ${imageId} still present in database after deletion operation` }).toBe(false);
-    console.log(`Verified: Image ${imageId} removed from database`);
+    console.log(`✓ Image ${imageId} removed from database`);
     
     const { originalDeleted, thumbnailDeleted } = await TestUtils.verifyImageFilesDeleted(collectionPath, imageId);
     expect(originalDeleted, { message: `Image ${imageId} original file still present on filesystem after deletion operation` }).toBe(true);
-    console.log(`Verified: Image ${imageId} original file removed from filesystem`);
+    console.log(`✓ Image ${imageId} original file removed from filesystem`);
     
     expect(thumbnailDeleted, { message: `Image ${imageId} thumbnail file still present on filesystem after deletion operation` }).toBe(true);
-    console.log(`Verified: Image ${imageId} thumbnail file removed from filesystem`);
+    console.log(`✓ Image ${imageId} thumbnail file removed from filesystem`);
     
     // Atomicity is verified by the fact that both database and file operations succeeded
-    console.log(`Verified: Image ${imageId} deletion completed atomically (database and filesystem)`);
+    console.log(`✓ Image ${imageId} deletion completed atomically (database and filesystem)`);
     
     expect(deletionResult, { message: `Image ${imageId} deletion operation returned ${deletionResult} instead of success confirmation` }).toBe(true);
-    console.log(`Verified: Image ${imageId} deletion operation returned success confirmation`);
+    console.log(`✓ Image ${imageId} deletion operation returned success confirmation`);
   });
 
   // Negative Scenarios
@@ -98,15 +98,15 @@ test.describe('Collections - Image Updates', () => {
     
     expect(errorThrown, { message: `Collection did not reject status update for non-existent image ID "${nonExistentImageId}"` }).toBe(true);
     expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate "image not found" for missing image reference` }).toContain('image not found');
-    console.log(`Verified: Collection rejected status update for non-existent image "${nonExistentImageId}"`);
+    console.log(`✓ Collection rejected status update for non-existent image "${nonExistentImageId}"`);
     
     expect(errorMessage, { message: `Error message "${errorMessage}" does not include attempted image identifier "${nonExistentImageId}" for debugging` }).toContain(nonExistentImageId);
-    console.log(`Verified: Error message includes attempted image identifier for debugging`);
+    console.log(`✓ Error message includes attempted image identifier for debugging`);
     
     const databaseStateAfter = await TestUtils.captureDatabaseState(collection);
     const databaseUnchanged = TestUtils.compareDatabaseStates(databaseStateBefore, databaseStateAfter);
     expect(databaseUnchanged, { message: `Database state modified after failed update attempt for non-existent image "${nonExistentImageId}"` }).toBe(true);
-    console.log(`Verified: Database state preserved after failed non-existent image update`);
+    console.log(`✓ Database state preserved after failed non-existent image update`);
   });
 
   test('Image update with invalid status', async () => {
@@ -133,16 +133,16 @@ test.describe('Collections - Image Updates', () => {
     
     expect(errorThrown, { message: `Collection did not reject invalid status "${invalidStatus}" for image ${testImage.id}` }).toBe(true);
     expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate "Invalid status" for unrecognized status value` }).toContain('Invalid status');
-    console.log(`Verified: Collection rejected invalid status "${invalidStatus}" for image ${testImage.id}`);
+    console.log(`✓ Collection rejected invalid status "${invalidStatus}" for image ${testImage.id}`);
     
     const hasValidOptions = ['INBOX', 'COLLECTION', 'ARCHIVE'].some(status => errorMessage.includes(status));
     expect(hasValidOptions, { message: `Error message "${errorMessage}" does not list valid status options for user guidance` }).toBe(true);
-    console.log(`Verified: Invalid status error message includes valid status options`);
+    console.log(`✓ Invalid status error message includes valid status options`);
     
     const databaseStateAfter = await TestUtils.captureDatabaseState(collection);
     const databaseUnchanged = TestUtils.compareDatabaseStates(databaseStateBefore, databaseStateAfter);
     expect(databaseUnchanged, { message: `Database state modified after invalid status "${invalidStatus}" update rejection for image ${testImage.id}` }).toBe(true);
-    console.log(`Verified: Database state preserved after invalid status update rejection`);
+    console.log(`✓ Database state preserved after invalid status update rejection`);
   });
 
   test('Image update with database constraint violation', async () => {
@@ -171,13 +171,13 @@ test.describe('Collections - Image Updates', () => {
     expect(errorThrown, { message: `Collection did not handle database constraint violation during status update for image ${testImage.id}` }).toBe(true);
     const hasConstraintError = /\b(constraint|violation|database|error)\b/i.test(errorMessage);
     expect(hasConstraintError, { message: `Error message "${errorMessage}" does not indicate database constraint violation condition` }).toBe(true);
-    console.log(`Verified: Collection reported database constraint violation for image ${testImage.id} status update`);
+    console.log(`✓ Collection reported database constraint violation for image ${testImage.id} status update`);
     
     // After cleanup, the collection should be in a consistent state
     // We can verify this by checking that normal operations work
     const imagesAfterFailure = await collection.getImages();
     expect(imagesAfterFailure.length, { message: `Collection database contains ${imagesAfterFailure.length} images indicating inconsistent state after constraint violation recovery` }).toBeGreaterThan(0);
-    console.log(`Verified: Collection database transaction properly rolled back after constraint violation`);
+    console.log(`✓ Collection database transaction properly rolled back after constraint violation`);
   });
 
   test('Image deletion with non-existent identifier', async () => {
@@ -200,15 +200,15 @@ test.describe('Collections - Image Updates', () => {
     
     expect(errorThrown, { message: `Collection did not reject deletion request for non-existent image ID "${nonExistentImageId}"` }).toBe(true);
     expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate "Image not found" for missing image reference` }).toContain('Image not found');
-    console.log(`Verified: Collection rejected deletion for non-existent image "${nonExistentImageId}"`);
+    console.log(`✓ Collection rejected deletion for non-existent image "${nonExistentImageId}"`);
     
     expect(errorMessage, { message: `Error message "${errorMessage}" does not include attempted image identifier "${nonExistentImageId}" for debugging` }).toContain(nonExistentImageId);
-    console.log(`Verified: Error message includes attempted image identifier for debugging`);
+    console.log(`✓ Error message includes attempted image identifier for debugging`);
     
     const databaseStateAfter = await TestUtils.captureDatabaseState(collection);
     const databaseUnchanged = TestUtils.compareDatabaseStates(databaseStateBefore, databaseStateAfter);
     expect(databaseUnchanged, { message: `Database state modified after failed deletion attempt for non-existent image "${nonExistentImageId}"` }).toBe(true);
-    console.log(`Verified: Database state preserved after failed non-existent image deletion`);
+    console.log(`✓ Database state preserved after failed non-existent image deletion`);
   });
 
   test('Image deletion with file system failure', async () => {
@@ -237,16 +237,16 @@ test.describe('Collections - Image Updates', () => {
     
     expect(errorThrown, { message: `Collection did not handle filesystem failure during deletion of image ${imageId}` }).toBe(true);
     expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate "Unable to process file change" for filesystem operation failure` }).toContain('Unable to process file change');
-    console.log(`Verified: Collection reported filesystem failure during image ${imageId} deletion`);
+    console.log(`✓ Collection reported filesystem failure during image ${imageId} deletion`);
     
     const databaseStateAfter = await TestUtils.captureDatabaseState(collection);
     const databaseUnchanged = TestUtils.compareDatabaseStates(databaseStateBefore, databaseStateAfter);
     expect(databaseUnchanged, { message: `Database changes not rolled back after filesystem failure during image ${imageId} deletion` }).toBe(true);
-    console.log(`Verified: Database transaction rolled back after filesystem failure`);
+    console.log(`✓ Database transaction rolled back after filesystem failure`);
     
     const imageAfterFailure = await collection.getImages();
     const imageStillExists = imageAfterFailure.some(img => img.id === imageId);
     expect(imageStillExists, { message: `Image ${imageId} missing from database after filesystem failure recovery (should be preserved)` }).toBe(true);
-    console.log(`Verified: Image ${imageId} database record preserved after filesystem failure recovery`);
+    console.log(`✓ Image ${imageId} database record preserved after filesystem failure recovery`);
   });
 });

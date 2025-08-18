@@ -11,7 +11,6 @@ export abstract class Fixtures<T> {
 
   static async cleanup(): Promise<void> {
     const results = await Promise.allSettled(this.cleanupFunctions.map(fn => fn()));
-    this.cleanupFunctions = [];
     
     const errors = results
       .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
@@ -22,7 +21,8 @@ export abstract class Fixtures<T> {
       throw new Error(`Fixture cleanup failed: ${errors.length} errors occurred during resource cleanup (${errorMessages})`);
     }
 
-    console.log(`Verified: All ${this.cleanupFunctions.length} fixtures cleaned up successfully`);
+    console.log(`✓ All ${this.cleanupFunctions.length} fixtures cleaned up successfully`);
+    this.cleanupFunctions = [];
   }
 
   static get count(): number {

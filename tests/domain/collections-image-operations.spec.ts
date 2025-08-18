@@ -31,20 +31,20 @@ test.describe('Collections - Image Operations', () => {
     expect(imageMetadata, { message: `Collection returned null metadata instead of valid image metadata for file "${imageFile.originalName}"` }).toBeTruthy();
     expect(imageMetadata.id, { message: `Image metadata contains ID "${imageMetadata.id}" which is not a valid UUID format` }).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
     expect(imageMetadata.originalName, { message: `Image metadata contains original name "${imageMetadata.originalName}" instead of expected "${imageFile.originalName}"` }).toBe(imageFile.originalName);
-    console.log(`Verified: Image ${imageMetadata.id} stored with UUID filename and correct original name`);
+    console.log(`✓ Image ${imageMetadata.id} stored with UUID filename and correct original name`);
     
     const expectedAspectRatio = imageFile.dimensions.width / imageFile.dimensions.height;
     const actualAspectRatio = imageMetadata.dimensions.width / imageMetadata.dimensions.height;
     const aspectRatioTolerance = 0.01; // Allow small rounding differences
     const aspectRatioMatch = Math.abs(expectedAspectRatio - actualAspectRatio) < aspectRatioTolerance;
     expect(aspectRatioMatch, { message: `Image ${imageMetadata.id} has aspect ratio ${actualAspectRatio} instead of preserving original aspect ratio ${expectedAspectRatio}` }).toBe(true);
-    console.log(`Verified: Image ${imageMetadata.id} thumbnail preserves aspect ratio`);
+    console.log(`✓ Image ${imageMetadata.id} thumbnail preserves aspect ratio`);
     
     TestUtils.shouldHaveValidMetadata(imageMetadata);
     expect(imageMetadata.status, { message: `Image ${imageMetadata.id} has status "${imageMetadata.status}" instead of "INBOX" upon addition` }).toBe('INBOX');
     expect(imageMetadata.size, { message: `Image ${imageMetadata.id} has size ${imageMetadata.size} bytes which is not greater than 0` }).toBeGreaterThan(0);
     expect(imageMetadata.fileHash, { message: `Image ${imageMetadata.id} has empty fileHash after processing` }).toBeTruthy();
-    console.log(`Verified: Image ${imageMetadata.id} added with complete metadata and INBOX status`);
+    console.log(`✓ Image ${imageMetadata.id} added with complete metadata and INBOX status`);
   });
 
   test('Image retrieval with status filter', async () => {
@@ -64,12 +64,12 @@ test.describe('Collections - Image Operations', () => {
     for (const image of collectionImages) {
       expect(image.status, { message: `Image ${image.id} has status "${image.status}" instead of "COLLECTION" in COLLECTION status filtered results` }).toBe('COLLECTION');
     }
-    console.log(`Verified: Status filter returned ${collectionImages.length} images with COLLECTION status only`);
+    console.log(`✓ Status filter returned ${collectionImages.length} images with COLLECTION status only`);
     
     for (const image of collectionImages) {
       TestUtils.shouldHaveValidMetadata(image);
     }
-    console.log(`Verified: All ${collectionImages.length} filtered images have complete metadata`);
+    console.log(`✓ All ${collectionImages.length} filtered images have complete metadata`);
     
     const expectedOrder = TestUtils.sortImages(expectedCollectionImages, 'updated_at', 'DESC');
     for (let i = 0; i < collectionImages.length - 1; i++) {
@@ -77,7 +77,7 @@ test.describe('Collections - Image Operations', () => {
       const nextTime = collectionImages[i + 1].updatedAt.getTime();
       expect(currentTime >= nextTime, { message: `Image ${collectionImages[i].id} at position ${i} has updated_at ${collectionImages[i].updatedAt.toISOString()} which is earlier than image ${collectionImages[i+1].id} at position ${i+1} with updated_at ${collectionImages[i+1].updatedAt.toISOString()}` }).toBe(true);
     }
-    console.log(`Verified: ${collectionImages.length} filtered images ordered by updated_at DESC`);
+    console.log(`✓ ${collectionImages.length} filtered images ordered by updated_at DESC`);
   });
 
   test('Image retrieval without filter', async () => {
@@ -92,12 +92,12 @@ test.describe('Collections - Image Operations', () => {
     const retrievedImages = await collection.getImages();
     
     expect(retrievedImages.length, { message: `Unfiltered query returned ${retrievedImages.length} images instead of all ${allImages.length} images in collection` }).toBe(allImages.length);
-    console.log(`Verified: Unfiltered query returned all ${retrievedImages.length} images in collection`);
+    console.log(`✓ Unfiltered query returned all ${retrievedImages.length} images in collection`);
     
     for (const image of retrievedImages) {
       TestUtils.shouldHaveValidMetadata(image);
     }
-    console.log(`Verified: All ${retrievedImages.length} unfiltered images have complete metadata`);
+    console.log(`✓ All ${retrievedImages.length} unfiltered images have complete metadata`);
     
     const expectedOrder = TestUtils.sortImages(allImages, 'updated_at', 'DESC');
     for (let i = 0; i < retrievedImages.length - 1; i++) {
@@ -105,7 +105,7 @@ test.describe('Collections - Image Operations', () => {
       const nextTime = retrievedImages[i + 1].updatedAt.getTime();
       expect(currentTime >= nextTime, { message: `Image ${retrievedImages[i].id} at position ${i} has updated_at ${retrievedImages[i].updatedAt.toISOString()} which is earlier than image ${retrievedImages[i+1].id} at position ${i+1} with updated_at ${retrievedImages[i+1].updatedAt.toISOString()}` }).toBe(true);
     }
-    console.log(`Verified: ${retrievedImages.length} unfiltered images ordered by updated_at DESC`);
+    console.log(`✓ ${retrievedImages.length} unfiltered images ordered by updated_at DESC`);
   });
 
   // Negative Scenarios
@@ -142,22 +142,22 @@ test.describe('Collections - Image Operations', () => {
     
     expect(errorThrown, { message: `Collection did not reject duplicate image "${duplicateImage.originalName}" with matching hash` }).toBe(true);
     expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate "Duplicate Image" for hash collision` }).toContain('Duplicate Image');
-    console.log(`Verified: Collection rejected duplicate image "${duplicateImage.originalName}" with appropriate error`);
+    console.log(`✓ Collection rejected duplicate image "${duplicateImage.originalName}" with appropriate error`);
     
     const collectionPath = collection.basePath;
     const contentsAfter = await TestUtils.captureFilesystemState(collectionPath);
     const duplicateImagePath = duplicateImage.filePath;
     const duplicateImageCopied = contentsAfter.some(path => path.includes(duplicateImage.originalName.split('.')[0]));
     expect(duplicateImageCopied, { message: `Duplicate image "${duplicateImage.originalName}" was copied to collection filesystem despite hash collision detection` }).toBe(false);
-    console.log(`Verified: No files created for rejected duplicate image "${duplicateImage.originalName}"`);
+    console.log(`✓ No files created for rejected duplicate image "${duplicateImage.originalName}"`);
     
     const imagesAfterDuplicate = await collection.getImages();
     expect(imagesAfterDuplicate.length, { message: `Collection contains ${imagesAfterDuplicate.length} images instead of expected 2 after duplicate rejection` }).toBe(2);
-    console.log(`Verified: Collection database unchanged after duplicate rejection - contains ${imagesAfterDuplicate.length} images`);
+    console.log(`✓ Collection database unchanged after duplicate rejection - contains ${imagesAfterDuplicate.length} images`);
     
     const finalImages = await collection.getImages();
     expect(finalImages.length, { message: `Collection image count is ${finalImages.length} instead of original 2 after duplicate handling` }).toBe(2);
-    console.log(`Verified: Collection state preserved after duplicate image rejection`);
+    console.log(`✓ Collection state preserved after duplicate image rejection`);
   });
 
   test('Image addition with processing failure', async () => {
@@ -182,11 +182,11 @@ test.describe('Collections - Image Operations', () => {
     
     expect(errorThrown, { message: `Collection did not reject corrupt image file "${corruptImage.originalName}" during processing` }).toBe(true);
     expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate "Unable to process image" for corrupt file handling` }).toContain('Unable to process image');
-    console.log(`Verified: Collection rejected corrupt image "${corruptImage.originalName}" with processing error`);
+    console.log(`✓ Collection rejected corrupt image "${corruptImage.originalName}" with processing error`);
     
     const images = await collection.getImages();
     expect(images.length, { message: `Collection database contains ${images.length} images instead of 0 after failed corrupt image processing` }).toBe(0);
-    console.log(`Verified: No database records created for failed corrupt image processing`);
+    console.log(`✓ No database records created for failed corrupt image processing`);
     
     const collectionPath = collection.basePath;
     const originalDir = `${collectionPath}/${collection.id}/images/original`;
@@ -197,7 +197,7 @@ test.describe('Collections - Image Operations', () => {
     
     expect(originalDirContents.length, { message: `Original images directory contains ${originalDirContents.length} files instead of 0 after corrupt image processing failure` }).toBe(0);
     expect(thumbnailDirContents.length, { message: `Thumbnails directory contains ${thumbnailDirContents.length} files instead of 0 after corrupt image processing failure` }).toBe(0);
-    console.log(`Verified: Collection filesystem clean after corrupt image processing failure`);
+    console.log(`✓ Collection filesystem clean after corrupt image processing failure`);
   });
 
   test('Image addition with storage failure', async () => {
@@ -229,16 +229,16 @@ test.describe('Collections - Image Operations', () => {
     
     expect(errorThrown, { message: `Collection did not handle storage failure for image "${imageFile.originalName}" when filesystem is blocked` }).toBe(true);
     expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate "Unable to save image" for storage operation failure` }).toContain('Unable to save image');
-    console.log(`Verified: Collection rejected image "${imageFile.originalName}" due to storage failure`);
+    console.log(`✓ Collection rejected image "${imageFile.originalName}" due to storage failure`);
     
     const stateAfter = await TestUtils.captureFilesystemState(collectionPath);
     const statesMatch = TestUtils.compareFilesystemStates(stateBefore, stateAfter.filter(path => !path.includes('storage-bloat.tmp')));
     expect(statesMatch, { message: `Filesystem contains partial files after storage failure for image "${imageFile.originalName}" - cleanup incomplete` }).toBe(true);
-    console.log(`Verified: Collection filesystem restored after storage failure cleanup`);
+    console.log(`✓ Collection filesystem restored after storage failure cleanup`);
     
     const images = await collection.getImages();
     expect(images.length, { message: `Collection database contains ${images.length} images instead of 0 after storage failure rollback` }).toBe(0);
-    console.log(`Verified: Collection database clean after storage failure rollback`);
+    console.log(`✓ Collection database clean after storage failure rollback`);
   });
 
   test('Image retrieval with database error', async () => {
@@ -259,10 +259,10 @@ test.describe('Collections - Image Operations', () => {
     
     expect(errorThrown, { message: `Collection did not handle database connection failure during image retrieval operation` }).toBe(true);
     expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate "Unable to retrieve images" for database access failure` }).toContain('Unable to retrieve images');
-    console.log(`Verified: Collection reported database connection failure for image retrieval`);
+    console.log(`✓ Collection reported database connection failure for image retrieval`);
     
     const hasConnectionDiagnostics = /\b(database|connection|sqlite|file|access)\b/i.test(errorMessage);
     expect(hasConnectionDiagnostics, { message: `Error message "${errorMessage}" lacks database connection diagnostic information` }).toBe(true);
-    console.log(`Verified: Database error message includes connection diagnostics`);
+    console.log(`✓ Database error message includes connection diagnostics`);
   });
 });

@@ -41,7 +41,7 @@ test.describe('Collections - Creation and Loading', () => {
       message: `Collection has base path "${collection.basePath}" instead of "${basePath}" after creation with valid parameters` 
     }).toBe(basePath);
     
-    console.log(`Verified: Collection ${collectionId} created with correct ID and base path`);
+    console.log(`✓ Collection ${collectionId} created with correct ID and base path`);
     
     const collectionPath = path.join(basePath, collectionId);
     await TestUtils.shouldHaveValidStructure(collectionPath);
@@ -65,7 +65,7 @@ test.describe('Collections - Creation and Loading', () => {
       message: `Loaded collection has ID "${loadedCollection.id}" instead of "${collectionId}" when loading from existing directory` 
     }).toBe(collectionId);
     
-    console.log(`Verified: Collection ${collectionId} successfully loaded from existing directory`);
+    console.log(`✓ Collection ${collectionId} successfully loaded from existing directory`);
   });
 
   // Negative Scenarios
@@ -97,7 +97,7 @@ test.describe('Collections - Creation and Loading', () => {
       message: `Invalid path "${invalidPath}" was created despite collection creation failure` 
     }).toBe(false);
     
-    console.log(`Verified: Collection creation properly rejected invalid path "${invalidPath}" with no filesystem changes`);
+    console.log(`✓ Collection creation properly rejected invalid path "${invalidPath}" with no filesystem changes`);
   });
 
   test('Collection creation with insufficient permissions', async () => {
@@ -129,7 +129,7 @@ test.describe('Collections - Creation and Loading', () => {
       message: `Collection directory "${collectionPath}" was created despite insufficient permissions failure` 
     }).toBe(false);
     
-    console.log(`Verified: Collection creation properly handled insufficient permissions at "${restrictedPath}" with proper cleanup`);
+    console.log(`✓ Collection creation properly handled insufficient permissions at "${restrictedPath}" with proper cleanup`);
   });
 
   test('Collection creation with database failure', async () => {
@@ -173,7 +173,7 @@ test.describe('Collections - Creation and Loading', () => {
       message: `Base path "${basePath}" contains collection remnants after database failure cleanup` 
     }).toBe(false);
     
-    console.log(`Verified: Collection creation with database failure properly cleaned up partial state`);
+    console.log(`✓ Collection creation with database failure properly cleaned up partial state`);
   });
 
   test('Collection loading with access issues', async () => {
@@ -210,6 +210,6 @@ test.describe('Collections - Creation and Loading', () => {
       message: `Access error "${errorMessage}" does not indicate specific database access issue (database, corrupt, access, or permission)` 
     }).toMatch(/(database|corrupt|access|permission)/i);
     
-    console.log(`Verified: Collection loading properly rejected corrupted database with specific error details`);
+    console.log(`✓ Collection loading properly rejected corrupted database with specific error details`);
   });
 });

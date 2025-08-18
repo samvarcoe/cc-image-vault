@@ -142,7 +142,7 @@ export class TestUtils {
       throw new Error(`Image ${metadata.id} has invalid date objects: createdAt=${typeof metadata.createdAt}, updatedAt=${typeof metadata.updatedAt} (must be Date objects)`);
     }
 
-    console.log(`Verified: Image ${metadata.id} metadata structure and all required fields`);
+    console.log(`✓ Image ${metadata.id} metadata structure and all required fields`);
   }
 
   /**
@@ -191,7 +191,7 @@ export class TestUtils {
       }
     }
 
-    console.log(`Verified: Collection directory structure complete at "${collectionPath}"`);
+    console.log(`✓ Collection directory structure complete at "${collectionPath}"`);
   }
 
   /**
@@ -308,7 +308,7 @@ export class TestUtils {
       throw new Error(`Filesystem state changed after failed ${operation}: ${differences.length} files/directories modified`);
     }
 
-    console.log(`Verified: Filesystem unchanged after failed ${operation}`);
+    console.log(`✓ Filesystem unchanged after failed ${operation}`);
   }
 
   /**
@@ -358,7 +358,7 @@ export class TestUtils {
       throw new Error(`Database state changed after failed ${operation}: ${differences.length} images modified`);
     }
 
-    console.log(`Verified: Database unchanged after failed ${operation}`);
+    console.log(`✓ Database unchanged after failed ${operation}`);
   }
 
   /**
@@ -467,7 +467,7 @@ export class TestUtils {
       throw new Error(`Image ${imageId} thumbnail file missing at "${thumbnailPath}" after processing`);
     }
 
-    console.log(`Verified: Image ${imageId} files exist (original and thumbnail)`);
+    console.log(`✓ Image ${imageId} files exist (original and thumbnail)`);
   }
 
   /**
@@ -489,7 +489,7 @@ export class TestUtils {
       throw new Error(`Image ${imageId} thumbnail file still exists at "${thumbnailPath}" after deletion`);
     }
 
-    console.log(`Verified: Image ${imageId} files successfully deleted (original and thumbnail)`);
+    console.log(`✓ Image ${imageId} files successfully deleted (original and thumbnail)`);
   }
 
   /**
