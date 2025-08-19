@@ -5,6 +5,7 @@ import { Collection } from '../../../src/domain/collection';
 import { ImageStatus } from '../../../src/domain/types';
 import { Fixtures } from './base-fixtures';
 import { ImageFixtures } from './image-fixtures';
+import FakeTimers from '@sinonjs/fake-timers';
 
 /**
  * Collection fixtures for creating collections with pre-populated images
@@ -12,6 +13,7 @@ import { ImageFixtures } from './image-fixtures';
 export class CollectionFixtures extends Fixtures<Collection> {
   static async create(options: {
     collectionId?: string;
+    basePath?: string;
     imageCounts?: {
       inbox?: number;
       collection?: number;
@@ -25,6 +27,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
 
     const {
       collectionId = `test-collection-${Date.now()}`,
+      basePath: customBasePath,
       imageCounts = { inbox: 2, collection: 2, archive: 1 },
       includeCorruptImages = false,
       includeDuplicates = false,
@@ -32,7 +35,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
       imageFormats = ['jpeg', 'png', 'webp']
     } = options;
 
-    const basePath = await fs.mkdtemp(path.join(tmpdir(), 'collection-fixture-'));
+    const basePath = customBasePath || await fs.mkdtemp(path.join(tmpdir(), 'collection-fixture-'));
     
     // Create the collection
     let collection: Collection;
@@ -130,16 +133,19 @@ export class CollectionFixtures extends Fixtures<Collection> {
    */
   static async createWithMixedStatuses(options: {
     collectionId?: string;
+    basePath?: string;
     statusCounts?: Record<ImageStatus, number>;
   } = {}): Promise<Collection> {
 
     const {
       collectionId = `mixed-status-collection-${Date.now()}`,
+      basePath,
       statusCounts = { 'INBOX': 3, 'COLLECTION': 5, 'ARCHIVE': 2 }
     } = options;
 
     return this.create({
       collectionId,
+      basePath,
       imageCounts: {
         inbox: statusCounts.INBOX,
         collection: statusCounts.COLLECTION,
@@ -153,12 +159,14 @@ export class CollectionFixtures extends Fixtures<Collection> {
    */
   static async createEmpty(options: {
     collectionId?: string;
+    basePath?: string;
   } = {}): Promise<Collection> {
 
-    const { collectionId = `empty-collection-${Date.now()}` } = options;
+    const { collectionId = `empty-collection-${Date.now()}`, basePath } = options;
 
     return this.create({
       collectionId,
+      basePath,
       imageCounts: { inbox: 0, collection: 0, archive: 0 }
     });
   }
@@ -211,17 +219,20 @@ export class CollectionFixtures extends Fixtures<Collection> {
    */
   static async createWithDatabaseIssues(options: {
     collectionId?: string;
+    basePath?: string;
     issueType?: 'connection' | 'corruption' | 'permissions';
   } = {}): Promise<Collection> {
 
     const {
       collectionId = `db-issue-collection-${Date.now()}`,
+      basePath,
       issueType = 'connection'
     } = options;
 
     // Create normal collection first
     const collection = await this.create({
       collectionId,
+      basePath,
       imageCounts: { inbox: 2, collection: 1, archive: 1 }
     });
 
@@ -250,6 +261,165 @@ export class CollectionFixtures extends Fixtures<Collection> {
     }
 
     // The collection now has a closed connection and corrupted database
+    return collection;
+  }
+
+  /**
+   * Creates a collection with images having staggered creation times for ordering tests
+   * Uses fake timers to ensure actual database timestamp differences
+   */
+  static async createWithVariedImageCreationTimes(options: {
+    collectionId?: string;
+    basePath?: string;
+    imageCount?: number;
+    statusDistribution?: { status: ImageStatus; count: number }[];
+    timeSpreadMinutes?: number;
+  } = {}): Promise<Collection> {
+
+    const {
+      collectionId = `time-varied-collection-${Date.now()}`,
+      basePath: customBasePath,
+      imageCount = 6,
+      statusDistribution = [
+        { status: 'INBOX', count: 2 },
+        { status: 'COLLECTION', count: 2 },
+        { status: 'ARCHIVE', count: 2 }
+      ],
+      timeSpreadMinutes = 30
+    } = options;
+
+    // Setup fake timers to control time progression
+    const baseTime = Date.now();
+    const clock = FakeTimers.install({
+      now: baseTime,
+      toFake: ['Date'] // Only fake Date-related methods
+    });
+
+    const basePath = customBasePath || await fs.mkdtemp(path.join(tmpdir(), 'time-collection-fixture-'));
+    let collection: Collection;
+
+    try {
+      collection = await Collection.create(collectionId, basePath);
+
+      // Calculate time increment for even distribution
+      const timeIncrement = (timeSpreadMinutes * 60 * 1000) / imageCount;
+      
+      let imageIndex = 0;
+      for (const { status, count } of statusDistribution) {
+        for (let i = 0; i < count; i++) {
+          // Advance time to the target timestamp for this image
+          if (imageIndex > 0) {
+            clock.tick(timeIncrement);
+          }
+          
+          const imageFile = await ImageFixtures.create({
+            imageId: `time-image-${imageIndex + 1}`,
+            originalName: `${status.toLowerCase()}-photo-${i + 1}.jpg`,
+            format: 'jpeg'
+          });
+
+          // Add image to collection - this will use the fake time
+          const imageMetadata = await collection.addImage(imageFile.filePath);
+          
+          // Update status if not INBOX (this also updates updated_at timestamp)
+          if (status !== 'INBOX') {
+            await collection.updateImageStatus(imageMetadata.id, status);
+          }
+
+          imageIndex++;
+        }
+      }
+
+    } finally {
+      // Always restore real timers
+      clock.uninstall();
+    }
+
+    const cleanup = async () => {
+      try {
+        await fs.rm(basePath, { recursive: true, force: true });
+      } catch (error) {
+        // Non-fatal cleanup error
+      }
+    };
+
+    this.addCleanup(cleanup);
+    return collection;
+  }
+
+  /**
+   * Creates a collection with a large number of images for pagination testing
+   */
+  static async createWithLargeImageSet(options: {
+    collectionId?: string;
+    basePath?: string;
+    totalImages?: number;
+    statusDistribution?: Record<ImageStatus, number>;
+  } = {}): Promise<Collection> {
+
+    const {
+      collectionId = `large-collection-${Date.now()}`,
+      basePath: customBasePath,
+      totalImages = 250,
+      statusDistribution = {
+        'INBOX': Math.floor(totalImages * 0.4),
+        'COLLECTION': Math.floor(totalImages * 0.4), 
+        'ARCHIVE': Math.floor(totalImages * 0.2)
+      }
+    } = options;
+
+    const basePath = customBasePath || await fs.mkdtemp(path.join(tmpdir(), 'large-collection-fixture-'));
+    const collection = await Collection.create(collectionId, basePath);
+
+    // Create images in batches for better performance
+    const statuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
+    let imageIndex = 0;
+
+    for (const status of statuses) {
+      const count = statusDistribution[status];
+      
+      // Create images in batches of 20 for performance
+      const batchSize = 20;
+      for (let batchStart = 0; batchStart < count; batchStart += batchSize) {
+        const batchEnd = Math.min(batchStart + batchSize, count);
+        const batchPromises = [];
+
+        for (let i = batchStart; i < batchEnd; i++) {
+          const promise = (async () => {
+            const format = ['jpeg', 'png', 'webp'][i % 3] as 'jpeg' | 'png' | 'webp';
+            const imageFile = await ImageFixtures.create({
+              imageId: `large-image-${imageIndex + 1}`,
+              originalName: `${status.toLowerCase()}-batch-${Math.floor(i / batchSize)}-image-${(i % batchSize) + 1}.${format === 'jpeg' ? 'jpg' : format}`,
+              format,
+              includeVisualContent: false // Use minimal images for performance
+            });
+
+            const imageMetadata = await collection.addImage(imageFile.filePath);
+            
+            if (status !== 'INBOX') {
+              await collection.updateImageStatus(imageMetadata.id, status);
+            }
+
+            imageIndex++;
+          })();
+          
+          batchPromises.push(promise);
+        }
+
+        // Wait for batch to complete before starting next batch
+        await Promise.all(batchPromises);
+      }
+    }
+
+    const cleanup = async () => {
+      try {
+        await fs.rm(basePath, { recursive: true, force: true });
+      } catch (error) {
+        // Non-fatal cleanup error
+      }
+    };
+
+    this.addCleanup(cleanup);
     return collection;
   }
 

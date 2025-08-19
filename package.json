@@ -4,8 +4,7 @@
   "description": "Image curation app",
   "main": "index.js",
   "scripts": {
-    "start": "tsx src/api/server.ts",
-    "dev": "nodemon --exec tsx src/api/server.ts",
+    "dev": "tsx watch src/api/server.ts",
     "domain:tests": "npx playwright test --config tests/domain/playwright.config.ts",
     "api:tests": "npx playwright test --config tests/api/playwright.config.ts",
     "tests:all": "npm run domain:tests && npm run api:tests"
@@ -21,6 +20,7 @@
   "homepage": "https://github.com/samvarcoe/cc-image-vault#readme",
   "devDependencies": {
     "@playwright/test": "^1.54.2",
+    "@sinonjs/fake-timers": "^14.0.0",
     "@types/express": "^5.0.3",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.3.0",

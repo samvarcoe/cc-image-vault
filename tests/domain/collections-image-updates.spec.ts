@@ -1,9 +1,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
-import { Collection } from '../../src/domain/collection';
 import { ImageStatus } from '../../src/domain/types';
 import { Fixtures } from '../utils/fixtures/base-fixtures';
-import { ImageFixtures } from '../utils/fixtures/image-fixtures';
 import { CollectionFixtures } from '../utils/fixtures/collection-fixtures';
 import { TestUtils } from './utils';
 

@@ -1,4 +1,5 @@
 import { APIModel } from './api-model';
+import { ImageStatus } from '../../../src/domain/types';
 
 // Type definitions for Collections API
 export interface CreateCollectionRequest {
@@ -14,6 +15,32 @@ export interface ErrorResponse {
   message: string;
 }
 
+// Type definitions for Images API
+export interface ImageQueryParams {
+  status?: ImageStatus;
+  limit?: number;
+  offset?: number;
+  orderBy?: 'created_at' | 'updated_at';
+  orderDirection?: 'ASC' | 'DESC';
+}
+
+export interface ImageMetadataResponse {
+  id: string;
+  originalName: string;
+  fileHash: string;
+  status: ImageStatus;
+  size: number;
+  dimensions: {
+    width: number;
+    height: number;
+  };
+  aspectRatio: number;
+  extension: string;
+  mimeType: string;
+  createdAt: string;  // ISO 8601 format
+  updatedAt: string;  // ISO 8601 format
+}
+
 /**
  * Collections API client for testing
  * Extends the base APIModel with collections-specific endpoints
@@ -27,5 +54,9 @@ export class CollectionsAPI extends APIModel {
   '/api/collections/:id' = {
     get: this.request<undefined, CollectionResponse>('/api/collections/:id', 'GET'),
     delete: this.request<undefined, void>('/api/collections/:id', 'DELETE'),
+  };
+
+  '/api/collections/:id/images' = {
+    get: this.request<undefined, ImageMetadataResponse[]>('/api/collections/:id/images', 'GET'),
   };
 }

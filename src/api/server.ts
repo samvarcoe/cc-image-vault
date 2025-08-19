@@ -92,6 +92,25 @@ app.delete('/api/collections/:id', async (req, res) => {
   }
 });
 
+// GET /api/collections/:id/images - List images in collection
+app.get('/api/collections/:id/images', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const images = await collectionsService.getCollectionImages(id, req.query);
+    res.json(images);
+  } catch (error: any) {
+    if (error.message.includes('Collection not found')) {
+      sendError(res, 404, 'not_found_error', error.message);
+    } else if (error.message.includes('Invalid')) {
+      sendError(res, 400, 'validation_error', error.message);
+    } else if (error.message.includes('Server error')) {
+      sendError(res, 500, 'server_error', error.message);
+    } else {
+      sendError(res, 500, 'server_error', 'Server error: failed to retrieve collection images');
+    }
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
