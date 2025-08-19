@@ -1,9 +1,9 @@
-import { test, expect, describe } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import { CollectionsAPI } from '../utils/collections-api-model';
 import { CollectionsDirectoryFixtures } from '../utils/collections-directory-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 
-describe('Collections API Endpoint', () => {
+test.describe('Collections API Endpoint', () => {
   let api: CollectionsAPI;
 
   // Setup API client - assuming server runs on localhost:3000
@@ -14,11 +14,6 @@ describe('Collections API Endpoint', () => {
 
   // Cleanup fixtures after each test
   test.afterEach(async () => {
-    await Fixtures.cleanup();
-  });
-  
-  // Final cleanup after all tests
-  test.afterAll(async () => {
     await Fixtures.cleanup();
   });
 
