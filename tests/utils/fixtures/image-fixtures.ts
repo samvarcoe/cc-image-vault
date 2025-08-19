@@ -202,7 +202,7 @@ export class ImageFixtures extends Fixtures<ImageFile> {
       </svg>
     `;
 
-    let sharpInstance = sharp(Buffer.from(svg));
+    const sharpInstance = sharp(Buffer.from(svg));
 
     switch (format) {
       case 'jpeg':
@@ -222,7 +222,7 @@ export class ImageFixtures extends Fixtures<ImageFile> {
     const randomG = Math.floor(Math.random() * 100) + 100; // 100-199  
     const randomB = Math.floor(Math.random() * 100) + 100; // 100-199
     
-    let sharpInstance = sharp({
+    const sharpInstance = sharp({
       create: {
         width,
         height,

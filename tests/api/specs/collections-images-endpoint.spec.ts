@@ -270,7 +270,7 @@ test.describe('Collections Images API Endpoint', () => {
 
     const invalidParamTests = CollectionsImagesAPIUtils.getInvalidQueryParams();
 
-    for (const { params, description } of invalidParamTests) {
+    for (const { params } of invalidParamTests) {
       // When the client requests GET /api/collections/:id/images with invalid limit or offset parameters
       const response = await api['/api/collections/:id/images'].get({
         pathParams: { id: collection.id },

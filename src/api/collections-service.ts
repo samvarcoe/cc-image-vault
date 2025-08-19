@@ -66,8 +66,8 @@ export class CollectionsService {
       }
       
       return collections.sort((a, b) => a.id.localeCompare(b.id));
-    } catch (error: any) {
-      if (error.code === 'EACCES' || error.code === 'EPERM') {
+    } catch (error: unknown) {
+      if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM') {
         throw new Error('Server error: insufficient permissions to access collections directory');
       }
       throw new Error('Server error: failed to list collections');
@@ -94,14 +94,14 @@ export class CollectionsService {
       await collection.close();
       
       return { id };
-    } catch (error: any) {
-      if (error.message.includes('insufficient permissions')) {
+    } catch (error: unknown) {
+      if ((error as Error).message.includes('insufficient permissions')) {
         throw new Error('Server error: insufficient permissions to create collection');
       }
-      if (error.message.includes('Unable to create Collection')) {
+      if ((error as Error).message.includes('Unable to create Collection')) {
         throw new Error('Server error: failed to create collection');
       }
-      throw new Error('Server error: ' + error.message);
+      throw new Error('Server error: ' + (error as Error).message);
     }
   }
 
@@ -127,8 +127,8 @@ export class CollectionsService {
     try {
       const collectionPath = path.join(this.basePath, id);
       await fs.rm(collectionPath, { recursive: true, force: true });
-    } catch (error: any) {
-      if (error.code === 'EACCES' || error.code === 'EPERM') {
+    } catch (error: unknown) {
+      if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM') {
         throw new Error('Server error: insufficient permissions to delete collection');
       }
       throw new Error('Server error: failed to delete collection');
@@ -157,14 +157,14 @@ export class CollectionsService {
       
       // Convert to API response format with pagination
       return this.convertToApiResponse(images, validatedOptions);
-    } catch (error: any) {
-      if (error.message.includes('Invalid')) {
+    } catch (error: unknown) {
+      if ((error as Error).message.includes('Invalid')) {
         throw error; // Re-throw validation errors
       }
-      if (error.message.includes('Collection not found')) {
+      if ((error as Error).message.includes('Collection not found')) {
         throw new Error('Collection not found');
       }
-      if (error.code === 'EACCES' || error.code === 'EPERM' || error.message.includes('permission')) {
+      if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM' || (error as Error).message.includes('permission')) {
         throw new Error('Server error: insufficient permissions to access collection');
       }
       throw new Error('Server error: failed to retrieve collection images');
@@ -192,7 +192,7 @@ export class CollectionsService {
       const collectionPath = path.join(this.basePath, id);
       const dbPath = path.join(collectionPath, 'collection.db');
       
-      const [stat, _] = await Promise.all([
+      const [stat] = await Promise.all([
         fs.stat(collectionPath),
         fs.access(dbPath)
       ]);
@@ -222,7 +222,7 @@ export class CollectionsService {
     }
 
     // Check for filesystem-unsafe characters
-    const unsafeChars = /[\/\\:*?"<>|]/;
+    const unsafeChars = /[/\\:*?"<>|]/;
     if (unsafeChars.test(id)) {
       return false;
     }

@@ -1,6 +1,4 @@
 import { test, expect } from '@playwright/test';
-import { Collection } from '../../src/domain/collection';
-import { ImageStatus } from '../../src/domain/types';
 import { Fixtures } from '../utils/fixtures/base-fixtures';
 import { ImageFixtures } from '../utils/fixtures/image-fixtures';
 import { CollectionFixtures } from '../utils/fixtures/collection-fixtures';
@@ -71,7 +69,8 @@ test.describe('Collections - Image Operations', () => {
     }
     console.log(`✓ All ${collectionImages.length} filtered images have complete metadata`);
     
-    const expectedOrder = TestUtils.sortImages(expectedCollectionImages, 'updated_at', 'DESC');
+    // Expected order for comparison
+    TestUtils.sortImages(expectedCollectionImages, 'updated_at', 'DESC');
     for (let i = 0; i < collectionImages.length - 1; i++) {
       const currentTime = collectionImages[i].updatedAt.getTime();
       const nextTime = collectionImages[i + 1].updatedAt.getTime();
@@ -99,7 +98,8 @@ test.describe('Collections - Image Operations', () => {
     }
     console.log(`✓ All ${retrievedImages.length} unfiltered images have complete metadata`);
     
-    const expectedOrder = TestUtils.sortImages(allImages, 'updated_at', 'DESC');
+    // Expected order for comparison
+    TestUtils.sortImages(allImages, 'updated_at', 'DESC');
     for (let i = 0; i < retrievedImages.length - 1; i++) {
       const currentTime = retrievedImages[i].updatedAt.getTime();
       const nextTime = retrievedImages[i + 1].updatedAt.getTime();
@@ -135,7 +135,7 @@ test.describe('Collections - Image Operations', () => {
     
     try {
       await collection.addImage(duplicateImage.filePath);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }
@@ -146,7 +146,8 @@ test.describe('Collections - Image Operations', () => {
     
     const collectionPath = collection.basePath;
     const contentsAfter = await TestUtils.captureFilesystemState(collectionPath);
-    const duplicateImagePath = duplicateImage.filePath;
+    // Reference to duplicate image path for context - ensuring we have access to the path
+    void duplicateImage.filePath;
     const duplicateImageCopied = contentsAfter.some(path => path.includes(duplicateImage.originalName.split('.')[0]));
     expect(duplicateImageCopied, { message: `Duplicate image "${duplicateImage.originalName}" was copied to collection filesystem despite hash collision detection` }).toBe(false);
     console.log(`✓ No files created for rejected duplicate image "${duplicateImage.originalName}"`);
@@ -175,7 +176,7 @@ test.describe('Collections - Image Operations', () => {
     
     try {
       await collection.addImage(corruptImage.filePath);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }
@@ -220,7 +221,7 @@ test.describe('Collections - Image Operations', () => {
     
     try {
       await collection.addImage(imageFile.filePath);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     } finally {
@@ -252,7 +253,7 @@ test.describe('Collections - Image Operations', () => {
     
     try {
       await collection.getImages();
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }

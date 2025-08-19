@@ -89,7 +89,7 @@ test.describe('Collections - Image Updates', () => {
     
     try {
       await collection.updateImageStatus(nonExistentImageId, 'COLLECTION');
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }
@@ -124,7 +124,7 @@ test.describe('Collections - Image Updates', () => {
     
     try {
       await collection.updateImageStatus(testImage.id, invalidStatus);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }
@@ -159,7 +159,7 @@ test.describe('Collections - Image Updates', () => {
     
     try {
       await collection.updateImageStatus(testImage.id, 'COLLECTION');
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     } finally {
@@ -191,7 +191,7 @@ test.describe('Collections - Image Updates', () => {
     
     try {
       await collection.deleteImage(nonExistentImageId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }
@@ -226,7 +226,7 @@ test.describe('Collections - Image Updates', () => {
     
     try {
       await collection.deleteImage(imageId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     } finally {

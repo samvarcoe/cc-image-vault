@@ -56,7 +56,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
       { status: 'ARCHIVE', count: imageCounts.archive || 0 }
     ];
 
-    const allImageFiles: any[] = [];
+    const allImageFiles: { path: string; status: ImageStatus; originalName: string }[] = [];
 
     for (const { status, count } of statuses) {
       for (let i = 0; i < count; i++) {
@@ -106,7 +106,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
           await collection.addImage(duplicates[i].filePath);
           // If we reach here, duplicate detection failed
           throw new Error('Duplicate detection should have prevented this addition');
-        } catch (error: any) {
+        } catch (error: unknown) {
           if (!error.message.includes('Duplicate Image')) {
             throw new Error(`Duplicate detection test failed: expected "Duplicate Image" error but got "${error.message}"`);
           }
@@ -119,7 +119,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
       try {
         // Collection cleanup will be handled by its own database connection cleanup
         await fs.rm(basePath, { recursive: true, force: true });
-      } catch (error) {
+      } catch {
         // Fixture cleanup errors are non-fatal but should be tracked
       }
     };
@@ -338,7 +338,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
     const cleanup = async () => {
       try {
         await fs.rm(basePath, { recursive: true, force: true });
-      } catch (error) {
+      } catch {
         // Non-fatal cleanup error
       }
     };
@@ -414,7 +414,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
     const cleanup = async () => {
       try {
         await fs.rm(basePath, { recursive: true, force: true });
-      } catch (error) {
+      } catch {
         // Non-fatal cleanup error
       }
     };

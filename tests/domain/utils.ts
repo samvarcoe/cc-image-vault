@@ -252,11 +252,11 @@ export class TestUtils {
               // Restore directory permissions if needed
               await fs.chmod(dirPath, mode);
             }
-          } catch (error) {
+          } catch {
             // Ignore cleanup errors
           }
         }
-      } catch (error) {
+      } catch {
         // Ignore cleanup errors
       }
     };
@@ -276,7 +276,7 @@ export class TestUtils {
           directories.push(...subDirs);
         }
       }
-    } catch (error) {
+    } catch {
       // Ignore errors
     }
     
@@ -314,10 +314,10 @@ export class TestUtils {
   /**
    * Captures database state by reading all image records for rollback verification
    */
-  static async captureDatabaseState(collection: any): Promise<ImageMetadata[]> {
+  static async captureDatabaseState(collection: { getImages(): Promise<ImageMetadata[]> }): Promise<ImageMetadata[]> {
     try {
       return await collection.getImages();
-    } catch (error) {
+    } catch {
       // If database is inaccessible, return empty state
       return [];
     }
@@ -364,7 +364,7 @@ export class TestUtils {
   /**
    * Simulates database constraint violation by corrupting the database during an operation
    */
-  static async simulateConstraintViolation(collection: any): Promise<() => Promise<void>> {
+  static async simulateConstraintViolation(collection: { basePath: string; id: string }): Promise<() => Promise<void>> {
     // Get the database path from the collection
     const collectionPath = path.join(collection.basePath, collection.id);
     const dbPath = path.join(collectionPath, 'collection.db');
@@ -381,7 +381,7 @@ export class TestUtils {
       try {
         await fs.copyFile(backupPath, dbPath);
         await fs.unlink(backupPath);
-      } catch (error) {
+      } catch {
         // Ignore cleanup errors
       }
     };
@@ -405,7 +405,7 @@ export class TestUtils {
         originalPath = path.join(originalDir, matchingFile);
         originalBackupPath = originalPath + '.backup-for-failure-test';
       }
-    } catch (error) {
+    } catch {
       // Directory might not exist or be accessible
     }
     
@@ -442,7 +442,7 @@ export class TestUtils {
             await fs.rename(thumbnailBackupPath, thumbnailPath);
           }
         }
-      } catch (error) {
+      } catch {
         // Ignore cleanup errors
       }
     };
@@ -505,7 +505,7 @@ export class TestUtils {
     try {
       const originalFiles = await fs.readdir(originalDir);
       originalExists = originalFiles.some(file => file.startsWith(imageId));
-    } catch (error) {
+    } catch {
       originalExists = false;
     }
     

@@ -30,7 +30,7 @@ export class CollectionsDirectoryFixtures extends Fixtures<DirectoryState> {
     // Ensure private directory exists
     try {
       await fs.mkdir(privateDir, { recursive: true });
-    } catch (error) {
+    } catch {
       // Directory might already exist, that's okay
     }
 

@@ -24,9 +24,9 @@ app.get('/api/collections', async (req, res) => {
   try {
     const collections = await collectionsService.listCollections();
     res.json(collections);
-  } catch (error: any) {
-    if (error.message.includes('Server error')) {
-      sendError(res, 500, 'server_error', error.message);
+  } catch (error: unknown) {
+    if ((error as Error).message.includes('Server error')) {
+      sendError(res, 500, 'server_error', (error as Error).message);
     } else {
       sendError(res, 500, 'server_error', 'Server error: failed to list collections');
     }
@@ -44,15 +44,15 @@ app.post('/api/collections', async (req, res) => {
     
     const collection = await collectionsService.createCollection(id);
     res.status(201).json(collection);
-  } catch (error: any) {
-    if (error.message.includes('Invalid collection ID format')) {
-      sendError(res, 400, 'validation_error', error.message);
-    } else if (error.message.includes('Duplicate collection ID')) {
-      sendError(res, 409, 'conflict_error', error.message);
-    } else if (error.message.includes('Server error')) {
-      sendError(res, 500, 'server_error', error.message);
+  } catch (error: unknown) {
+    if ((error as Error).message.includes('Invalid collection ID format')) {
+      sendError(res, 400, 'validation_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Duplicate collection ID')) {
+      sendError(res, 409, 'conflict_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Server error')) {
+      sendError(res, 500, 'server_error', (error as Error).message);
     } else {
-      console.error('Unexpected collection creation error:', error.message);
+      console.error('Unexpected collection creation error:', (error as Error).message);
       sendError(res, 500, 'server_error', 'Server error: failed to create collection');
     }
   }
@@ -64,11 +64,11 @@ app.get('/api/collections/:id', async (req, res) => {
     const { id } = req.params;
     const collection = await collectionsService.getCollection(id);
     res.json(collection);
-  } catch (error: any) {
-    if (error.message.includes('Collection not found')) {
-      sendError(res, 404, 'not_found_error', error.message);
-    } else if (error.message.includes('Server error')) {
-      sendError(res, 500, 'server_error', error.message);
+  } catch (error: unknown) {
+    if ((error as Error).message.includes('Collection not found')) {
+      sendError(res, 404, 'not_found_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Server error')) {
+      sendError(res, 500, 'server_error', (error as Error).message);
     } else {
       sendError(res, 500, 'server_error', 'Server error: failed to retrieve collection');
     }
@@ -81,11 +81,11 @@ app.delete('/api/collections/:id', async (req, res) => {
     const { id } = req.params;
     await collectionsService.deleteCollection(id);
     res.status(204).send();
-  } catch (error: any) {
-    if (error.message.includes('Collection not found')) {
-      sendError(res, 404, 'not_found_error', error.message);
-    } else if (error.message.includes('Server error')) {
-      sendError(res, 500, 'server_error', error.message);
+  } catch (error: unknown) {
+    if ((error as Error).message.includes('Collection not found')) {
+      sendError(res, 404, 'not_found_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Server error')) {
+      sendError(res, 500, 'server_error', (error as Error).message);
     } else {
       sendError(res, 500, 'server_error', 'Server error: failed to delete collection');
     }
@@ -98,13 +98,13 @@ app.get('/api/collections/:id/images', async (req, res) => {
     const { id } = req.params;
     const images = await collectionsService.getCollectionImages(id, req.query);
     res.json(images);
-  } catch (error: any) {
-    if (error.message.includes('Collection not found')) {
-      sendError(res, 404, 'not_found_error', error.message);
-    } else if (error.message.includes('Invalid')) {
-      sendError(res, 400, 'validation_error', error.message);
-    } else if (error.message.includes('Server error')) {
-      sendError(res, 500, 'server_error', error.message);
+  } catch (error: unknown) {
+    if ((error as Error).message.includes('Collection not found')) {
+      sendError(res, 404, 'not_found_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Invalid')) {
+      sendError(res, 400, 'validation_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Server error')) {
+      sendError(res, 500, 'server_error', (error as Error).message);
     } else {
       sendError(res, 500, 'server_error', 'Server error: failed to retrieve collection images');
     }

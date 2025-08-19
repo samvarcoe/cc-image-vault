@@ -9,7 +9,7 @@ A simple application that lets users upload their images and sort them into "col
 ## Architecture Overview
 
 ### File Structure
-```
+```bash
 collections/
 ├── collection-id-1/
 │   ├── collection.db
@@ -103,7 +103,7 @@ export interface ICollection {
 ## Pages
 
 ### Navigation Structure
-```
+```bash
 / 
 ├── /collection/:id
 │   ├── /collection/:id/inbox

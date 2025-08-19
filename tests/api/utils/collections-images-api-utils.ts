@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { ImageQueryParams, ImageMetadataResponse } from './collections-api-model';
+import { ImageMetadataResponse } from './collections-api-model';
 import { ImageStatus } from '../../../src/domain/types';
 import { AssertableResponse } from './assertable-response';
 
@@ -169,14 +169,14 @@ export class CollectionsImagesAPIUtils {
   /**
    * Validates error response structure and content
    */
-  static assertValidErrorResponse(response: AssertableResponse<any>, expectedStatus: number, expectedErrorType: string): void {
+  static assertValidErrorResponse(response: AssertableResponse<unknown>, expectedStatus: number, expectedErrorType: string): void {
     response.shouldHaveStatus(expectedStatus);
 
     expect(response.body, { 
       message: `Error response body is missing for ${expectedStatus} status` 
     }).toBeDefined();
 
-    const errorBody = response.body as any;
+    const errorBody = response.body as Record<string, unknown>;
     expect(errorBody.error, { 
       message: `Error response missing 'error' field for ${expectedStatus} status` 
     }).toBeDefined();

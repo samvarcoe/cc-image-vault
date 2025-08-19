@@ -19,7 +19,7 @@ test.describe('Collections API Endpoint', () => {
 
   test('Collection listing with existing collections', async () => {
     // Given multiple collections exist in the private directory
-    const directoryState = await CollectionsDirectoryFixtures.createWithExistingCollections({
+    await CollectionsDirectoryFixtures.createWithExistingCollections({
       collectionIds: ['collection-1', 'collection-2', 'collection-3']
     });
 
@@ -111,7 +111,7 @@ test.describe('Collections API Endpoint', () => {
 
     // And the API returns error message indicating duplicate ID
     expect(response.body).toBeDefined();
-    const errorResponse = response.body as any;
+    const errorResponse = response.body as Record<string, unknown>;
     expect(errorResponse.error).toBeDefined();
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('duplicate');
@@ -147,7 +147,7 @@ test.describe('Collections API Endpoint', () => {
 
       // And the API returns error message indicating invalid ID format
       expect(response.body).toBeDefined();
-      const errorResponse = response.body as any;
+      const errorResponse = response.body as Record<string, unknown>;
       expect(errorResponse.error).toBeDefined();
       expect(errorResponse.message).toBeDefined();
       expect(errorResponse.message.toLowerCase()).toContain('invalid');
@@ -193,7 +193,7 @@ test.describe('Collections API Endpoint', () => {
 
     // And the API returns error message indicating collection not found
     expect(response.body).toBeDefined();
-    const errorResponse = response.body as any;
+    const errorResponse = response.body as Record<string, unknown>;
     expect(errorResponse.error).toBeDefined();
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('not found');
@@ -247,7 +247,7 @@ test.describe('Collections API Endpoint', () => {
 
     // And the API returns error message indicating collection not found
     expect(response.body).toBeDefined();
-    const errorResponse = response.body as any;
+    const errorResponse = response.body as Record<string, unknown>;
     expect(errorResponse.error).toBeDefined();
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('not found');
@@ -270,7 +270,7 @@ test.describe('Collections API Endpoint', () => {
 
     // And the API returns error message indicating server error
     expect(response.body).toBeDefined();
-    const errorResponse = response.body as any;
+    const errorResponse = response.body as Record<string, unknown>;
     expect(errorResponse.error).toBeDefined();
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('server error');
@@ -288,7 +288,7 @@ test.describe('Collections API Endpoint', () => {
 
     // And the API returns error message indicating server error
     expect(response.body).toBeDefined();
-    const errorResponse = response.body as any;
+    const errorResponse = response.body as Record<string, unknown>;
     expect(errorResponse.error).toBeDefined();
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('server error');

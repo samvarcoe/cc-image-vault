@@ -26,12 +26,12 @@ export class Collection {
     // Check if base path is accessible
     try {
       await fs.access(basePath);
-    } catch (error) {
+    } catch {
       throw new Error('Unable to create Collection: invalid path');
     }
 
     const collectionPath = path.join(basePath, id);
-    let createdDirectories: string[] = [];
+    const createdDirectories: string[] = [];
 
     try {
       // Create collection directory structure
@@ -56,7 +56,7 @@ export class Collection {
 
       return new Collection(id, basePath, db);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Clean up any created directories on failure
       try {
         // Remove the entire collection directory if it was created
@@ -64,15 +64,15 @@ export class Collection {
         if (collectionExists) {
           await fs.rm(collectionPath, { recursive: true, force: true });
         }
-      } catch (cleanupError) {
+      } catch {
         // Ignore cleanup errors
       }
 
-      if (error.code === 'EACCES' || error.code === 'EPERM') {
+      if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM') {
         throw new Error('Unable to create Collection: insufficient permissions');
       }
       
-      throw new Error('Unable to create Collection: ' + error.message);
+      throw new Error('Unable to create Collection: ' + (error as Error).message);
     }
   }
 
@@ -94,8 +94,8 @@ export class Collection {
 
       return new Collection(id, basePath, db);
 
-    } catch (error: any) {
-      throw new Error('Unable to load Collection: ' + error.message);
+    } catch (error: unknown) {
+      throw new Error('Unable to load Collection: ' + (error as Error).message);
     }
   }
 
@@ -109,13 +109,13 @@ export class Collection {
             try {
               await Collection.createSchema(db);
               resolve(db);
-            } catch (schemaError: any) {
-              reject(new Error('Database schema creation failed: ' + schemaError.message));
+            } catch (schemaError: unknown) {
+              reject(new Error('Database schema creation failed: ' + (schemaError as Error).message));
             }
           }
         });
-      } catch (error: any) {
-        reject(new Error('Database initialization failed: ' + error.message));
+      } catch (error: unknown) {
+        reject(new Error('Database initialization failed: ' + (error as Error).message));
       }
     });
   }
@@ -153,7 +153,7 @@ export class Collection {
     // Check if database file exists
     try {
       await fs.access(databasePath);
-    } catch (error) {
+    } catch {
       throw new Error('database file not found');
     }
 
@@ -166,8 +166,8 @@ export class Collection {
             resolve(db);
           }
         });
-      } catch (error: any) {
-        reject(new Error('database access error: ' + error.message));
+      } catch (error: unknown) {
+        reject(new Error('database access error: ' + (error as Error).message));
       }
     });
   }
@@ -186,8 +186,8 @@ export class Collection {
     try {
       const fileBuffer = await fs.readFile(filePath);
       return crypto.createHash('sha256').update(fileBuffer).digest('hex');
-    } catch (error: any) {
-      throw new Error('Unable to process image: failed to calculate hash - ' + error.message);
+    } catch (error: unknown) {
+      throw new Error('Unable to process image: failed to calculate hash - ' + (error as Error).message);
     }
   }
 
@@ -210,11 +210,11 @@ export class Collection {
         mimeType,
         extension
       };
-    } catch (error: any) {
-      if (error.message.includes('Unable to process image')) {
+    } catch (error: unknown) {
+      if ((error as Error).message.includes('Unable to process image')) {
         throw error;
       }
-      throw new Error('Unable to process image: failed to extract metadata - ' + error.message);
+      throw new Error('Unable to process image: failed to extract metadata - ' + (error as Error).message);
     }
   }
 
@@ -240,8 +240,8 @@ export class Collection {
         })
         .jpeg({ quality: 80 })
         .toFile(thumbnailPath);
-    } catch (error: any) {
-      throw new Error('Unable to process image: failed to generate thumbnail - ' + error.message);
+    } catch (error: unknown) {
+      throw new Error('Unable to process image: failed to generate thumbnail - ' + (error as Error).message);
     }
   }
 
@@ -250,7 +250,7 @@ export class Collection {
       this.db.get(
         'SELECT id FROM images WHERE file_hash = ?',
         [fileHash],
-        (err: Error | null, row: any) => {
+        (err: Error | null, row: Record<string, unknown> | undefined) => {
           if (err) {
             reject(new Error('Unable to retrieve images: database query failed - ' + err.message));
           } else {
@@ -270,7 +270,7 @@ export class Collection {
     // Verify file exists
     try {
       await fs.access(filePath);
-    } catch (error) {
+    } catch {
       throw new Error('Unable to process image: file not found');
     }
 
@@ -338,31 +338,44 @@ export class Collection {
         updatedAt: now
       };
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Rollback: remove any created files
       for (const file of createdFiles) {
         try {
           await fs.unlink(file);
-        } catch (cleanupError) {
+        } catch {
           // Ignore cleanup errors
         }
       }
 
-      if (error.message.includes('Unable to process image')) {
+      if ((error as Error).message.includes('Unable to process image')) {
         throw error;
       }
-      if (error.message.includes('ENOSPC') || error.message.includes('no space left')) {
+      if ((error as Error).message.includes('ENOSPC') || (error as Error).message.includes('no space left')) {
         throw new Error('Unable to save image: insufficient disk space');
       }
-      if (error.message.includes('EACCES') || error.message.includes('EPERM') || error.message.includes('ENOTDIR')) {
+      if ((error as Error).message.includes('EACCES') || (error as Error).message.includes('EPERM') || (error as Error).message.includes('ENOTDIR')) {
         throw new Error('Unable to save image: insufficient permissions');
       }
       
-      throw new Error('Unable to save image: ' + error.message);
+      throw new Error('Unable to save image: ' + (error as Error).message);
     }
   }
 
-  private async insertImageRecord(imageData: any): Promise<void> {
+  private async insertImageRecord(imageData: {
+    id: string;
+    originalName: string;
+    fileHash: string;
+    status: string;
+    size: number;
+    width: number;
+    height: number;
+    aspectRatio: number;
+    extension: string;
+    mimeType: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }): Promise<void> {
     return new Promise((resolve, reject) => {
       const sql = `
         INSERT INTO images (
@@ -397,7 +410,7 @@ export class Collection {
   async getImages(options?: QueryOptions): Promise<ImageMetadata[]> {
     try {
       let sql = 'SELECT * FROM images';
-      const params: any[] = [];
+      const params: (string | number)[] = [];
 
       if (options?.status) {
         sql += ' WHERE status = ?';
@@ -415,7 +428,7 @@ export class Collection {
           return;
         }
 
-        this.db.all(sql, params, (err: Error | null, rows: any[]) => {
+        this.db.all(sql, params, (err: Error | null, rows: Record<string, unknown>[]) => {
           if (err) {
             if (err.message.includes('SQLITE_MISUSE') || err.message.includes('closed') || err.message.includes('cannot operate')) {
               reject(new Error('Unable to retrieve images: database connection issues - database connection closed'));
@@ -424,27 +437,27 @@ export class Collection {
             }
           } else {
             const images = rows.map(row => ({
-              id: row.id,
-              originalName: row.original_name,
-              fileHash: row.file_hash,
+              id: row.id as string,
+              originalName: row.original_name as string,
+              fileHash: row.file_hash as string,
               status: row.status as ImageStatus,
-              size: row.size,
+              size: row.size as number,
               dimensions: {
-                width: row.width,
-                height: row.height
+                width: row.width as number,
+                height: row.height as number
               },
-              aspectRatio: row.aspect_ratio,
-              extension: row.extension,
-              mimeType: row.mime_type,
-              createdAt: new Date(row.created_at),
-              updatedAt: new Date(row.updated_at)
+              aspectRatio: row.aspect_ratio as number,
+              extension: row.extension as string,
+              mimeType: row.mime_type as string,
+              createdAt: new Date(row.created_at as string),
+              updatedAt: new Date(row.updated_at as string)
             }));
             resolve(images);
           }
         });
       });
-    } catch (error: any) {
-      throw new Error('Unable to retrieve images: ' + error.message);
+    } catch (error: unknown) {
+      throw new Error('Unable to retrieve images: ' + (error as Error).message);
     }
   }
 
@@ -468,7 +481,7 @@ export class Collection {
           function(this: sqlite3.RunResult, err: Error | null) {
             if (err) {
               reject(new Error('Unable to update image status: database error - ' + err.message));
-            } else if ((this as any).changes === 0) {
+            } else if (this.changes === 0) {
               reject(new Error(`image not found: ${imageId}`));
             } else {
               // Fetch and return updated image
@@ -481,35 +494,35 @@ export class Collection {
           this.db.get(
             'SELECT * FROM images WHERE id = ?',
             [imageId],
-            (err: Error | null, row: any) => {
+            (err: Error | null, row: Record<string, unknown> | undefined) => {
               if (err) {
                 reject(new Error('Unable to retrieve updated image: ' + err.message));
               } else if (!row) {
                 reject(new Error('Image not found after status update'));
               } else {
                 resolve({
-                  id: row.id,
-                  originalName: row.original_name,
-                  fileHash: row.file_hash,
+                  id: row.id as string,
+                  originalName: row.original_name as string,
+                  fileHash: row.file_hash as string,
                   status: row.status as ImageStatus,
-                  size: row.size,
+                  size: row.size as number,
                   dimensions: {
-                    width: row.width,
-                    height: row.height
+                    width: row.width as number,
+                    height: row.height as number
                   },
-                  aspectRatio: row.aspect_ratio,
-                  extension: row.extension,
-                  mimeType: row.mime_type,
-                  createdAt: new Date(row.created_at),
-                  updatedAt: new Date(row.updated_at)
+                  aspectRatio: row.aspect_ratio as number,
+                  extension: row.extension as string,
+                  mimeType: row.mime_type as string,
+                  createdAt: new Date(row.created_at as string),
+                  updatedAt: new Date(row.updated_at as string)
                 });
               }
             }
           );
         });
       });
-    } catch (error: any) {
-      throw new Error('Unable to update image status: ' + error.message);
+    } catch (error: unknown) {
+      throw new Error('Unable to update image status: ' + (error as Error).message);
     }
   }
 
@@ -531,16 +544,16 @@ export class Collection {
       try {
         // Delete original file
         await fs.unlink(originalPath);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Rollback database changes if file deletion fails
         await this.rollbackImageDeletion(imageMetadata);
-        throw new Error('Unable to process file change: failed to delete original file - ' + error.message);
+        throw new Error('Unable to process file change: failed to delete original file - ' + (error as Error).message);
       }
 
       try {
         // Delete thumbnail file
         await fs.unlink(thumbnailPath);
-      } catch (error: any) {
+      } catch (error: unknown) {
         // Rollback database changes and restore original file if thumbnail deletion fails
         await this.rollbackImageDeletion(imageMetadata);
         try {
@@ -550,22 +563,22 @@ export class Collection {
             await fs.copyFile(originalBackupPath, originalPath);
             await fs.unlink(originalBackupPath);
           }
-        } catch (restoreError) {
+        } catch {
           // Ignore restore errors
         }
-        throw new Error('Unable to process file change: failed to delete thumbnail file - ' + error.message);
+        throw new Error('Unable to process file change: failed to delete thumbnail file - ' + (error as Error).message);
       }
 
       return true;
 
-    } catch (error: any) {
-      if (error.message.includes('Image not found')) {
+    } catch (error: unknown) {
+      if ((error as Error).message.includes('Image not found')) {
         throw new Error(`Image not found: ${imageId}`);
       }
-      if (error.message.includes('Unable to process file change')) {
+      if ((error as Error).message.includes('Unable to process file change')) {
         throw error;
       }
-      throw new Error('Unable to delete image: ' + error.message);
+      throw new Error('Unable to delete image: ' + (error as Error).message);
     }
   }
 
@@ -574,27 +587,27 @@ export class Collection {
       this.db.get(
         'SELECT * FROM images WHERE id = ?',
         [imageId],
-        (err: Error | null, row: any) => {
+        (err: Error | null, row: Record<string, unknown> | undefined) => {
           if (err) {
             reject(new Error('Database query failed: ' + err.message));
           } else if (!row) {
             reject(new Error('Image not found'));
           } else {
             resolve({
-              id: row.id,
-              originalName: row.original_name,
-              fileHash: row.file_hash,
+              id: row.id as string,
+              originalName: row.original_name as string,
+              fileHash: row.file_hash as string,
               status: row.status as ImageStatus,
-              size: row.size,
+              size: row.size as number,
               dimensions: {
-                width: row.width,
-                height: row.height
+                width: row.width as number,
+                height: row.height as number
               },
-              aspectRatio: row.aspect_ratio,
-              extension: row.extension,
-              mimeType: row.mime_type,
-              createdAt: new Date(row.created_at),
-              updatedAt: new Date(row.updated_at)
+              aspectRatio: row.aspect_ratio as number,
+              extension: row.extension as string,
+              mimeType: row.mime_type as string,
+              createdAt: new Date(row.created_at as string),
+              updatedAt: new Date(row.updated_at as string)
             });
           }
         }
@@ -610,7 +623,7 @@ export class Collection {
         function(this: sqlite3.RunResult, err: Error | null) {
           if (err) {
             reject(new Error('Database deletion failed: ' + err.message));
-          } else if ((this as any).changes === 0) {
+          } else if (this.changes === 0) {
             reject(new Error('Image not found'));
           } else {
             resolve();
@@ -637,7 +650,7 @@ export class Collection {
         createdAt: imageMetadata.createdAt,
         updatedAt: imageMetadata.updatedAt
       });
-    } catch (rollbackError) {
+    } catch {
       // Ignore rollback errors - we've already failed
     }
   }
@@ -658,7 +671,8 @@ export class Collection {
           reject(new Error('Failed to close database connection: ' + err.message));
         } else {
           // Set database reference to null to trigger connection errors
-          (this.db as any) = null;
+          // @ts-expect-error - Setting db to null for cleanup
+          this.db = null;
           resolve();
         }
       });

@@ -79,7 +79,7 @@ test.describe('Collections - Creation and Loading', () => {
     
     try {
       await Collection.create(collectionId, invalidPath);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }
@@ -110,7 +110,7 @@ test.describe('Collections - Creation and Loading', () => {
     
     try {
       await Collection.create(collectionId, restrictedPath);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }
@@ -149,7 +149,7 @@ test.describe('Collections - Creation and Loading', () => {
     
     try {
       await Collection.create(collectionId, basePath);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }
@@ -193,7 +193,7 @@ test.describe('Collections - Creation and Loading', () => {
     
     try {
       await Collection.load(collectionPath);
-    } catch (error: any) {
+    } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
     }
