@@ -13,6 +13,7 @@ import FakeTimers from '@sinonjs/fake-timers';
 export class CollectionFixtures extends Fixtures<Collection> {
   static async create(options: {
     collectionId?: string;
+    basePath?: string;
     imageCounts?: {
       inbox?: number;
       collection?: number;
@@ -26,6 +27,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
 
     const {
       collectionId = `test-collection-${Date.now()}`,
+      basePath: customBasePath,
       imageCounts = { inbox: 2, collection: 2, archive: 1 },
       includeCorruptImages = false,
       includeDuplicates = false,
@@ -33,7 +35,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
       imageFormats = ['jpeg', 'png', 'webp']
     } = options;
 
-    const basePath = await fs.mkdtemp(path.join(tmpdir(), 'collection-fixture-'));
+    const basePath = customBasePath || await fs.mkdtemp(path.join(tmpdir(), 'collection-fixture-'));
     
     // Create the collection
     let collection: Collection;
@@ -131,16 +133,19 @@ export class CollectionFixtures extends Fixtures<Collection> {
    */
   static async createWithMixedStatuses(options: {
     collectionId?: string;
+    basePath?: string;
     statusCounts?: Record<ImageStatus, number>;
   } = {}): Promise<Collection> {
 
     const {
       collectionId = `mixed-status-collection-${Date.now()}`,
+      basePath,
       statusCounts = { 'INBOX': 3, 'COLLECTION': 5, 'ARCHIVE': 2 }
     } = options;
 
     return this.create({
       collectionId,
+      basePath,
       imageCounts: {
         inbox: statusCounts.INBOX,
         collection: statusCounts.COLLECTION,
@@ -154,12 +159,14 @@ export class CollectionFixtures extends Fixtures<Collection> {
    */
   static async createEmpty(options: {
     collectionId?: string;
+    basePath?: string;
   } = {}): Promise<Collection> {
 
-    const { collectionId = `empty-collection-${Date.now()}` } = options;
+    const { collectionId = `empty-collection-${Date.now()}`, basePath } = options;
 
     return this.create({
       collectionId,
+      basePath,
       imageCounts: { inbox: 0, collection: 0, archive: 0 }
     });
   }
@@ -212,17 +219,20 @@ export class CollectionFixtures extends Fixtures<Collection> {
    */
   static async createWithDatabaseIssues(options: {
     collectionId?: string;
+    basePath?: string;
     issueType?: 'connection' | 'corruption' | 'permissions';
   } = {}): Promise<Collection> {
 
     const {
       collectionId = `db-issue-collection-${Date.now()}`,
+      basePath,
       issueType = 'connection'
     } = options;
 
     // Create normal collection first
     const collection = await this.create({
       collectionId,
+      basePath,
       imageCounts: { inbox: 2, collection: 1, archive: 1 }
     });
 
@@ -260,6 +270,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
    */
   static async createWithVariedImageCreationTimes(options: {
     collectionId?: string;
+    basePath?: string;
     imageCount?: number;
     statusDistribution?: { status: ImageStatus; count: number }[];
     timeSpreadMinutes?: number;
@@ -267,6 +278,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
 
     const {
       collectionId = `time-varied-collection-${Date.now()}`,
+      basePath: customBasePath,
       imageCount = 6,
       statusDistribution = [
         { status: 'INBOX', count: 2 },
@@ -283,7 +295,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
       toFake: ['Date'] // Only fake Date-related methods
     });
 
-    const basePath = await fs.mkdtemp(path.join(tmpdir(), 'time-collection-fixture-'));
+    const basePath = customBasePath || await fs.mkdtemp(path.join(tmpdir(), 'time-collection-fixture-'));
     let collection: Collection;
 
     try {
@@ -340,12 +352,14 @@ export class CollectionFixtures extends Fixtures<Collection> {
    */
   static async createWithLargeImageSet(options: {
     collectionId?: string;
+    basePath?: string;
     totalImages?: number;
     statusDistribution?: Record<ImageStatus, number>;
   } = {}): Promise<Collection> {
 
     const {
       collectionId = `large-collection-${Date.now()}`,
+      basePath: customBasePath,
       totalImages = 250,
       statusDistribution = {
         'INBOX': Math.floor(totalImages * 0.4),
@@ -354,7 +368,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
       }
     } = options;
 
-    const basePath = await fs.mkdtemp(path.join(tmpdir(), 'large-collection-fixture-'));
+    const basePath = customBasePath || await fs.mkdtemp(path.join(tmpdir(), 'large-collection-fixture-'));
     const collection = await Collection.create(collectionId, basePath);
 
     // Create images in batches for better performance

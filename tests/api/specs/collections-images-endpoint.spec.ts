@@ -13,6 +13,11 @@ test.describe('Collections Images API Endpoint', () => {
     api = new CollectionsAPI('http://localhost:3000');
   });
 
+  // Setup private directory before each test
+  test.beforeEach(async () => {
+    await import('fs').then(fs => fs.promises.mkdir('/workspace/image-vault/private', { recursive: true }));
+  });
+
   // Cleanup fixtures after each test
   test.afterEach(async () => {
     await Fixtures.cleanup();
@@ -22,6 +27,7 @@ test.describe('Collections Images API Endpoint', () => {
     // Given a collection exists with images in various statuses
     const collection = await CollectionFixtures.createWithMixedStatuses({
       collectionId: 'mixed-status-collection',
+      basePath: '/workspace/image-vault/private',
       statusCounts: { 'INBOX': 2, 'COLLECTION': 3, 'ARCHIVE': 1 }
     });
 
@@ -63,7 +69,8 @@ test.describe('Collections Images API Endpoint', () => {
   test('Image listing with empty collection', async () => {
     // Given a collection exists with no images
     const collection = await CollectionFixtures.createEmpty({
-      collectionId: 'empty-collection'
+      collectionId: 'empty-collection',
+      basePath: '/workspace/image-vault/private'
     });
 
     // When the client requests GET /api/collections/:id/images
@@ -104,6 +111,7 @@ test.describe('Collections Images API Endpoint', () => {
     // Given a collection exists with images in multiple statuses
     const collection = await CollectionFixtures.createWithMixedStatuses({
       collectionId: 'filter-test-collection',
+      basePath: '/workspace/image-vault/private',
       statusCounts: { 'INBOX': 4, 'COLLECTION': 5, 'ARCHIVE': 3 }
     });
 
@@ -138,6 +146,7 @@ test.describe('Collections Images API Endpoint', () => {
     // Given a collection exists with multiple images
     const collection = await CollectionFixtures.createWithLargeImageSet({
       collectionId: 'pagination-test-collection',
+      basePath: '/workspace/image-vault/private',
       totalImages: 25,
       statusDistribution: { 'INBOX': 25, 'COLLECTION': 0, 'ARCHIVE': 0 }
     });
@@ -183,6 +192,7 @@ test.describe('Collections Images API Endpoint', () => {
     // Given a collection exists with images created at different times using fake timers
     const collection = await CollectionFixtures.createWithVariedImageCreationTimes({
       collectionId: 'ordering-test-collection',
+      basePath: '/workspace/image-vault/private',
       imageCount: 8,
       statusDistribution: [
         { status: 'INBOX', count: 3 },
@@ -235,6 +245,7 @@ test.describe('Collections Images API Endpoint', () => {
     // Given a collection exists with images
     const collection = await CollectionFixtures.createWithMixedStatuses({
       collectionId: 'invalid-status-collection',
+      basePath: '/workspace/image-vault/private',
       statusCounts: { 'INBOX': 2, 'COLLECTION': 2, 'ARCHIVE': 1 }
     });
 
@@ -253,6 +264,7 @@ test.describe('Collections Images API Endpoint', () => {
     // Given a collection exists with images
     const collection = await CollectionFixtures.createWithMixedStatuses({
       collectionId: 'invalid-params-collection',
+      basePath: '/workspace/image-vault/private',
       statusCounts: { 'INBOX': 3, 'COLLECTION': 2, 'ARCHIVE': 1 }
     });
 
@@ -276,16 +288,24 @@ test.describe('Collections Images API Endpoint', () => {
   });
 
   test('Image listing with collection access issues', async () => {
-    // Given a collection exists but has permission issues
-    const collection = await CollectionFixtures.createWithDatabaseIssues({
+    // Given a collection exists with images
+    const collection = await CollectionFixtures.createWithMixedStatuses({
       collectionId: 'permission-issue-collection',
-      issueType: 'permissions'
+      basePath: '/workspace/image-vault/private',
+      statusCounts: { 'INBOX': 2, 'COLLECTION': 1, 'ARCHIVE': 1 }
     });
+
+    // And the collections directory has permission issues
+    const privateDir = '/workspace/image-vault/private';
+    await import('fs').then(fs => fs.promises.chmod(privateDir, 0o444)); // Read-only permissions
 
     // When the client requests GET /api/collections/:id/images
     const response = await api['/api/collections/:id/images'].get({
       pathParams: { id: collection.id }
     });
+
+    // Restore permissions for cleanup
+    await import('fs').then(fs => fs.promises.chmod(privateDir, 0o755));
 
     // Then the API returns 500 status code
     // And the API returns error message indicating server error
