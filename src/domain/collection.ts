@@ -582,7 +582,7 @@ export class Collection {
     }
   }
 
-  private async getImageMetadata(imageId: string): Promise<ImageMetadata> {
+  async getImageMetadata(imageId: string): Promise<ImageMetadata> {
     return new Promise((resolve, reject) => {
       this.db.get(
         'SELECT * FROM images WHERE id = ?',
@@ -613,6 +613,42 @@ export class Collection {
         }
       );
     });
+  }
+
+  async getImageFilePath(imageId: string): Promise<string> {
+    const metadata = await this.getImageMetadata(imageId);
+    const originalPath = path.join(this.basePath, this.id, 'images', 'original', `${imageId}${metadata.extension}`);
+    
+    // Verify file exists and is accessible
+    try {
+      await fs.access(originalPath);
+      return originalPath;
+    } catch (error: unknown) {
+      const nodeError = error as NodeJS.ErrnoException;
+      if (nodeError.code === 'EACCES' || nodeError.code === 'EPERM') {
+        throw new Error('Image file access denied due to insufficient permissions');
+      }
+      throw new Error('Image file not found on filesystem');
+    }
+  }
+
+  async getThumbnailFilePath(imageId: string): Promise<string> {
+    // First verify image exists in database
+    await this.getImageMetadata(imageId);
+    
+    const thumbnailPath = path.join(this.basePath, this.id, 'images', 'thumbnails', `${imageId}.jpg`);
+    
+    // Verify thumbnail file exists and is accessible
+    try {
+      await fs.access(thumbnailPath);
+      return thumbnailPath;
+    } catch (error: unknown) {
+      const nodeError = error as NodeJS.ErrnoException;
+      if (nodeError.code === 'EACCES' || nodeError.code === 'EPERM') {
+        throw new Error('Thumbnail file access denied due to insufficient permissions');
+      }
+      throw new Error('Thumbnail file not found on filesystem');
+    }
   }
 
   private async deleteImageRecord(imageId: string): Promise<void> {

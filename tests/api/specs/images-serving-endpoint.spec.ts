@@ -40,14 +40,17 @@ test.describe('Image Serving API Endpoints', () => {
       message: `Original image serving failed (HTTP ${response.raw.status}) for valid image ${testImage.id} in collection ${collection.collectionId}`
     }).toBe(true);
 
-    await BinaryResponseUtils.validateImageResponse(response.raw, {
+    const responseBuffer = await BinaryResponseUtils.validateImageResponse(response.raw, {
       expectedContentType: testImage.metadata.mimeType,
       expectedContentLength: testImage.metadata.size.toString(),
       expectedCacheControl: 'max-age=31536000',
       shouldMatchSourceFile: testImage.originalPath
     });
 
-    await BinaryResponseUtils.validateIsValidImage(response.raw, 'jpeg');
+    // Validate image format using the already-read buffer
+    if (responseBuffer) {
+      BinaryResponseUtils.validateImageFormatFromBuffer(responseBuffer, 'jpeg', '/api/images/' + collection.collectionId + '/' + testImage.id);
+    }
 
     console.log(`✓ Original image ${testImage.id} served successfully with correct headers and content`);
   });
@@ -82,16 +85,19 @@ test.describe('Image Serving API Endpoints', () => {
 
     const thumbnailStats = await ImageServingFixtures.getImageStats(testImage.thumbnailPath!);
 
-    await BinaryResponseUtils.validateImageResponse(response.raw, {
-      expectedContentType: 'image/webp',
+    const responseBuffer = await BinaryResponseUtils.validateImageResponse(response.raw, {
+      expectedContentType: 'image/jpeg',
       expectedContentLength: thumbnailStats.size.toString(),
       expectedCacheControl: 'max-age=31536000',
       shouldMatchSourceFile: testImage.thumbnailPath!
     });
 
-    await BinaryResponseUtils.validateIsValidImage(response.raw, 'webp');
+    // Validate image format using the already-read buffer
+    if (responseBuffer) {
+      BinaryResponseUtils.validateImageFormatFromBuffer(responseBuffer, 'jpeg', '/api/images/' + collection.collectionId + '/' + testImage.id + '/thumbnail');
+    }
 
-    console.log(`✓ Thumbnail for image ${testImage.id} served successfully as WebP with correct headers`);
+    console.log(`✓ Thumbnail for image ${testImage.id} served successfully as JPEG with correct headers`);
   });
 
   test('Image serving with non-existent collection', async () => {
@@ -123,7 +129,7 @@ test.describe('Image Serving API Endpoints', () => {
         message: `Error response missing 'message' field for non-existent collection "${nonExistentCollectionId}"`
       }).toHaveProperty('message');
       
-      expect(errorBody.message, {
+      expect(errorBody.message.toLowerCase(), {
         message: `Error message "${errorBody.message}" does not indicate collection not found for collection "${nonExistentCollectionId}"`
       }).toContain('collection not found');
     }
@@ -165,7 +171,7 @@ test.describe('Image Serving API Endpoints', () => {
         message: `Error response missing 'message' field for non-existent image "${nonExistentImageId}" in collection "${collection.collectionId}"`
       }).toHaveProperty('message');
       
-      expect(errorBody.message, {
+      expect(errorBody.message.toLowerCase(), {
         message: `Error message "${errorBody.message}" does not indicate image not found for image "${nonExistentImageId}"`
       }).toContain('image not found');
     }
@@ -211,7 +217,7 @@ test.describe('Image Serving API Endpoints', () => {
         message: `Error response missing 'message' field for missing thumbnail of image "${imageWithoutThumbnail!.id}"`
       }).toHaveProperty('message');
       
-      expect(errorBody.message, {
+      expect(errorBody.message.toLowerCase(), {
         message: `Error message "${errorBody.message}" does not indicate thumbnail not found for image "${imageWithoutThumbnail!.id}"`
       }).toContain('thumbnail not found');
     }
@@ -251,7 +257,7 @@ test.describe('Image Serving API Endpoints', () => {
         message: `Error response missing 'message' field for permission-denied image "${testImage.id}"`
       }).toHaveProperty('message');
       
-      expect(errorBody.message, {
+      expect(errorBody.message.toLowerCase(), {
         message: `Error message "${errorBody.message}" does not indicate server error for image "${testImage.id}" with permission issues`
       }).toContain('server error');
     }

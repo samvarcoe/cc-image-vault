@@ -2,6 +2,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { ImageFixtures } from '../../utils/fixtures/image-fixtures';
+import { Collection } from '../../../src/domain/collection';
 import sharp from 'sharp';
 
 export interface ImageServingState {
@@ -48,29 +49,23 @@ export class ImageServingFixtures extends Fixtures<ImageServingState> {
 
     const privateDir = path.join(baseDir, 'private');
     const collectionPath = path.join(privateDir, collectionId);
-    const imagesDir = path.join(collectionPath, 'images');
-    const originalDir = path.join(imagesDir, 'original');
-    const thumbnailsDir = path.join(imagesDir, 'thumbnails');
 
-    // Create directory structure
-    await fs.mkdir(originalDir, { recursive: true });
-    await fs.mkdir(thumbnailsDir, { recursive: true });
+    // Ensure private directory exists
+    await fs.mkdir(privateDir, { recursive: true });
 
-    // Create collection database file
-    const dbPath = path.join(collectionPath, 'collection.db');
-    await fs.writeFile(dbPath, '');
-
+    // Create collection using the proper domain class
+    const collection = await Collection.create(collectionId, privateDir);
+    
     const images: ImageServingState['images'] = [];
 
-    // Create test images and thumbnails
+    // Create test images and add them to collection
     for (let i = 0; i < imageCount; i++) {
-      const imageId = `image-${i + 1}-${Date.now()}-${Math.random().toString(36).substring(7)}`;
       const format = imageFormats[i % imageFormats.length];
       const extension = format === 'jpeg' ? 'jpg' : format;
       
-      // Create original image
+      // Create original image file
       const originalImage = await ImageFixtures.create({
-        imageId,
+        imageId: `temp-${i}`,
         format,
         width: 800 + (i * 200), // Vary sizes
         height: 600 + (i * 150),
@@ -78,49 +73,43 @@ export class ImageServingFixtures extends Fixtures<ImageServingState> {
         includeVisualContent: true
       });
 
-      // Copy to collection original directory with UUID name
-      const originalFileName = `${imageId}.${extension}`;
-      const originalPath = path.join(originalDir, originalFileName);
-      await fs.copyFile(originalImage.filePath, originalPath);
-
+      // Add image to collection (this creates database record and files)
+      const metadata = await collection.addImage(originalImage.filePath);
+      
       const imageEntry: ImageServingState['images'][0] = {
-        id: imageId,
-        originalPath,
+        id: metadata.id,
+        originalPath: path.join(collectionPath, 'images', 'original', `${metadata.id}${metadata.extension}`),
         metadata: {
-          originalName: originalImage.originalName,
-          size: originalImage.size,
-          dimensions: originalImage.dimensions,
-          mimeType: originalImage.mimeType,
-          extension: originalImage.extension
+          originalName: metadata.originalName,
+          size: metadata.size,
+          dimensions: metadata.dimensions,
+          mimeType: metadata.mimeType,
+          extension: metadata.extension
         }
       };
 
-      // Create thumbnail if not in missing list
-      const shouldCreateThumbnail = includeAllThumbnails && !missingThumbnailImageIds.includes(imageId);
-      
+      // Set thumbnail path if it should exist
+      const shouldCreateThumbnail = includeAllThumbnails && !missingThumbnailImageIds.includes(metadata.id);
       if (shouldCreateThumbnail) {
-        const thumbnailFileName = `${imageId}.webp`; // Thumbnails are always WebP
-        const thumbnailPath = path.join(thumbnailsDir, thumbnailFileName);
-        
-        // Create 400px thumbnail preserving aspect ratio
-        const thumbnailBuffer = await sharp(originalImage.filePath)
-          .resize(400, 400, { 
-            fit: 'inside',
-            withoutEnlargement: true 
-          })
-          .webp({ quality: 80 })
-          .toBuffer();
-        
-        await fs.writeFile(thumbnailPath, thumbnailBuffer);
-        imageEntry.thumbnailPath = thumbnailPath;
+        imageEntry.thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${metadata.id}.jpg`);
+      } else if (!includeAllThumbnails || missingThumbnailImageIds.includes(metadata.id)) {
+        // Remove thumbnail file if it shouldn't exist
+        const thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${metadata.id}.jpg`);
+        try {
+          await fs.unlink(thumbnailPath);
+        } catch {
+          // Ignore if file doesn't exist
+        }
       }
 
       images.push(imageEntry);
     }
 
+    await collection.close();
+
     // Simulate permission issues if requested
     if (simulatePermissionIssues) {
-      // Remove read permissions from original directory
+      const originalDir = path.join(collectionPath, 'images', 'original');
       await fs.chmod(originalDir, 0o000);
     }
 
@@ -128,6 +117,7 @@ export class ImageServingFixtures extends Fixtures<ImageServingState> {
       try {
         // Restore permissions if they were changed
         if (simulatePermissionIssues) {
+          const originalDir = path.join(collectionPath, 'images', 'original');
           await fs.chmod(originalDir, 0o755);
         }
 
@@ -173,7 +163,7 @@ export class ImageServingFixtures extends Fixtures<ImageServingState> {
     const imagesToHaveThumbnails = state.images.slice(0, imageCount - missingThumbnailCount);
     
     for (const image of imagesToHaveThumbnails) {
-      const thumbnailFileName = `${image.id}.webp`;
+      const thumbnailFileName = `${image.id}.jpg`;
       const thumbnailPath = path.join(path.dirname(image.originalPath), '..', 'thumbnails', thumbnailFileName);
       
       const thumbnailBuffer = await sharp(image.originalPath)
@@ -181,7 +171,7 @@ export class ImageServingFixtures extends Fixtures<ImageServingState> {
           fit: 'inside',
           withoutEnlargement: true 
         })
-        .webp({ quality: 80 })
+        .jpeg({ quality: 80 })
         .toBuffer();
       
       await fs.writeFile(thumbnailPath, thumbnailBuffer);
@@ -236,7 +226,7 @@ export class ImageServingFixtures extends Fixtures<ImageServingState> {
    * Utility to verify thumbnail exists
    */
   static async thumbnailExists(collectionPath: string, imageId: string): Promise<boolean> {
-    const thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${imageId}.webp`);
+    const thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${imageId}.jpg`);
     try {
       await fs.access(thumbnailPath);
       return true;

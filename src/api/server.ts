@@ -111,6 +111,70 @@ app.get('/api/collections/:id/images', async (req, res) => {
   }
 });
 
+// GET /api/images/:collectionId/:imageId - Serve original image file
+app.get('/api/images/:collectionId/:imageId', async (req, res) => {
+  try {
+    const { collectionId, imageId } = req.params;
+    const { filePath, metadata } = await collectionsService.serveOriginalImage(collectionId, imageId);
+    
+    // Set cache headers for immutable content (1 year)
+    res.set('Cache-Control', 'max-age=31536000');
+    
+    // Set content type based on image metadata
+    res.set('Content-Type', metadata.mimeType);
+    
+    // Set content length
+    res.set('Content-Length', metadata.size.toString());
+    
+    // Send the file
+    res.sendFile(filePath);
+  } catch (error: unknown) {
+    if ((error as Error).message.includes('Collection not found')) {
+      sendError(res, 404, 'not_found_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Image not found')) {
+      sendError(res, 404, 'not_found_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Server error')) {
+      sendError(res, 500, 'server_error', (error as Error).message);
+    } else {
+      sendError(res, 500, 'server_error', 'Server error: failed to serve image');
+    }
+  }
+});
+
+// GET /api/images/:collectionId/:imageId/thumbnail - Serve thumbnail image file
+app.get('/api/images/:collectionId/:imageId/thumbnail', async (req, res) => {
+  try {
+    const { collectionId, imageId } = req.params;
+    const { filePath } = await collectionsService.serveThumbnailImage(collectionId, imageId);
+    
+    // Set cache headers for immutable content (1 year)
+    res.set('Cache-Control', 'max-age=31536000');
+    
+    // Thumbnails are always JPEG format (as per Collection.generateThumbnail)
+    res.set('Content-Type', 'image/jpeg');
+    
+    // Get file stats for content length
+    const fs = await import('fs');
+    const stats = await fs.promises.stat(filePath);
+    res.set('Content-Length', stats.size.toString());
+    
+    // Send the file
+    res.sendFile(filePath);
+  } catch (error: unknown) {
+    if ((error as Error).message.includes('Collection not found')) {
+      sendError(res, 404, 'not_found_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Image not found')) {
+      sendError(res, 404, 'not_found_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Thumbnail not found')) {
+      sendError(res, 404, 'not_found_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Server error')) {
+      sendError(res, 500, 'server_error', (error as Error).message);
+    } else {
+      sendError(res, 500, 'server_error', 'Server error: failed to serve thumbnail');
+    }
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });

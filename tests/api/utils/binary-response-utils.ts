@@ -13,8 +13,9 @@ export class BinaryResponseUtils {
   static async validateImageResponse(
     response: Response, 
     validation: BinaryResponseValidation = {}
-  ): Promise<void> {
+  ): Promise<Buffer | undefined> {
     const endpoint = this.getEndpointDescription(response);
+    let responseBuffer: Buffer | undefined;
 
     if (validation.expectedContentType) {
       const actualContentType = response.headers.get('content-type');
@@ -42,7 +43,8 @@ export class BinaryResponseUtils {
 
     if (validation.expectedSize !== undefined) {
       const buffer = await response.arrayBuffer();
-      const actualSize = buffer.byteLength;
+      responseBuffer = Buffer.from(buffer);
+      const actualSize = responseBuffer.byteLength;
       expect(actualSize, {
         message: `${endpoint} response size mismatch. Expected: ${validation.expectedSize} bytes, Got: ${actualSize} bytes`
       }).toBe(validation.expectedSize);
@@ -50,17 +52,20 @@ export class BinaryResponseUtils {
     }
 
     if (validation.shouldMatchSourceFile) {
-      await this.validateFileContentMatch(response, validation.shouldMatchSourceFile, endpoint);
+      responseBuffer = await this.validateFileContentMatch(response, validation.shouldMatchSourceFile, endpoint);
     }
+
+    return responseBuffer;
   }
 
   static async validateFileContentMatch(
     response: Response, 
     sourceFilePath: string, 
     endpoint: string
-  ): Promise<void> {
+  ): Promise<Buffer> {
     const responseBuffer = await response.arrayBuffer();
-    const responseHash = crypto.createHash('sha256').update(new Uint8Array(responseBuffer)).digest('hex');
+    const responseBufferNode = Buffer.from(responseBuffer);
+    const responseHash = crypto.createHash('sha256').update(responseBufferNode).digest('hex');
 
     const fs = await import('fs');
     const sourceBuffer = await fs.promises.readFile(sourceFilePath);
@@ -71,6 +76,8 @@ export class BinaryResponseUtils {
     }).toBe(sourceHash);
     
     console.log(`✓ ${endpoint} response content matches source file (SHA256: ${sourceHash.substring(0, 16)}...)`);
+    
+    return responseBufferNode;
   }
 
   static async validateBinaryContent(
@@ -106,6 +113,10 @@ export class BinaryResponseUtils {
     const buffer = await response.arrayBuffer();
     const responseBuffer = Buffer.from(buffer);
 
+    this.validateImageFormatFromBuffer(responseBuffer, expectedFormat, endpoint);
+  }
+
+  static validateImageFormatFromBuffer(responseBuffer: Buffer, expectedFormat: 'jpeg' | 'png' | 'webp' | undefined, endpoint: string): void {
     expect(responseBuffer.length, {
       message: `${endpoint} returned empty image data`
     }).toBeGreaterThan(0);
