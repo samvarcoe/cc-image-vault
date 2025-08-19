@@ -126,7 +126,7 @@ export class BinaryResponseUtils {
       
       console.log(`✓ ${endpoint} contains valid ${expectedFormat.toUpperCase()} image data`);
     } else {
-      const isValidImage = Object.entries(signatures).some(([format, signature]) => {
+      const isValidImage = Object.entries(signatures).some(([, signature]) => {
         const actualStart = responseBuffer.subarray(0, signature.length);
         return actualStart.equals(signature);
       });

@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
-import { ImageFixtures, ImageFile } from '../../utils/fixtures/image-fixtures';
+import { ImageFixtures } from '../../utils/fixtures/image-fixtures';
 import sharp from 'sharp';
 
 export interface ImageServingState {

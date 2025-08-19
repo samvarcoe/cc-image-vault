@@ -114,7 +114,7 @@ test.describe('Image Serving API Endpoints', () => {
     }).toBe(false);
 
     if (response.body) {
-      const errorBody = response.body as any;
+      const errorBody = response.body as Record<string, unknown>;
       expect(errorBody, {
         message: `Error response missing 'error' field for non-existent collection "${nonExistentCollectionId}"`
       }).toHaveProperty('error');
@@ -156,7 +156,7 @@ test.describe('Image Serving API Endpoints', () => {
     }).toBe(false);
 
     if (response.body) {
-      const errorBody = response.body as any;
+      const errorBody = response.body as Record<string, unknown>;
       expect(errorBody, {
         message: `Error response missing 'error' field for non-existent image "${nonExistentImageId}" in collection "${collection.collectionId}"`
       }).toHaveProperty('error');
@@ -202,7 +202,7 @@ test.describe('Image Serving API Endpoints', () => {
     }).toBe(false);
 
     if (response.body) {
-      const errorBody = response.body as any;
+      const errorBody = response.body as Record<string, unknown>;
       expect(errorBody, {
         message: `Error response missing 'error' field for missing thumbnail of image "${imageWithoutThumbnail!.id}"`
       }).toHaveProperty('error');
@@ -242,7 +242,7 @@ test.describe('Image Serving API Endpoints', () => {
     }).toBe(false);
 
     if (response.body) {
-      const errorBody = response.body as any;
+      const errorBody = response.body as Record<string, unknown>;
       expect(errorBody, {
         message: `Error response missing 'error' field for permission-denied image "${testImage.id}"`
       }).toHaveProperty('error');
