@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/api/server.ts",
+    "lint": "npx eslint",
     "domain:tests": "npx playwright test --config tests/domain/playwright.config.ts",
     "api:tests": "npx playwright test --config tests/api/playwright.config.ts",
     "tests:all": "npm run domain:tests && npm run api:tests"
@@ -19,15 +20,22 @@
   },
   "homepage": "https://github.com/samvarcoe/cc-image-vault#readme",
   "devDependencies": {
+    "@eslint/css": "^0.10.0",
+    "@eslint/js": "^9.33.0",
+    "@eslint/json": "^0.13.1",
+    "@eslint/markdown": "^7.1.0",
     "@playwright/test": "^1.54.2",
     "@sinonjs/fake-timers": "^14.0.0",
     "@types/express": "^5.0.3",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.3.0",
     "@types/uuid": "^10.0.0",
+    "eslint": "^9.33.0",
+    "globals": "^16.3.0",
     "nodemon": "^3.1.10",
     "tsx": "^4.20.3",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.40.0"
   },
   "dependencies": {
     "dotenv": "^17.2.1",

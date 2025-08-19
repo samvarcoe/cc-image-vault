@@ -2,7 +2,6 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import sqlite3 from 'sqlite3';
-const { Database } = sqlite3;
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { ImageMetadata, ImageStatus, QueryOptions } from './types';
@@ -10,9 +9,9 @@ import { ImageMetadata, ImageStatus, QueryOptions } from './types';
 export class Collection {
   public readonly id: string;
   public readonly basePath: string;
-  private db: Database;
+  private db: sqlite3.Database;
 
-  private constructor(id: string, basePath: string, db: Database) {
+  private constructor(id: string, basePath: string, db: sqlite3.Database) {
     this.id = id;
     this.basePath = basePath;
     this.db = db;
@@ -100,10 +99,10 @@ export class Collection {
     }
   }
 
-  private static async initializeDatabase(databasePath: string): Promise<Database> {
+  private static async initializeDatabase(databasePath: string): Promise<sqlite3.Database> {
     return new Promise((resolve, reject) => {
       try {
-        const db = new Database(databasePath, async (err) => {
+        const db = new sqlite3.Database(databasePath, async (err) => {
           if (err) {
             reject(new Error('Database initialization failed: ' + err.message));
           } else {
@@ -121,7 +120,7 @@ export class Collection {
     });
   }
 
-  private static async createSchema(db: Database): Promise<void> {
+  private static async createSchema(db: sqlite3.Database): Promise<void> {
     return new Promise((resolve, reject) => {
       const createImageTable = `
         CREATE TABLE IF NOT EXISTS images (
@@ -140,7 +139,7 @@ export class Collection {
         )
       `;
 
-      db.run(createImageTable, (err) => {
+      db.run(createImageTable, (err: Error | null) => {
         if (err) {
           reject(err);
         } else {
@@ -150,7 +149,7 @@ export class Collection {
     });
   }
 
-  private static async connectToDatabase(databasePath: string): Promise<Database> {
+  private static async connectToDatabase(databasePath: string): Promise<sqlite3.Database> {
     // Check if database file exists
     try {
       await fs.access(databasePath);
@@ -160,7 +159,7 @@ export class Collection {
 
     return new Promise((resolve, reject) => {
       try {
-        const db = new Database(databasePath, (err) => {
+        const db = new sqlite3.Database(databasePath, (err) => {
           if (err) {
             reject(new Error('database connection failed: ' + err.message));
           } else {
@@ -251,7 +250,7 @@ export class Collection {
       this.db.get(
         'SELECT id FROM images WHERE file_hash = ?',
         [fileHash],
-        (err, row) => {
+        (err: Error | null, row: any) => {
           if (err) {
             reject(new Error('Unable to retrieve images: database query failed - ' + err.message));
           } else {
@@ -385,7 +384,7 @@ export class Collection {
         imageData.mimeType,
         imageData.createdAt.toISOString(),
         imageData.updatedAt.toISOString()
-      ], function(err) {
+      ], function(this: sqlite3.RunResult, err: Error | null) {
         if (err) {
           reject(new Error('Database insert failed: ' + err.message));
         } else {
@@ -416,7 +415,7 @@ export class Collection {
           return;
         }
 
-        this.db.all(sql, params, (err, rows: any[]) => {
+        this.db.all(sql, params, (err: Error | null, rows: any[]) => {
           if (err) {
             if (err.message.includes('SQLITE_MISUSE') || err.message.includes('closed') || err.message.includes('cannot operate')) {
               reject(new Error('Unable to retrieve images: database connection issues - database connection closed'));
@@ -466,14 +465,14 @@ export class Collection {
         this.db.run(
           'UPDATE images SET status = ?, updated_at = ? WHERE id = ?',
           [newStatus, now.toISOString(), imageId],
-          function(err) {
+          function(this: sqlite3.RunResult, err: Error | null) {
             if (err) {
               reject(new Error('Unable to update image status: database error - ' + err.message));
-            } else if (this.changes === 0) {
+            } else if ((this as any).changes === 0) {
               reject(new Error(`image not found: ${imageId}`));
             } else {
               // Fetch and return updated image
-              resolve();
+              resolve(undefined);
             }
           }
         );
@@ -482,7 +481,7 @@ export class Collection {
           this.db.get(
             'SELECT * FROM images WHERE id = ?',
             [imageId],
-            (err, row: any) => {
+            (err: Error | null, row: any) => {
               if (err) {
                 reject(new Error('Unable to retrieve updated image: ' + err.message));
               } else if (!row) {
@@ -575,7 +574,7 @@ export class Collection {
       this.db.get(
         'SELECT * FROM images WHERE id = ?',
         [imageId],
-        (err, row: any) => {
+        (err: Error | null, row: any) => {
           if (err) {
             reject(new Error('Database query failed: ' + err.message));
           } else if (!row) {
@@ -608,10 +607,10 @@ export class Collection {
       this.db.run(
         'DELETE FROM images WHERE id = ?',
         [imageId],
-        function(err) {
+        function(this: sqlite3.RunResult, err: Error | null) {
           if (err) {
             reject(new Error('Database deletion failed: ' + err.message));
-          } else if (this.changes === 0) {
+          } else if ((this as any).changes === 0) {
             reject(new Error('Image not found'));
           } else {
             resolve();
@@ -654,7 +653,7 @@ export class Collection {
 
   async close(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.db.close((err) => {
+      this.db.close((err: Error | null) => {
         if (err) {
           reject(new Error('Failed to close database connection: ' + err.message));
         } else {
