@@ -325,4 +325,94 @@ export class CollectionsService {
       updatedAt: image.updatedAt.toISOString()
     }));
   }
+
+  /**
+   * Serves an original image file by collection and image ID
+   */
+  async serveOriginalImage(collectionId: string, imageId: string): Promise<{ filePath: string; metadata: ImageMetadata }> {
+    try {
+      // Check if collection directory exists first
+      if (!await this.collectionDirectoryExists(collectionId)) {
+        throw new Error('Collection not found');
+      }
+
+      const collectionPath = path.join(this.basePath, collectionId);
+      
+      // Load collection and get image metadata and file path
+      const collection = await Collection.load(collectionPath);
+      
+      try {
+        const metadata = await collection.getImageMetadata(imageId);
+        const filePath = await collection.getImageFilePath(imageId);
+        await collection.close();
+        
+        return { filePath, metadata };
+      } catch (error: unknown) {
+        await collection.close();
+        throw error;
+      }
+    } catch (error: unknown) {
+      if ((error as Error).message.includes('Collection not found')) {
+        throw new Error('Collection not found');
+      }
+      if ((error as Error).message.includes('Image not found')) {
+        throw new Error('Image not found');
+      }
+      if ((error as Error).message.includes('Image file not found on filesystem')) {
+        throw new Error('Image not found');
+      }
+      if ((error as Error).message.includes('Image file access denied due to insufficient permissions')) {
+        throw new Error('Server error: insufficient permissions to access image file');
+      }
+      if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM' || (error as Error).message.includes('permission')) {
+        throw new Error('Server error: insufficient permissions to access image file');
+      }
+      throw new Error('Server error: failed to serve image');
+    }
+  }
+
+  /**
+   * Serves a thumbnail image file by collection and image ID
+   */
+  async serveThumbnailImage(collectionId: string, imageId: string): Promise<{ filePath: string; metadata: ImageMetadata }> {
+    try {
+      // Check if collection directory exists first
+      if (!await this.collectionDirectoryExists(collectionId)) {
+        throw new Error('Collection not found');
+      }
+
+      const collectionPath = path.join(this.basePath, collectionId);
+      
+      // Load collection and get image metadata and thumbnail file path
+      const collection = await Collection.load(collectionPath);
+      
+      try {
+        const metadata = await collection.getImageMetadata(imageId);
+        const filePath = await collection.getThumbnailFilePath(imageId);
+        await collection.close();
+        
+        return { filePath, metadata };
+      } catch (error: unknown) {
+        await collection.close();
+        throw error;
+      }
+    } catch (error: unknown) {
+      if ((error as Error).message.includes('Collection not found')) {
+        throw new Error('Collection not found');
+      }
+      if ((error as Error).message.includes('Image not found')) {
+        throw new Error('Image not found');
+      }
+      if ((error as Error).message.includes('Thumbnail file not found on filesystem')) {
+        throw new Error('Thumbnail not found');
+      }
+      if ((error as Error).message.includes('Thumbnail file access denied due to insufficient permissions')) {
+        throw new Error('Server error: insufficient permissions to access thumbnail file');
+      }
+      if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM' || (error as Error).message.includes('permission')) {
+        throw new Error('Server error: insufficient permissions to access thumbnail file');
+      }
+      throw new Error('Server error: failed to serve thumbnail');
+    }
+  }
 }

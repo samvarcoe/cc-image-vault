@@ -59,4 +59,12 @@ export class CollectionsAPI extends APIModel {
   '/api/collections/:id/images' = {
     get: this.request<undefined, ImageMetadataResponse[]>('/api/collections/:id/images', 'GET'),
   };
+
+  '/api/images/:collectionId/:imageId' = {
+    get: this.request<undefined, undefined>('/api/images/:collectionId/:imageId', 'GET'),
+  };
+
+  '/api/images/:collectionId/:imageId/thumbnail' = {
+    get: this.request<undefined, undefined>('/api/images/:collectionId/:imageId/thumbnail', 'GET'),
+  };
 }
