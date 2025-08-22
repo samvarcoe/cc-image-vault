@@ -1,6 +1,17 @@
 import express from 'express';
 import helmet from 'helmet';
-import { CollectionsService } from './collections-service';
+import path from 'path';
+import { promises as fs } from 'fs';
+import { Collection } from '../domain/collection';
+import {
+  ImageQueryParams,
+  validateCollectionId,
+  listCollectionDirectories,
+  collectionExists,
+  collectionDirectoryExists,
+  parseImageQueryParams,
+  convertToApiResponse
+} from './collection-utils';
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -11,8 +22,8 @@ app.use(helmet());
 // Parse JSON bodies
 app.use(express.json());
 
-// Initialize collections service
-const collectionsService = new CollectionsService('./private');
+// Base path for collections
+const basePath = path.resolve('./private');
 
 // Error response helper
 const sendError = (res: express.Response, statusCode: number, error: string, message: string) => {
@@ -22,7 +33,7 @@ const sendError = (res: express.Response, statusCode: number, error: string, mes
 // GET /api/collections - List all collections
 app.get('/api/collections', async (req, res) => {
   try {
-    const collections = await collectionsService.listCollections();
+    const collections = await listCollectionDirectories(basePath);
     res.json(collections);
   } catch (error: unknown) {
     if ((error as Error).message.includes('Server error')) {
@@ -42,18 +53,31 @@ app.post('/api/collections', async (req, res) => {
       return sendError(res, 400, 'validation_error', 'Invalid collection ID format: ID is required');
     }
     
-    const collection = await collectionsService.createCollection(id);
-    res.status(201).json(collection);
+    // Validate collection ID
+    try {
+      validateCollectionId(id);
+    } catch (error: unknown) {
+      return sendError(res, 400, 'validation_error', (error as Error).message);
+    }
+
+    // Check if collection already exists
+    if (await collectionExists(basePath, id)) {
+      return sendError(res, 409, 'conflict_error', 'Duplicate collection ID');
+    }
+
+    // Create collection using domain layer
+    const collection = await Collection.create(id, basePath);
+    await collection.close();
+    
+    res.status(201).json({ id });
   } catch (error: unknown) {
-    if ((error as Error).message.includes('Invalid collection ID format')) {
-      sendError(res, 400, 'validation_error', (error as Error).message);
-    } else if ((error as Error).message.includes('Duplicate collection ID')) {
-      sendError(res, 409, 'conflict_error', (error as Error).message);
-    } else if ((error as Error).message.includes('Server error')) {
-      sendError(res, 500, 'server_error', (error as Error).message);
+    if ((error as Error).message.includes('insufficient permissions')) {
+      sendError(res, 500, 'server_error', 'Server error: insufficient permissions to create collection');
+    } else if ((error as Error).message.includes('Unable to create Collection')) {
+      sendError(res, 500, 'server_error', 'Server error: failed to create collection');
     } else {
       console.error('Unexpected collection creation error:', (error as Error).message);
-      sendError(res, 500, 'server_error', 'Server error: failed to create collection');
+      sendError(res, 500, 'server_error', 'Server error: ' + (error as Error).message);
     }
   }
 });
@@ -62,16 +86,14 @@ app.post('/api/collections', async (req, res) => {
 app.get('/api/collections/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const collection = await collectionsService.getCollection(id);
-    res.json(collection);
-  } catch (error: unknown) {
-    if ((error as Error).message.includes('Collection not found')) {
-      sendError(res, 404, 'not_found_error', (error as Error).message);
-    } else if ((error as Error).message.includes('Server error')) {
-      sendError(res, 500, 'server_error', (error as Error).message);
-    } else {
-      sendError(res, 500, 'server_error', 'Server error: failed to retrieve collection');
+    
+    if (!await collectionExists(basePath, id)) {
+      return sendError(res, 404, 'not_found_error', 'Collection not found');
     }
+    
+    res.json({ id });
+  } catch {
+    sendError(res, 500, 'server_error', 'Server error: failed to retrieve collection');
   }
 });
 
@@ -79,13 +101,18 @@ app.get('/api/collections/:id', async (req, res) => {
 app.delete('/api/collections/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    await collectionsService.deleteCollection(id);
+    
+    if (!await collectionExists(basePath, id)) {
+      return sendError(res, 404, 'not_found_error', 'Collection not found');
+    }
+
+    const collectionPath = path.join(basePath, id);
+    await fs.rm(collectionPath, { recursive: true, force: true });
+    
     res.status(204).send();
   } catch (error: unknown) {
-    if ((error as Error).message.includes('Collection not found')) {
-      sendError(res, 404, 'not_found_error', (error as Error).message);
-    } else if ((error as Error).message.includes('Server error')) {
-      sendError(res, 500, 'server_error', (error as Error).message);
+    if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM') {
+      sendError(res, 500, 'server_error', 'Server error: insufficient permissions to delete collection');
     } else {
       sendError(res, 500, 'server_error', 'Server error: failed to delete collection');
     }
@@ -96,15 +123,32 @@ app.delete('/api/collections/:id', async (req, res) => {
 app.get('/api/collections/:id/images', async (req, res) => {
   try {
     const { id } = req.params;
-    const images = await collectionsService.getCollectionImages(id, req.query);
-    res.json(images);
+    
+    // Parse and validate query parameters first
+    const validatedOptions = parseImageQueryParams(req.query as ImageQueryParams);
+    
+    // Check if collection directory exists to distinguish between "not found" and "access issues"
+    if (!await collectionDirectoryExists(basePath, id)) {
+      return sendError(res, 404, 'not_found_error', 'Collection not found');
+    }
+    
+    const collectionPath = path.join(basePath, id);
+    
+    // Load collection and get images
+    const collection = await Collection.load(collectionPath);
+    const images = await collection.getImages(validatedOptions);
+    await collection.close();
+    
+    // Convert to API response format with pagination
+    const response = convertToApiResponse(images, validatedOptions);
+    res.json(response);
   } catch (error: unknown) {
-    if ((error as Error).message.includes('Collection not found')) {
-      sendError(res, 404, 'not_found_error', (error as Error).message);
-    } else if ((error as Error).message.includes('Invalid')) {
+    if ((error as Error).message.includes('Invalid')) {
       sendError(res, 400, 'validation_error', (error as Error).message);
-    } else if ((error as Error).message.includes('Server error')) {
-      sendError(res, 500, 'server_error', (error as Error).message);
+    } else if ((error as Error).message.includes('Collection not found')) {
+      sendError(res, 404, 'not_found_error', 'Collection not found');
+    } else if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM' || (error as Error).message.includes('permission')) {
+      sendError(res, 500, 'server_error', 'Server error: insufficient permissions to access collection');
     } else {
       sendError(res, 500, 'server_error', 'Server error: failed to retrieve collection images');
     }
@@ -115,26 +159,48 @@ app.get('/api/collections/:id/images', async (req, res) => {
 app.get('/api/images/:collectionId/:imageId', async (req, res) => {
   try {
     const { collectionId, imageId } = req.params;
-    const { filePath, metadata } = await collectionsService.serveOriginalImage(collectionId, imageId);
     
-    // Set cache headers for immutable content (1 year)
-    res.set('Cache-Control', 'max-age=31536000');
+    // Check if collection directory exists first
+    if (!await collectionDirectoryExists(basePath, collectionId)) {
+      return sendError(res, 404, 'not_found_error', 'Collection not found');
+    }
+
+    const collectionPath = path.join(basePath, collectionId);
     
-    // Set content type based on image metadata
-    res.set('Content-Type', metadata.mimeType);
+    // Load collection and get image metadata and file path
+    const collection = await Collection.load(collectionPath);
     
-    // Set content length
-    res.set('Content-Length', metadata.size.toString());
-    
-    // Send the file
-    res.sendFile(filePath);
+    try {
+      const metadata = await collection.getImageMetadata(imageId);
+      const filePath = await collection.getImageFilePath(imageId);
+      await collection.close();
+      
+      // Set cache headers for immutable content (1 year)
+      res.set('Cache-Control', 'max-age=31536000');
+      
+      // Set content type based on image metadata
+      res.set('Content-Type', metadata.mimeType);
+      
+      // Set content length
+      res.set('Content-Length', metadata.size.toString());
+      
+      // Send the file
+      res.sendFile(filePath);
+    } catch (error: unknown) {
+      await collection.close();
+      throw error;
+    }
   } catch (error: unknown) {
     if ((error as Error).message.includes('Collection not found')) {
-      sendError(res, 404, 'not_found_error', (error as Error).message);
+      sendError(res, 404, 'not_found_error', 'Collection not found');
     } else if ((error as Error).message.includes('Image not found')) {
-      sendError(res, 404, 'not_found_error', (error as Error).message);
-    } else if ((error as Error).message.includes('Server error')) {
-      sendError(res, 500, 'server_error', (error as Error).message);
+      sendError(res, 404, 'not_found_error', 'Image not found');
+    } else if ((error as Error).message.includes('Image file not found on filesystem')) {
+      sendError(res, 404, 'not_found_error', 'Image not found');
+    } else if ((error as Error).message.includes('Image file access denied due to insufficient permissions')) {
+      sendError(res, 500, 'server_error', 'Server error: insufficient permissions to access image file');
+    } else if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM' || (error as Error).message.includes('permission')) {
+      sendError(res, 500, 'server_error', 'Server error: insufficient permissions to access image file');
     } else {
       sendError(res, 500, 'server_error', 'Server error: failed to serve image');
     }
@@ -145,30 +211,49 @@ app.get('/api/images/:collectionId/:imageId', async (req, res) => {
 app.get('/api/images/:collectionId/:imageId/thumbnail', async (req, res) => {
   try {
     const { collectionId, imageId } = req.params;
-    const { filePath } = await collectionsService.serveThumbnailImage(collectionId, imageId);
     
-    // Set cache headers for immutable content (1 year)
-    res.set('Cache-Control', 'max-age=31536000');
+    // Check if collection directory exists first
+    if (!await collectionDirectoryExists(basePath, collectionId)) {
+      return sendError(res, 404, 'not_found_error', 'Collection not found');
+    }
+
+    const collectionPath = path.join(basePath, collectionId);
     
-    // Thumbnails are always JPEG format (as per Collection.generateThumbnail)
-    res.set('Content-Type', 'image/jpeg');
+    // Load collection and get image metadata and thumbnail file path
+    const collection = await Collection.load(collectionPath);
     
-    // Get file stats for content length
-    const fs = await import('fs');
-    const stats = await fs.promises.stat(filePath);
-    res.set('Content-Length', stats.size.toString());
-    
-    // Send the file
-    res.sendFile(filePath);
+    try {
+      await collection.getImageMetadata(imageId); // Verify image exists
+      const filePath = await collection.getThumbnailFilePath(imageId);
+      await collection.close();
+      
+      // Set cache headers for immutable content (1 year)
+      res.set('Cache-Control', 'max-age=31536000');
+      
+      // Thumbnails are always JPEG format (as per Collection.generateThumbnail)
+      res.set('Content-Type', 'image/jpeg');
+      
+      // Get file stats for content length
+      const stats = await fs.stat(filePath);
+      res.set('Content-Length', stats.size.toString());
+      
+      // Send the file
+      res.sendFile(filePath);
+    } catch (error: unknown) {
+      await collection.close();
+      throw error;
+    }
   } catch (error: unknown) {
     if ((error as Error).message.includes('Collection not found')) {
-      sendError(res, 404, 'not_found_error', (error as Error).message);
+      sendError(res, 404, 'not_found_error', 'Collection not found');
     } else if ((error as Error).message.includes('Image not found')) {
-      sendError(res, 404, 'not_found_error', (error as Error).message);
-    } else if ((error as Error).message.includes('Thumbnail not found')) {
-      sendError(res, 404, 'not_found_error', (error as Error).message);
-    } else if ((error as Error).message.includes('Server error')) {
-      sendError(res, 500, 'server_error', (error as Error).message);
+      sendError(res, 404, 'not_found_error', 'Image not found');
+    } else if ((error as Error).message.includes('Thumbnail file not found on filesystem')) {
+      sendError(res, 404, 'not_found_error', 'Thumbnail not found');
+    } else if ((error as Error).message.includes('Thumbnail file access denied due to insufficient permissions')) {
+      sendError(res, 500, 'server_error', 'Server error: insufficient permissions to access thumbnail file');
+    } else if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM' || (error as Error).message.includes('permission')) {
+      sendError(res, 500, 'server_error', 'Server error: insufficient permissions to access thumbnail file');
     } else {
       sendError(res, 500, 'server_error', 'Server error: failed to serve thumbnail');
     }

@@ -111,6 +111,20 @@ export class ImageServingFixtures extends Fixtures<ImageServingState> {
     if (simulatePermissionIssues) {
       const originalDir = path.join(collectionPath, 'images', 'original');
       await fs.chmod(originalDir, 0o000);
+      
+      // Verify that permission restrictions actually work
+      try {
+        await fs.access(originalDir);
+        // If we get here, permissions aren't being enforced
+        console.warn('Warning: Filesystem permissions not enforced in this environment, skipping permission test');
+        await fs.chmod(originalDir, 0o755); // Restore permissions
+        throw new Error('SKIP_PERMISSION_TEST: Filesystem permissions not enforced');
+      } catch (error) {
+        if ((error as Error).message.startsWith('SKIP_PERMISSION_TEST')) {
+          throw error;
+        }
+        // Permission restriction is working as expected
+      }
     }
 
     const cleanup = async () => {

@@ -50,6 +50,21 @@ export class CollectionsDirectoryFixtures extends Fixtures<DirectoryState> {
     if (simulatePermissionIssues) {
       // Remove write permissions from the private directory
       await fs.chmod(privateDir, 0o444);
+      
+      // Verify that permission restrictions actually work
+      try {
+        const testPath = path.join(privateDir, 'permission-test-' + Date.now());
+        await fs.mkdir(testPath);
+        // If we get here, permissions aren't being enforced
+        console.warn('Warning: Filesystem permissions not enforced in this environment, skipping permission test');
+        await fs.chmod(privateDir, 0o755); // Restore permissions
+        throw new Error('SKIP_PERMISSION_TEST: Filesystem permissions not enforced');
+      } catch (error) {
+        if ((error as Error).message.startsWith('SKIP_PERMISSION_TEST')) {
+          throw error;
+        }
+        // Permission restriction is working as expected
+      }
     }
 
     const cleanup = async () => {

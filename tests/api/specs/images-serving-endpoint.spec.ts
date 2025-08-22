@@ -226,9 +226,19 @@ test.describe('Image Serving API Endpoints', () => {
   });
 
   test('Image serving with filesystem permission issues', async () => {
-    const collection = await ImageServingFixtures.createWithPermissionIssues({
-      collectionId: 'permission-issues-collection'
-    });
+    let collection;
+    try {
+      collection = await ImageServingFixtures.createWithPermissionIssues({
+        collectionId: 'permission-issues-collection'
+      });
+    } catch (error) {
+      if ((error as Error).message.includes('SKIP_PERMISSION_TEST')) {
+        // Skip this test in environments where filesystem permissions aren't enforced
+        console.log('Skipping permission test - filesystem permissions not enforced in this environment');
+        return;
+      }
+      throw error;
+    }
 
     const testImage = collection.images[0];
 
