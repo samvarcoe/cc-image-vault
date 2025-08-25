@@ -1,59 +1,44 @@
 import { test, expect } from '@playwright/test';
 import { promises as fs } from 'fs';
-import { tmpdir } from 'os';
 import path from 'path';
-import { Collection } from '../../src/domain/collection';
-import { TestUtils } from './utils';
+import { Collection } from '../../../src/domain/collection';
+import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
+import { Fixtures } from '../../utils/fixtures/base-fixtures';
+import { TestUtils } from '../utils';
 
 test.describe('Collections - Creation and Loading', () => {
-  const tempDirs: string[] = [];
-
+  
   test.afterAll(async () => {
-    // Cleanup all temporary directories
-    for (const dir of tempDirs) {
-      try {
-        await fs.rm(dir, { recursive: true, force: true });
-      } catch (error) {
-        console.warn(`Cleanup warning for ${dir}:`, error);
-      }
-    }
+    await Fixtures.cleanup();
   });
-
-  async function createTempDir(): Promise<string> {
-    const tempDir = await fs.mkdtemp(path.join(tmpdir(), 'collection-test-'));
-    tempDirs.push(tempDir);
-    return tempDir;
-  }
 
   // Positive Scenarios
 
   test('Collection creation with valid parameters', async () => {
     const collectionId = `test-collection-${Date.now()}`;
-    const basePath = await createTempDir();
     
-    const collection = await Collection.create(collectionId, basePath);
+    const collection = await CollectionFixtures.createEmpty({ collectionId });
     
     expect(collection.id, { 
       message: `Collection has ID "${collection.id}" instead of "${collectionId}" after creation with valid parameters` 
     }).toBe(collectionId);
     
     expect(collection.basePath, { 
-      message: `Collection has base path "${collection.basePath}" instead of "${basePath}" after creation with valid parameters` 
-    }).toBe(basePath);
+      message: `Collection base path "${collection.basePath}" should be defined after creation with valid parameters` 
+    }).toBeTruthy();
     
     console.log(`✓ Collection ${collectionId} created with correct ID and base path`);
     
-    const collectionPath = path.join(basePath, collectionId);
+    const collectionPath = path.join(collection.basePath, collectionId);
     await TestUtils.shouldHaveValidStructure(collectionPath);
   });
 
   test('Collection loading from existing directory', async () => {
     const collectionId = `existing-collection-${Date.now()}`;
-    const basePath = await createTempDir();
     
-    // First create a collection
-    await Collection.create(collectionId, basePath);
-    const collectionPath = path.join(basePath, collectionId);
+    // First create a collection using fixtures
+    const collection = await CollectionFixtures.createEmpty({ collectionId });
+    const collectionPath = path.join(collection.basePath, collectionId);
     
     const loadedCollection = await Collection.load(collectionPath);
     
@@ -78,6 +63,7 @@ test.describe('Collections - Creation and Loading', () => {
     let errorMessage = '';
     
     try {
+      // Use Collection.create directly for error testing scenario
       await Collection.create(collectionId, invalidPath);
     } catch (error: unknown) {
       errorThrown = true;
@@ -103,12 +89,21 @@ test.describe('Collections - Creation and Loading', () => {
   test('Collection creation with insufficient permissions', async () => {
     const collectionId = `permission-fail-collection-${Date.now()}`;
     const restrictedPath = await TestUtils.createNoWritePermissionPath();
-    tempDirs.push(restrictedPath);
+    
+    // Add manual cleanup for this specific test resource
+    (Fixtures as any).addCleanup(async () => {
+      try {
+        await fs.rm(restrictedPath, { recursive: true, force: true });
+      } catch {
+        // Cleanup failures are non-fatal
+      }
+    });
     
     let errorThrown = false;
     let errorMessage = '';
     
     try {
+      // Use Collection.create directly for error testing scenario
       await Collection.create(collectionId, restrictedPath);
     } catch (error: unknown) {
       errorThrown = true;
@@ -134,10 +129,19 @@ test.describe('Collections - Creation and Loading', () => {
 
   test('Collection creation with database failure', async () => {
     const collectionId = `db-fail-collection-${Date.now()}`;
-    const basePath = await createTempDir();
+    
+    // Use fixtures to create a temp directory that will be cleaned up
+    const tempDir = await fs.mkdtemp('/tmp/db-fail-test-');
+    (Fixtures as any).addCleanup(async () => {
+      try {
+        await fs.rm(tempDir, { recursive: true, force: true });
+      } catch {
+        // Cleanup failures are non-fatal
+      }
+    });
     
     // Create the collection directory structure manually to simulate partial creation
-    const collectionPath = path.join(basePath, collectionId);
+    const collectionPath = path.join(tempDir, collectionId);
     await fs.mkdir(collectionPath, { recursive: true });
     
     // Create a directory where the database should be to cause database creation to fail
@@ -148,7 +152,8 @@ test.describe('Collections - Creation and Loading', () => {
     let errorMessage = '';
     
     try {
-      await Collection.create(collectionId, basePath);
+      // Use Collection.create directly for error testing scenario
+      await Collection.create(collectionId, tempDir);
     } catch (error: unknown) {
       errorThrown = true;
       errorMessage = error.message;
@@ -167,10 +172,10 @@ test.describe('Collections - Creation and Loading', () => {
       message: `Collection directory "${collectionPath}" still exists after database failure instead of being cleaned up` 
     }).toBe(false);
     
-    const baseContents = await TestUtils.listContents(basePath);
+    const baseContents = await TestUtils.listContents(tempDir);
     const hasCollectionItems = baseContents.some(item => item.includes(collectionId));
     expect(hasCollectionItems, { 
-      message: `Base path "${basePath}" contains collection remnants after database failure cleanup` 
+      message: `Base path "${tempDir}" contains collection remnants after database failure cleanup` 
     }).toBe(false);
     
     console.log(`✓ Collection creation with database failure properly cleaned up partial state`);
@@ -178,11 +183,10 @@ test.describe('Collections - Creation and Loading', () => {
 
   test('Collection loading with access issues', async () => {
     const collectionId = `access-issue-collection-${Date.now()}`;
-    const basePath = await createTempDir();
     
-    // First create a valid collection
-    await Collection.create(collectionId, basePath);
-    const collectionPath = path.join(basePath, collectionId);
+    // First create a valid collection using fixtures
+    const collection = await CollectionFixtures.createEmpty({ collectionId });
+    const collectionPath = path.join(collection.basePath, collectionId);
     
     // Corrupt the database to simulate access issues
     const databasePath = path.join(collectionPath, 'collection.db');

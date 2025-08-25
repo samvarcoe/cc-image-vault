@@ -4,12 +4,13 @@ import { CollectionsDirectoryFixtures } from '../utils/collections-directory-fix
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { TEST_CONFIG } from '../../utils/test-config';
 
-test.describe('Collections API Endpoint', () => {
+test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
   let api: CollectionsAPI;
 
   // Setup API client using shared test configuration
   test.beforeAll(() => {
     api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
+
   });
 
   // Cleanup fixtures after each test

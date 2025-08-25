@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
-import { ImageStatus } from '../../src/domain/types';
-import { Fixtures } from '../utils/fixtures/base-fixtures';
-import { CollectionFixtures } from '../utils/fixtures/collection-fixtures';
-import { TestUtils } from './utils';
+import { ImageStatus } from '../../../src/domain/types';
+import { Fixtures } from '../../utils/fixtures/base-fixtures';
+import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
+import { TestUtils } from '../utils';
 
 test.describe('Collections - Image Updates', () => {
   

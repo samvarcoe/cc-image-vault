@@ -5,7 +5,7 @@ import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { TEST_CONFIG } from '../../utils/test-config';
 
-test.describe('Collections Images API Endpoint', () => {
+test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
   let api: CollectionsAPI;
 
   // Setup API client using shared test configuration

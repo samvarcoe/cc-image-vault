@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { Fixtures } from '../utils/fixtures/base-fixtures';
-import { ImageFixtures } from '../utils/fixtures/image-fixtures';
-import { CollectionFixtures } from '../utils/fixtures/collection-fixtures';
-import { TestUtils } from './utils';
+import { Fixtures } from '../../utils/fixtures/base-fixtures';
+import { ImageFixtures } from '../../utils/fixtures/image-fixtures';
+import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
+import { TestUtils } from '../utils';
 
 test.describe('Collections - Image Operations', () => {
   

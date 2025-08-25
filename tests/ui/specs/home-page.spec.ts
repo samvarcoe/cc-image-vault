@@ -3,7 +3,7 @@ import { ImageVaultApp } from '../ui-model/image-vault-app';
 import { HomePageFixtures } from '../utils/home-page-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 
-test.describe('Home Page', () => {
+test.describe('Home Page', { tag: '@sequential' }, () => {
   test.afterEach(async () => {
     await Fixtures.cleanup();
   });

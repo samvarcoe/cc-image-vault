@@ -27,6 +27,8 @@ app.use(helmet({
       "script-src": ["'self'", "'unsafe-inline'"],
       "script-src-attr": ["'unsafe-inline'"], // Allow inline event handlers
       "form-action": ["'self'"], // Allow form submissions to same origin
+      // Disable upgrade-insecure-requests in development to avoid HTTPS protocol errors
+      "upgrade-insecure-requests": process.env.NODE_ENV === 'production' ? [] : null,
     },
   },
 }));

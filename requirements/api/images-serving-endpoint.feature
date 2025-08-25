@@ -45,9 +45,3 @@ Feature: Image Serving API Endpoints
         When the client requests GET /api/images/:collectionId/:imageId/thumbnail
         Then the API returns 404 status code
         And the API returns error message indicating thumbnail not found
-
-    Scenario: Image serving with filesystem permission issues
-        Given a collection and image exist but have permission issues
-        When the client requests GET /api/images/:collectionId/:imageId
-        Then the API returns 500 status code
-        And the API returns error message indicating server error

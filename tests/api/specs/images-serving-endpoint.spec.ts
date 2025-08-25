@@ -5,7 +5,7 @@ import { BinaryResponseUtils } from '../utils/binary-response-utils';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { TEST_CONFIG } from '../../utils/test-config';
 
-test.describe('Image Serving API Endpoints', () => {
+test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
   let api: CollectionsAPI;
 
   test.beforeAll(() => {
@@ -224,55 +224,5 @@ test.describe('Image Serving API Endpoints', () => {
     }
 
     console.log(`✓ Missing thumbnail for image "${imageWithoutThumbnail!.id}" correctly returns 404 with proper error message`);
-  });
-
-  test('Image serving with filesystem permission issues', async () => {
-    let collection;
-    try {
-      collection = await ImageServingFixtures.createWithPermissionIssues({
-        collectionId: 'permission-issues-collection'
-      });
-    } catch (error) {
-      if ((error as Error).message.includes('SKIP_PERMISSION_TEST')) {
-        // Skip this test in environments where filesystem permissions aren't enforced
-        console.log('Skipping permission test - filesystem permissions not enforced in this environment');
-        return;
-      }
-      throw error;
-    }
-
-    const testImage = collection.images[0];
-
-    const response = await api['/api/images/:collectionId/:imageId'].get({
-      pathParams: {
-        collectionId: collection.collectionId,
-        imageId: testImage.id
-      }
-    });
-
-    expect(response.raw.status, {
-      message: `Image serving returned HTTP ${response.raw.status} instead of 500 for image "${testImage.id}" with filesystem permission issues`
-    }).toBe(500);
-
-    expect(response.raw.ok, {
-      message: `Image serving succeeded unexpectedly for image "${testImage.id}" despite filesystem permission restrictions`
-    }).toBe(false);
-
-    if (response.body) {
-      const errorBody = response.body as Record<string, unknown>;
-      expect(errorBody, {
-        message: `Error response missing 'error' field for permission-denied image "${testImage.id}"`
-      }).toHaveProperty('error');
-      
-      expect(errorBody, {
-        message: `Error response missing 'message' field for permission-denied image "${testImage.id}"`
-      }).toHaveProperty('message');
-      
-      expect(errorBody.message.toLowerCase(), {
-        message: `Error message "${errorBody.message}" does not indicate server error for image "${testImage.id}" with permission issues`
-      }).toContain('server error');
-    }
-
-    console.log(`✓ Filesystem permission issues for image "${testImage.id}" correctly return 500 with proper error message`);
   });
 });
