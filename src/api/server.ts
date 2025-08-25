@@ -54,6 +54,7 @@ app.get('/', async (req, res) => {
     const collections = await listCollectionDirectories(basePath);
     const model = new HomePageModel(collections);
     const view = new HomePageView(model);
+    // throw new Error('renderPage function is missing'); // This line is just to avoid TS error in this snippet
     const html = renderPage(view, model, 'home');
     res.send(html);
   } catch (error: unknown) {

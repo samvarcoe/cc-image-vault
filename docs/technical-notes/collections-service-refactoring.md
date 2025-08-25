@@ -17,12 +17,12 @@ The service was essentially performing infrastructure tasks (filesystem operatio
 
 ### Architecture Changes
 **Before:**
-```
+```text
 API Endpoints → CollectionsService → Collection (Domain)
 ```
 
 **After:**
-```
+```text
 API Endpoints → Collection (Domain) + Utilities
 ```
 

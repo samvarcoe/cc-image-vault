@@ -119,18 +119,8 @@ export interface ICollection {
 
 ### Collection Page (/collection/:id)
 - The main page for the collection
-- Displays images with "COLLECTION" status
+- Displays images according to their status
 - Primary interface for viewing curated images
-
-### Inbox Page (/collection/:id/inbox)
-- Where images are initially placed before user decision
-- Displays images with "INBOX" status
-- Primary sorting and classification interface
-
-### Archive Page (/collection/:id/archive)
-- Where photos go when rejected from collection but not yet deleted
-- Displays images with "ARCHIVE" status
-- Allows restoration to collection or permanent deletion
 
 ### Slideshow Page (/collection/:id/slideshow)
 - Cycles through images with "COLLECTION" status

@@ -91,7 +91,7 @@ test.describe('Collections - Creation and Loading', () => {
     const restrictedPath = await TestUtils.createNoWritePermissionPath();
     
     // Add manual cleanup for this specific test resource
-    (Fixtures as any).addCleanup(async () => {
+    (Fixtures as { addCleanup: (fn: () => Promise<void>) => void }).addCleanup(async () => {
       try {
         await fs.rm(restrictedPath, { recursive: true, force: true });
       } catch {
@@ -132,7 +132,7 @@ test.describe('Collections - Creation and Loading', () => {
     
     // Use fixtures to create a temp directory that will be cleaned up
     const tempDir = await fs.mkdtemp('/tmp/db-fail-test-');
-    (Fixtures as any).addCleanup(async () => {
+    (Fixtures as { addCleanup: (fn: () => Promise<void>) => void }).addCleanup(async () => {
       try {
         await fs.rm(tempDir, { recursive: true, force: true });
       } catch {

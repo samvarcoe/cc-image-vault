@@ -1,153 +1,167 @@
-// Client-side home page controller
-class HomePageController {
-  constructor() {
-    this.currentCollectionToDelete = null;
-    this.init();
-  }
-
-  init() {
-    // Make controller available globally
-    window.homeController = this;
-    
-    // Initialize form validation
-    const input = document.querySelector('[data-testid="collection-id-input"]');
-    const createButton = document.querySelector('[data-testid="create-button"]');
-    
-    if (input && createButton) {
-      // Initial state
-      createButton.disabled = !input.value.trim();
-      
-      // Real-time validation
-      input.addEventListener('input', (e) => {
-        this.validateCollectionId(e.target.value);
-      });
+import { Controller } from '../../mvc.js';
+import { HomePageModel } from './model.js';
+import { HomePageView } from './view.js';
+export class HomePageController extends Controller {
+    constructor(model, view) {
+        super(model, view);
     }
-  }
-
-  async createCollection(event) {
-    event.preventDefault();
-    
-    const form = event.target;
-    const formData = new FormData(form);
-    const collectionId = formData.get('collectionId');
-
-    // Clear previous errors
-    this.clearErrors();
-
-    // Validate collection ID
-    if (!this.isValidCollectionId(collectionId)) {
-      this.showValidationError('Collection ID can only contain letters, numbers, and hyphens');
-      return;
+    attachEventListeners() {
+        document.addEventListener('click', (e) => {
+            var _a;
+            const target = e.target;
+            const id = target.dataset.id || ((_a = target.closest('[data-id]')) === null || _a === void 0 ? void 0 : _a.getAttribute('data-id'));
+            switch (id) {
+                case 'delete-collection':
+                    this.handleDeleteCollection(target.closest('[data-id]'));
+                    break;
+                case 'cancel-deletion':
+                    this.handleCancelDeletion();
+                    break;
+                case 'confirm-deletion':
+                    this.handleConfirmDeletion();
+                    break;
+                case 'create-collection-submit':
+                    this.handleCreateCollection(e);
+                    break;
+            }
+        });
+        document.addEventListener('input', (e) => {
+            const target = e.target;
+            const id = target.dataset.id;
+            if (id === 'collection-id-input') {
+                this.handleCollectionIdInput(target);
+            }
+        });
+        document.addEventListener('submit', (e) => {
+            const target = e.target;
+            const id = target.dataset.id;
+            if (id === 'create-collection-form') {
+                e.preventDefault();
+                this.handleCreateCollection(e);
+            }
+        });
     }
-
-    try {
-      const response = await fetch('/api/collections', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ id: collectionId })
-      });
-
-      if (response.status === 409) {
-        this.showDuplicateIdError();
-        return;
-      }
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Refresh the page to show the new collection
-      window.location.reload();
-    } catch (error) {
-      console.error('Error creating collection:', error);
-      this.showValidationError('Failed to create collection. Please try again.');
+    handleCollectionIdInput(input) {
+        const value = input.value.trim();
+        const model = this.model;
+        const elementId = input.getAttribute('data-testid') || input.id;
+        model.captureFocusState(elementId, input.selectionStart, input.selectionEnd);
+        model.updateFormState(value);
+        if (value && !model.getFormState().isValid) {
+            model.setFormError('validation', 'Collection ID can only contain letters, numbers, and hyphens');
+        }
+        else {
+            model.clearFormErrors();
+        }
+        this.updateView();
     }
-  }
-
-  validateCollectionId(value) {
-    const createButton = document.querySelector('[data-testid="create-button"]');
-    
-    if (!value.trim()) {
-      this.clearErrors();
-      createButton.disabled = true;
-      return;
+    updateView() {
+        super.updateView();
+        this.restoreFocusState();
     }
-
-    if (this.isValidCollectionId(value)) {
-      this.clearErrors();
-      createButton.disabled = false;
-    } else {
-      this.showValidationError('Collection ID can only contain letters, numbers, and hyphens');
-      createButton.disabled = true;
+    restoreFocusState() {
+        const model = this.model;
+        const focusState = model.getFocusState();
+        if (focusState.activeElementId) {
+            const element = document.querySelector(`[data-testid="${focusState.activeElementId}"], #${focusState.activeElementId}`);
+            if (element && element.focus) {
+                element.focus();
+                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                    if (focusState.selectionStart !== null && focusState.selectionEnd !== null) {
+                        element.setSelectionRange(focusState.selectionStart, focusState.selectionEnd);
+                    }
+                }
+            }
+        }
     }
-  }
-
-  isValidCollectionId(id) {
-    return /^[a-zA-Z0-9-]+$/.test(id);
-  }
-
-  showDeleteConfirmation(collectionId) {
-    this.currentCollectionToDelete = collectionId;
-    const dialog = document.querySelector('[data-testid="confirmation-dialog"]');
-    const collectionDisplay = document.querySelector('[data-testid="collection-id-display"]');
-    
-    collectionDisplay.textContent = collectionId;
-    dialog.style.display = 'flex';
-  }
-
-  cancelDeletion() {
-    this.currentCollectionToDelete = null;
-    const dialog = document.querySelector('[data-testid="confirmation-dialog"]');
-    dialog.style.display = 'none';
-  }
-
-  async confirmDeletion() {
-    if (!this.currentCollectionToDelete) return;
-
-    try {
-      const response = await fetch(`/api/collections/${this.currentCollectionToDelete}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Refresh the page to remove the deleted collection
-      window.location.reload();
-    } catch (error) {
-      console.error('Error deleting collection:', error);
-      // Show error message to user
+    async handleCreateCollection(event) {
+        event.preventDefault();
+        const model = this.model;
+        const formState = model.getFormState();
+        if (!formState.isValid) {
+            return;
+        }
+        model.setCreatingCollection(true);
+        const existingCollection = model.getCollections().find(c => c.id === formState.collectionId);
+        if (!existingCollection) {
+            model.addCollectionOptimistically(formState.collectionId);
+        }
+        this.updateView();
+        try {
+            const response = await fetch('/api/collections', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: formState.collectionId })
+            });
+            if (response.status === 409) {
+                if (!existingCollection) {
+                    model.removeCollectionOptimistically(formState.collectionId);
+                }
+                model.setFormError('duplicate');
+                model.setCreatingCollection(false);
+                this.updateView();
+                return;
+            }
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            model.resetForm();
+            model.setCreatingCollection(false);
+            this.updateView();
+        }
+        catch (error) {
+            console.error('Error creating collection:', error);
+            if (!existingCollection) {
+                model.removeCollectionOptimistically(formState.collectionId);
+            }
+            model.setFormError('server', 'Failed to create collection. Please try again.');
+            model.setCreatingCollection(false);
+            this.updateView();
+        }
     }
-  }
-
-  showValidationError(message) {
-    const errorElement = document.querySelector('[data-testid="validation-error"]');
-    errorElement.textContent = message;
-    errorElement.style.display = 'block';
-  }
-
-  showDuplicateIdError() {
-    const errorElement = document.querySelector('[data-testid="duplicate-id-error"]');
-    errorElement.style.display = 'block';
-  }
-
-  clearErrors() {
-    const validationError = document.querySelector('[data-testid="validation-error"]');
-    const duplicateError = document.querySelector('[data-testid="duplicate-id-error"]');
-    
-    if (validationError) validationError.style.display = 'none';
-    if (duplicateError) duplicateError.style.display = 'none';
-  }
+    handleDeleteCollection(element) {
+        const collectionId = element.dataset.collectionId;
+        if (!collectionId)
+            return;
+        this.model.setDeletingCollection(collectionId);
+        this.updateView();
+    }
+    handleCancelDeletion() {
+        this.model.setDeletingCollection(null);
+        this.updateView();
+    }
+    async handleConfirmDeletion() {
+        const model = this.model;
+        const collectionId = model.getLoadingState().deletingCollection;
+        if (!collectionId)
+            return;
+        model.removeCollectionOptimistically(collectionId);
+        this.updateView();
+        try {
+            const response = await fetch(`/api/collections/${collectionId}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            model.setDeletingCollection(null);
+            this.updateView();
+        }
+        catch (error) {
+            console.error('Error deleting collection:', error);
+            model.addCollectionOptimistically(collectionId);
+            model.setDeletingCollection(null);
+            this.updateView();
+        }
+    }
 }
-
-// Initialize the controller when DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    new HomePageController();
-  });
-} else {
-  new HomePageController();
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const serverData = window.__MODEL_DATA__;
+    const parsedData = JSON.parse(serverData);
+    const model = new HomePageModel(parsedData.collections || []);
+    const view = new HomePageView(model);
+    const controller = new HomePageController(model, view);
+    controller.init();
+});

@@ -1,20 +1,16 @@
 import { View, escapeHtml } from '../../mvc.js';
-import { HomePageModel, CollectionListItem, HomePageData, ErrorState } from './model.js';
-
-export class HomePageView extends View<HomePageData> {
-  constructor(protected model: HomePageModel) {
-    super(model);
-  }
-
-  getTitle(): string {
-    return 'Image Vault - Home';
-  }
-
-  render(): string {
-    const collections = this.model.getSortedCollections();
-    const hasCollections = this.model.hasCollections();
-
-    return /*html*/`
+export class HomePageView extends View {
+    constructor(model) {
+        super(model);
+        this.model = model;
+    }
+    getTitle() {
+        return 'Image Vault - Home';
+    }
+    render() {
+        const collections = this.model.getSortedCollections();
+        const hasCollections = this.model.hasCollections();
+        return `
       <div class="home-page">
         <header class="page-header">
           <h1>Image Vault</h1>
@@ -29,10 +25,9 @@ export class HomePageView extends View<HomePageData> {
         ${this.renderConfirmationDialog()}
       </div>
     `;
-  }
-
-  private renderCollectionsList(collections: CollectionListItem[]): string {
-    return /*html*/`
+    }
+    renderCollectionsList(collections) {
+        return `
       <section class="collections-section">
         <h2>Your Collections</h2>
         <div data-testid="collections-list" class="collections-list">
@@ -40,14 +35,12 @@ export class HomePageView extends View<HomePageData> {
         </div>
       </section>
     `;
-  }
-
-  private renderCollectionItem(collection: CollectionListItem): string {
-    const escapedId = escapeHtml(collection.id);
-    const loadingState = this.model.getLoadingState();
-    const isDeleting = loadingState.deletingCollection === collection.id;
-    
-    return /*html*/`
+    }
+    renderCollectionItem(collection) {
+        const escapedId = escapeHtml(collection.id);
+        const loadingState = this.model.getLoadingState();
+        const isDeleting = loadingState.deletingCollection === collection.id;
+        return `
       <div data-testid="collection-item-${escapedId}" class="collection-item">
         <a data-testid="collection-link-${escapedId}" href="/collection/${escapedId}" class="collection-link">
           <h3>${escapedId}</h3>
@@ -63,23 +56,20 @@ export class HomePageView extends View<HomePageData> {
         </button>
       </div>
     `;
-  }
-
-  private renderEmptyState(): string {
-    return /*html*/`
+    }
+    renderEmptyState() {
+        return `
       <div data-testid="empty-state" class="empty-state">
         <h2>No Collections Yet</h2>
         <p>Create your first collection to get started organizing your images.</p>
       </div>
     `;
-  }
-
-  private renderCreateCollectionForm(): string {
-    const formState = this.model.getFormState();
-    const errorState = this.model.getErrorState();
-    const loadingState = this.model.getLoadingState();
-    
-    return /*html*/`
+    }
+    renderCreateCollectionForm() {
+        const formState = this.model.getFormState();
+        const errorState = this.model.getErrorState();
+        const loadingState = this.model.getLoadingState();
+        return `
       <section class="create-collection-section">
         <h2>Create New Collection</h2>
         <form data-testid="create-collection-form" data-id="create-collection-form" class="create-collection-form">
@@ -111,14 +101,12 @@ export class HomePageView extends View<HomePageData> {
         </form>
       </section>
     `;
-  }
-
-  private renderConfirmationDialog(): string {
-    const loadingState = this.model.getLoadingState();
-    const collectionToDelete = loadingState.deletingCollection;
-    const isVisible = collectionToDelete !== null;
-    
-    return /*html*/`
+    }
+    renderConfirmationDialog() {
+        const loadingState = this.model.getLoadingState();
+        const collectionToDelete = loadingState.deletingCollection;
+        const isVisible = collectionToDelete !== null;
+        return `
       <div data-testid="confirmation-dialog" class="confirmation-dialog" style="display: ${isVisible ? 'flex' : 'none'};">
         <div class="dialog-overlay" data-id="cancel-deletion"></div>
         <div class="dialog-content">
@@ -146,31 +134,26 @@ export class HomePageView extends View<HomePageData> {
         </div>
       </div>
     `;
-  }
-
-  private renderFormErrors(errorState: ErrorState): string {
-    let errors = '';
-    
-    if (errorState.validation) {
-      errors += /*html*/`<div data-testid="validation-error" class="validation-error">${escapeHtml(errorState.validation)}</div>`;
     }
-    
-    if (errorState.duplicate) {
-      errors += /*html*/`
+    renderFormErrors(errorState) {
+        let errors = '';
+        if (errorState.validation) {
+            errors += `<div data-testid="validation-error" class="validation-error">${escapeHtml(errorState.validation)}</div>`;
+        }
+        if (errorState.duplicate) {
+            errors += `
         <div data-testid="duplicate-id-error" class="duplicate-id-error">
           A collection with this ID already exists. Please choose a different name.
         </div>
       `;
-    }
-    
-    if (errorState.server) {
-      errors += /*html*/`
+        }
+        if (errorState.server) {
+            errors += `
         <div data-testid="server-error" class="server-error">
           ${escapeHtml(errorState.server)}
         </div>
       `;
+        }
+        return errors;
     }
-    
-    return errors;
-  }
 }

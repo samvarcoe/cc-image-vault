@@ -1,16 +1,64 @@
-import { Model } from '../../mvc';
+import { Model } from '../../mvc.js';
 
 export interface CollectionListItem {
   id: string;
 }
 
+export interface FormState {
+  collectionId: string;
+  isValid: boolean;
+  isSubmitting: boolean;
+}
+
+export interface ErrorState {
+  validation: string | null;
+  duplicate: boolean;
+  server: string | null;
+}
+
+export interface LoadingState {
+  creatingCollection: boolean;
+  deletingCollection: string | null;
+}
+
+export interface FocusState {
+  activeElementId: string | null;
+  selectionStart: number | null;
+  selectionEnd: number | null;
+}
+
 export interface HomePageData {
   collections: CollectionListItem[];
+  formState: FormState;
+  errorState: ErrorState;
+  loadingState: LoadingState;
+  focusState: FocusState;
 }
 
 export class HomePageModel extends Model<HomePageData> {
   constructor(collections: CollectionListItem[] = []) {
-    super({ collections });
+    super({ 
+      collections,
+      formState: {
+        collectionId: '',
+        isValid: false,
+        isSubmitting: false
+      },
+      errorState: {
+        validation: null,
+        duplicate: false,
+        server: null
+      },
+      loadingState: {
+        creatingCollection: false,
+        deletingCollection: null
+      },
+      focusState: {
+        activeElementId: null,
+        selectionStart: null,
+        selectionEnd: null
+      }
+    });
   }
 
   getCollections(): CollectionListItem[] {
@@ -23,5 +71,99 @@ export class HomePageModel extends Model<HomePageData> {
 
   hasCollections(): boolean {
     return this.getCollections().length > 0;
+  }
+
+  getFormState(): FormState {
+    return this.data.formState;
+  }
+
+  getErrorState(): ErrorState {
+    return this.data.errorState;
+  }
+
+  getLoadingState(): LoadingState {
+    return this.data.loadingState;
+  }
+
+  getFocusState(): FocusState {
+    return this.data.focusState;
+  }
+
+  captureFocusState(elementId: string, selectionStart: number | null = null, selectionEnd: number | null = null): void {
+    this.data.focusState = {
+      activeElementId: elementId,
+      selectionStart,
+      selectionEnd
+    };
+  }
+
+  clearFocusState(): void {
+    this.data.focusState = {
+      activeElementId: null,
+      selectionStart: null,
+      selectionEnd: null
+    };
+  }
+
+  updateFormState(collectionId: string): void {
+    this.data.formState = {
+      ...this.data.formState,
+      collectionId,
+      isValid: this.isValidCollectionId(collectionId)
+    };
+  }
+
+  setFormSubmitting(isSubmitting: boolean): void {
+    this.data.formState = {
+      ...this.data.formState,
+      isSubmitting
+    };
+  }
+
+  setFormError(type: 'validation' | 'duplicate' | 'server', message?: string): void {
+    if (type === 'validation') {
+      this.data.errorState.validation = message || null;
+    } else if (type === 'duplicate') {
+      this.data.errorState.duplicate = true;
+    } else if (type === 'server') {
+      this.data.errorState.server = message || null;
+    }
+  }
+
+  clearFormErrors(): void {
+    this.data.errorState = {
+      validation: null,
+      duplicate: false,
+      server: null
+    };
+  }
+
+  setCreatingCollection(isCreating: boolean): void {
+    this.data.loadingState.creatingCollection = isCreating;
+  }
+
+  setDeletingCollection(collectionId: string | null): void {
+    this.data.loadingState.deletingCollection = collectionId;
+  }
+
+  addCollectionOptimistically(collectionId: string): void {
+    this.data.collections = [...this.data.collections, { id: collectionId }];
+  }
+
+  removeCollectionOptimistically(collectionId: string): void {
+    this.data.collections = this.data.collections.filter(c => c.id !== collectionId);
+  }
+
+  resetForm(): void {
+    this.data.formState = {
+      collectionId: '',
+      isValid: false,
+      isSubmitting: false
+    };
+    this.clearFormErrors();
+  }
+
+  private isValidCollectionId(id: string): boolean {
+    return /^[a-zA-Z0-9-]+$/.test(id) && id.trim().length > 0;
   }
 }

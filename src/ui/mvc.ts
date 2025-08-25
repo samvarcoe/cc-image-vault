@@ -70,21 +70,25 @@ export function renderPage<T>(view: View<T>, model: Model<T>, pageSlug: string):
     .replace(/\r/g, '\\r')
     .replace(/\n/g, '\\n');
   
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(view.getTitle())}</title>
-  <link rel="stylesheet" href="/css/${pageSlug}.css">
-</head>
-<body>
-  <div id="app">${view.render()}</div>
-  
-  <script>
-    window.__MODEL_DATA__ = '${escapedModelData}';
-  </script>
-  <script src="/js/${pageSlug}.js"></script>
-</body>
-</html>`;
+  return /*html*/`
+    <!DOCTYPE html>
+    <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${escapeHtml(view.getTitle())}</title>
+        <link rel="stylesheet" href="/css/${pageSlug}.css">
+      </head>
+      <body>
+        <div id="app">${view.render()}</div>
+        
+        <script>
+          window.__MODEL_DATA__ = '${escapedModelData}';
+        </script>
+        <script type="module" src="/js/pages/${pageSlug}/model.js"></script>
+        <script type="module" src="/js/pages/${pageSlug}/view.js"></script>
+        <script type="module" src="/js/pages/${pageSlug}/controller.js"></script>
+      </body>
+    </html>
+  `;
 }

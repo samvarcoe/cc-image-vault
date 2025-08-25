@@ -13,4 +13,12 @@ export default defineConfig([
   { files: ["**/*.jsonc"], plugins: { json }, language: "json/jsonc", extends: ["json/recommended"] },
   { files: ["**/*.md"], plugins: { markdown }, language: "markdown/commonmark", extends: ["markdown/recommended"] },
   { files: ["**/*.css"], plugins: { css }, language: "css/css", extends: ["css/recommended"] },
+  {
+    ignores: [
+      "public/**/*",  // Ignore compiled JavaScript and CSS files
+      "dist/**/*",    // Ignore compiled output
+      "node_modules/**/*",
+      "package-lock.json"  // Ignore auto-generated lockfile
+    ]
+  }
 ]);
