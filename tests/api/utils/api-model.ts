@@ -73,10 +73,6 @@ export class APIModel {
         body: options.body ? JSON.stringify(options.body) : undefined,
       };
 
-      // For Node.js environments with self-signed certificates, bypass certificate validation
-      if (typeof process !== 'undefined' && process.env.NODE_TLS_REJECT_UNAUTHORIZED !== '0') {
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-      }
 
       console.log(`Making a ${method} request to "${url.toString()}"`);
 

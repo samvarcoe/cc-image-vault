@@ -83,10 +83,7 @@ Built using the project's lightweight MVC framework with server-side rendering:
 6. **Error Handling**: User-friendly error messages for validation failures and duplicate IDs
 
 ### Development Environment Setup
-**HTTPS Configuration**: Implemented proper SSL certificates for development using OpenSSL with Subject Alternative Names (SAN):
-- Certificate path: `/workspace/image-vault/.certs/`
-- SAN entries include: localhost, claude-code, *.claude-code, 127.0.0.1, 0.0.0.0
-- Eliminates certificate bypass needs while maintaining security
+**HTTP Configuration**: Simplified development setup using HTTP only for local development, eliminating certificate management complexity.
 
 **Content Security Policy**: Configured helmet middleware to allow inline scripts and event handlers required for the MVC framework's client-side controller functionality.
 
@@ -95,11 +92,10 @@ Built using the project's lightweight MVC framework with server-side rendering:
 - `src/ui/pages/home/view.ts` - HTML template rendering with embedded styles
 - `src/ui/pages/home/controller.ts` - Client-side interaction handling  
 - `src/ui/mvc.ts` - Enhanced framework with inline CSS/JS support
-- `src/api/server.ts` - Added home route and HTTPS server configuration
+- `src/api/server.ts` - Added home route and HTTP server configuration
 - `tests/ui/ui-model/image-vault-app.ts` - Application-specific test utilities
 - `tests/ui/ui-model/pages/home-page-driver.ts` - Page object for home page interactions
 - `tests/ui/ui-model/element.ts` - Added missing `isDisabled()` method
-- `.certs/openssl.conf` - SSL certificate configuration with proper SAN entries
 
 ### API Integration
 - **GET /**: Renders home page with collection data via MVC framework
@@ -109,7 +105,7 @@ Built using the project's lightweight MVC framework with server-side rendering:
 
 ### Production Readiness
 - ✅ Complete test coverage with 9/9 acceptance tests passing
-- ✅ Proper HTTPS configuration for development and production
+- ✅ Simplified HTTP configuration for development (HTTPS can be added for production)
 - ✅ Client and server-side validation
 - ✅ Comprehensive error handling and user feedback
 - ✅ Responsive design with embedded CSS

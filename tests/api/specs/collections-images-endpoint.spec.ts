@@ -3,14 +3,14 @@ import { CollectionsAPI } from '../utils/collections-api-model';
 import { CollectionsImagesAPIUtils } from '../utils/collections-images-api-utils';
 import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
+import { TEST_CONFIG } from '../../utils/test-config';
 
 test.describe('Collections Images API Endpoint', () => {
   let api: CollectionsAPI;
 
-  // Setup API client - assuming server runs on localhost:3000
-  // TODO: Make this configurable via environment variable
+  // Setup API client using shared test configuration
   test.beforeAll(() => {
-    api = new CollectionsAPI('https://localhost:3000');
+    api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
   });
 
   // Setup private directory before each test

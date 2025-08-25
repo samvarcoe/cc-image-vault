@@ -2,14 +2,14 @@ import { test, expect } from '@playwright/test';
 import { CollectionsAPI } from '../utils/collections-api-model';
 import { CollectionsDirectoryFixtures } from '../utils/collections-directory-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
+import { TEST_CONFIG } from '../../utils/test-config';
 
 test.describe('Collections API Endpoint', () => {
   let api: CollectionsAPI;
 
-  // Setup API client - assuming server runs on localhost:3000
-  // TODO: Make this configurable via environment variable
+  // Setup API client using shared test configuration
   test.beforeAll(() => {
-    api = new CollectionsAPI('https://localhost:3000');
+    api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
   });
 
   // Cleanup fixtures after each test

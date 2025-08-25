@@ -1,6 +1,5 @@
 import express from 'express';
 import helmet from 'helmet';
-import https from 'https';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { Collection } from '../domain/collection';
@@ -296,28 +295,9 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Start HTTPS server for development
-async function startServer() {
-  try {
-    const certPath = path.join(__dirname, '../../.certs/cert.pem');
-    const keyPath = path.join(__dirname, '../../.certs/key.pem');
-    
-    const cert = await fs.readFile(certPath, 'utf8');
-    const key = await fs.readFile(keyPath, 'utf8');
-    
-    const httpsServer = https.createServer({ cert, key }, app);
-    
-    httpsServer.listen(port, '0.0.0.0', () => {
-      console.log(`Image Vault API server running on https://0.0.0.0:${port}`);
-    });
-  } catch (error) {
-    console.error('Failed to start HTTPS server, falling back to HTTP:', error);
-    app.listen(port, '0.0.0.0', () => {
-      console.log(`Image Vault API server running on http://0.0.0.0:${port}`);
-    });
-  }
-}
-
-startServer();
+// Start HTTP server
+app.listen(port, () => {
+  console.log(`Image Vault API server running on http://localhost:${port}`);
+});
 
 export { app };
