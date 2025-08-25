@@ -1,5 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
+import https from 'https';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { Collection } from '../domain/collection';
@@ -12,15 +13,31 @@ import {
   parseImageQueryParams,
   convertToApiResponse
 } from './collection-utils';
+import { HomePageModel } from '../ui/pages/home/model';
+import { HomePageView } from '../ui/pages/home/view';
+import { renderPage } from '../ui/mvc';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      "script-src": ["'self'", "'unsafe-inline'"],
+      "script-src-attr": ["'unsafe-inline'"], // Allow inline event handlers
+      "form-action": ["'self'"], // Allow form submissions to same origin
+    },
+  },
+}));
 
 // Parse JSON bodies
 app.use(express.json());
+
+// Serve static files
+app.use('/css', express.static(path.join(__dirname, '../../public/css')));
+app.use('/js', express.static(path.join(__dirname, '../../public/js')));
 
 // Base path for collections
 const basePath = path.resolve('./private');
@@ -29,6 +46,20 @@ const basePath = path.resolve('./private');
 const sendError = (res: express.Response, statusCode: number, error: string, message: string) => {
   res.status(statusCode).json({ error, message });
 };
+
+// Home page route
+app.get('/', async (req, res) => {
+  try {
+    const collections = await listCollectionDirectories(basePath);
+    const model = new HomePageModel(collections);
+    const view = new HomePageView(model);
+    const html = renderPage(view, model, 'home');
+    res.send(html);
+  } catch (error: unknown) {
+    console.error('Error rendering home page:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 // GET /api/collections - List all collections
 app.get('/api/collections', async (req, res) => {
@@ -265,9 +296,28 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`Image Vault API server running on http://localhost:${port}`);
-});
+// Start HTTPS server for development
+async function startServer() {
+  try {
+    const certPath = path.join(__dirname, '../../.certs/cert.pem');
+    const keyPath = path.join(__dirname, '../../.certs/key.pem');
+    
+    const cert = await fs.readFile(certPath, 'utf8');
+    const key = await fs.readFile(keyPath, 'utf8');
+    
+    const httpsServer = https.createServer({ cert, key }, app);
+    
+    httpsServer.listen(port, '0.0.0.0', () => {
+      console.log(`Image Vault API server running on https://0.0.0.0:${port}`);
+    });
+  } catch (error) {
+    console.error('Failed to start HTTPS server, falling back to HTTP:', error);
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`Image Vault API server running on http://0.0.0.0:${port}`);
+    });
+  }
+}
+
+startServer();
 
 export { app };

@@ -123,6 +123,10 @@ export class Element {
     console.log(`${this.name} is confirmed as disabled from user interaction`);
   };
 
+  isDisabled = async (): Promise<boolean> => {
+    return await this.locator.isDisabled();
+  };
+
   shouldHaveCount = async (count: number, timeout = 10000) => {
     console.log(`Verifying ${this.name} has exactly ${count} matching elements`);
     

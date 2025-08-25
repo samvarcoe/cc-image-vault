@@ -10,7 +10,7 @@ test.describe('Collections Images API Endpoint', () => {
   // Setup API client - assuming server runs on localhost:3000
   // TODO: Make this configurable via environment variable
   test.beforeAll(() => {
-    api = new CollectionsAPI('http://localhost:3000');
+    api = new CollectionsAPI('https://localhost:3000');
   });
 
   // Setup private directory before each test

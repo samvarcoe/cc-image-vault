@@ -7,7 +7,7 @@ export function escapeHtml(unsafe: string): string {
     .replace(/'/g, "&#039;");
 }
 
-export function escapeJsonForScript(obj: any): string {
+export function escapeJsonForScript(obj: unknown): string {
   return JSON.stringify(obj)
     .replace(/</g, '\\u003c')
     .replace(/>/g, '\\u003e')
@@ -48,7 +48,7 @@ export abstract class Controller<T> {
   protected attachEventListeners(): void {}
   
   init(): void {
-    this.model.hydrate((window as any).__MODEL_DATA__);
+    this.model.hydrate((window as unknown as { __MODEL_DATA__: string }).__MODEL_DATA__);
     this.attachEventListeners();
   }
   
@@ -61,7 +61,7 @@ export abstract class Controller<T> {
   }
 }
 
-export function renderPage<T>(view: View<T>, model: Model<T>): string {
+export function renderPage<T>(view: View<T>, model: Model<T>, pageSlug: string): string {
   const modelDataString = model.serialize();
   // Escape the JSON string for safe inclusion in HTML
   const escapedModelData = modelDataString
@@ -76,7 +76,7 @@ export function renderPage<T>(view: View<T>, model: Model<T>): string {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(view.getTitle())}</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/${pageSlug}.css">
 </head>
 <body>
   <div id="app">${view.render()}</div>
@@ -84,7 +84,7 @@ export function renderPage<T>(view: View<T>, model: Model<T>): string {
   <script>
     window.__MODEL_DATA__ = '${escapedModelData}';
   </script>
-  <script type="module" src="/js/pages/collection-view/controller.js"></script>
+  <script src="/js/${pageSlug}.js"></script>
 </body>
 </html>`;
 }
