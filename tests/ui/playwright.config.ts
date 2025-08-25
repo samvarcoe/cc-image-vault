@@ -1,4 +1,5 @@
 import { defineConfig } from '@playwright/test';
+import { TEST_CONFIG } from '../utils/test-config';
 
 export default defineConfig({
   testDir: './specs',
@@ -11,11 +12,10 @@ export default defineConfig({
     ['list']
   ],
   use: {
-    baseURL: 'https://claude-code:3000',
+    baseURL: TEST_CONFIG.UI_BASE_URL,
     // trace: 'on-first-retry',
     // screenshot: 'only-on-failure',
     headless: true,
-    ignoreHTTPSErrors: true, // Ignore self-signed certificate errors
     connectOptions: {
       wsEndpoint: 'ws://playwright-server:8080',  // Connect to the remote playwright server
     },

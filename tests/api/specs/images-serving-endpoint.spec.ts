@@ -3,12 +3,13 @@ import { CollectionsAPI } from '../utils/collections-api-model';
 import { ImageServingFixtures } from '../utils/image-serving-fixtures';
 import { BinaryResponseUtils } from '../utils/binary-response-utils';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
+import { TEST_CONFIG } from '../../utils/test-config';
 
 test.describe('Image Serving API Endpoints', () => {
   let api: CollectionsAPI;
 
   test.beforeAll(() => {
-    api = new CollectionsAPI('https://localhost:3000');
+    api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
   });
 
   test.afterEach(async () => {
