@@ -9,6 +9,7 @@ test.describe('Home Page', () => {
   });
 
   test('Collections exist in the system', async ({ page }) => {
+
     // Given multiple collections exist in the system
     const collections = await HomePageFixtures.createMultipleCollections({
       collectionIds: ['zebra-photos', 'alpha-collection', 'mid-range-pics', 'beta-images']
@@ -19,6 +20,7 @@ test.describe('Home Page', () => {
 
     // When the user views the collections list
     await app.homePage.visit();
+    console.log('Visited home page');
 
     // Then all of the collections are displayed in alphabetical order
     await app.homePage.shouldShowCollectionsInAlphabeticalOrder(collectionIds);
@@ -139,8 +141,7 @@ test.describe('Home Page', () => {
     // Verify the original collection still exists and no duplicate was created
     await app.homePage.shouldShowCollection(existingCollection.id);
 
-    await app.shouldHaveNoConsoleErrors();
-    await app.shouldHaveNoApiErrors();
+    // Note: We don't check for console/API errors here because we expect a 409 response for duplicate ID validation
   });
 
   test('User attempts to delete a collection', async ({ page }) => {

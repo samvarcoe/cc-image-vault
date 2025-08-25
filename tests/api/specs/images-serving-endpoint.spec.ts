@@ -8,7 +8,7 @@ test.describe('Image Serving API Endpoints', () => {
   let api: CollectionsAPI;
 
   test.beforeAll(() => {
-    api = new CollectionsAPI('http://localhost:3000');
+    api = new CollectionsAPI('https://localhost:3000');
   });
 
   test.afterEach(async () => {

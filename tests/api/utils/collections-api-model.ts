@@ -67,4 +67,5 @@ export class CollectionsAPI extends APIModel {
   '/api/images/:collectionId/:imageId/thumbnail' = {
     get: this.request<undefined, undefined>('/api/images/:collectionId/:imageId/thumbnail', 'GET'),
   };
+
 }

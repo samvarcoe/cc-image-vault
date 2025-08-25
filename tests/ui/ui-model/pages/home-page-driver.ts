@@ -80,7 +80,7 @@ export class HomePageDriver extends PageObject {
     await this.page.waitForResponse(response => 
       response.url().includes('/api/collections') && 
       response.request().method() === 'DELETE' &&
-      (response.status() === 200 || response.status() >= 400)
+      (response.status() === 204 || response.status() >= 400)
     );
   }
 
@@ -97,7 +97,7 @@ export class HomePageDriver extends PageObject {
     const currentUrl = this.page.url();
     expect(currentUrl, { 
       message: `Current URL is "${currentUrl}" instead of home page after navigation` 
-    }).toBe(`http://claude-code:3000${this.url}`);
+    }).toBe(`https://claude-code:3000${this.url}`);
     console.log('✓ User is on home page');
   }
 

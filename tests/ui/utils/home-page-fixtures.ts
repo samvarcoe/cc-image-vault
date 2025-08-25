@@ -1,4 +1,5 @@
 import { CollectionsAPI } from '../../api/utils/collections-api-model';
+import { CollectionsDirectoryFixtures } from '../../api/utils/collections-directory-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 
 interface CollectionListItem {
@@ -7,27 +8,17 @@ interface CollectionListItem {
 
 /**
  * UI fixtures for home page testing scenarios
- * Uses the API layer to set up collections for UI testing
+ * Uses the existing API testing infrastructure to set up collections
  */
 export class HomePageFixtures extends Fixtures<CollectionListItem[]> {
-  private static collectionsAPI = new CollectionsAPI('http://claude-code:3000');
+  private static collectionsAPI = new CollectionsAPI('https://claude-code:3000');
 
   /**
    * Creates an empty collections state for testing empty state UI
    */
   static async createEmptyCollectionsState(): Promise<CollectionListItem[]> {
-    // Ensure we start with a clean slate by deleting any existing collections
-    const existingCollections = await this.collectionsAPI.listCollections();
-    
-    for (const collection of existingCollections) {
-      await this.collectionsAPI.deleteCollection(collection.id);
-    }
-
-    const cleanup = async () => {
-      // No cleanup needed - collections were already cleaned up
-    };
-
-    this.addCleanup(cleanup);
+    // Use existing directory fixtures to create clean state
+    await CollectionsDirectoryFixtures.createEmpty();
     return [];
   }
 
@@ -42,29 +33,18 @@ export class HomePageFixtures extends Fixtures<CollectionListItem[]> {
       collectionIds = ['zebra-photos', 'alpha-collection', 'mid-range-pics', 'beta-images']
     } = options;
 
-    // Ensure clean state first
-    await this.createEmptyCollectionsState();
-
+    // Use existing directory fixtures and then create via API to ensure they're proper collections
+    await CollectionsDirectoryFixtures.createEmpty();
+    
     const createdCollections: CollectionListItem[] = [];
 
-    // Create collections in the specified order
+    // Create collections via API (this will create them properly with SQLite databases)
     for (const id of collectionIds) {
-      await this.collectionsAPI.createCollection({ id });
+      await this.collectionsAPI['/api/collections'].post({ body: { id } });
       createdCollections.push({ id });
     }
 
-    const cleanup = async () => {
-      // Delete all created collections
-      for (const collection of createdCollections) {
-        try {
-          await this.collectionsAPI.deleteCollection(collection.id);
-        } catch {
-          // Non-fatal cleanup error
-        }
-      }
-    };
-
-    this.addCleanup(cleanup);
+    // Cleanup is handled by CollectionsDirectoryFixtures
     return createdCollections;
   }
 
@@ -78,21 +58,10 @@ export class HomePageFixtures extends Fixtures<CollectionListItem[]> {
     const { collectionId = `deletion-test-${Date.now()}` } = options;
 
     // Ensure clean state
-    await this.createEmptyCollectionsState();
+    await CollectionsDirectoryFixtures.createEmpty();
 
-    await this.collectionsAPI.createCollection({ id: collectionId });
-    const collection = { id: collectionId };
-
-    const cleanup = async () => {
-      try {
-        await this.collectionsAPI.deleteCollection(collectionId);
-      } catch {
-        // Non-fatal cleanup error - collection may already be deleted by test
-      }
-    };
-
-    this.addCleanup(cleanup);
-    return collection;
+    await this.collectionsAPI['/api/collections'].post({ body: { id: collectionId } });
+    return { id: collectionId };
   }
 
   /**
@@ -104,23 +73,11 @@ export class HomePageFixtures extends Fixtures<CollectionListItem[]> {
     
     const { existingId = 'duplicate-test-collection' } = options;
 
-    // Ensure clean state
-    await this.createEmptyCollectionsState();
-
-    await this.collectionsAPI.createCollection({ id: existingId });
-    const existingCollection = { id: existingId };
-
-    const cleanup = async () => {
-      try {
-        await this.collectionsAPI.deleteCollection(existingId);
-      } catch {
-        // Non-fatal cleanup error
-      }
-    };
-
-    this.addCleanup(cleanup);
+    await CollectionsDirectoryFixtures.createEmpty();
+    await this.collectionsAPI['/api/collections'].post({ body: { id: existingId } });
+    
     return { 
-      existingCollection, 
+      existingCollection: { id: existingId }, 
       duplicateId: existingId // Same ID to trigger duplicate error
     };
   }
@@ -129,21 +86,8 @@ export class HomePageFixtures extends Fixtures<CollectionListItem[]> {
    * Creates collections for testing the first collection creation flow
    */
   static async createFirstCollectionScenario(): Promise<{ newCollectionId: string }> {
-    // Start with empty state
-    await this.createEmptyCollectionsState();
-
-    const newCollectionId = `first-collection-${Date.now()}`;
-
-    const cleanup = async () => {
-      try {
-        await this.collectionsAPI.deleteCollection(newCollectionId);
-      } catch {
-        // Non-fatal cleanup error - collection may not have been created if test failed
-      }
-    };
-
-    this.addCleanup(cleanup);
-    return { newCollectionId };
+    await CollectionsDirectoryFixtures.createEmpty();
+    return { newCollectionId: `first-collection-${Date.now()}` };
   }
 
   /**
@@ -159,22 +103,10 @@ export class HomePageFixtures extends Fixtures<CollectionListItem[]> {
       newCollectionId = `additional-collection-${Date.now()}`
     } = options;
 
-    // Create existing collections
     const existingCollections = await this.createMultipleCollections({
       collectionIds: existingCollectionIds
     });
 
-    const cleanup = async () => {
-      try {
-        // Try to cleanup the new collection (may not exist if test failed)
-        await this.collectionsAPI.deleteCollection(newCollectionId);
-      } catch {
-        // Non-fatal cleanup error
-      }
-      // Existing collections cleanup is already handled by createMultipleCollections
-    };
-
-    this.addCleanup(cleanup);
     return { existingCollections, newCollectionId };
   }
 }

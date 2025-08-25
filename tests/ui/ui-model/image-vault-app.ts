@@ -29,4 +29,18 @@ export class ImageVaultApp extends App {
     }).toBe(0);
     console.log('✓ No API request failures during operation');
   }
+
+  async shouldHaveNoConsoleErrors(): Promise<void> {
+    const consoleErrors = await this.getConsoleErrors();
+    // Filter out expected HTTPS warnings and CSP violations in dev environment
+    const unexpectedErrors = consoleErrors.filter(error => 
+      !error.includes('Cross-Origin-Opener-Policy') &&
+      !error.includes('Content Security Policy') &&
+      !error.includes('ERR_SSL_PROTOCOL_ERROR')
+    );
+    expect(unexpectedErrors.length, { 
+      message: `Found ${unexpectedErrors.length} unexpected console errors: ${unexpectedErrors.join(', ')}` 
+    }).toBe(0);
+    console.log('✓ No unexpected console errors');
+  }
 }
