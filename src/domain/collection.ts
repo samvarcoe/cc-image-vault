@@ -283,7 +283,7 @@ export class Collection {
 
     const metadata = await this.extractImageMetadata(filePath);
     const imageId = uuidv4();
-    const originalName = path.basename(filePath);
+    const originalName = path.basename(filePath).split('.').slice(0, -1).join('.');
     
     // Define file paths
     const originalDir = path.join(this.basePath, this.id, 'images', 'original');

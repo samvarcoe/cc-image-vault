@@ -7,260 +7,84 @@ import { Fixtures } from './base-fixtures';
 import { ImageFixtures } from './image-fixtures';
 import FakeTimers from '@sinonjs/fake-timers';
 
+const COLLECTIONS_DIRECTORY = '/workspace/image-vault/private';
+
 /**
  * Collection fixtures for creating collections with pre-populated images
  */
 export class CollectionFixtures extends Fixtures<Collection> {
+  static async clearDirectory(): Promise<void> {
+    const contents = await fs.readdir(COLLECTIONS_DIRECTORY).catch(() => []);
+
+    for (const item of contents) {
+      const itemPath = path.join(COLLECTIONS_DIRECTORY, item);
+      await fs.rm(itemPath, { recursive: true, force: true }).catch(() => {});
+    }
+  };
+  
   static async create(options: {
     collectionId?: string;
-    basePath?: string;
+    useTmpDir?: boolean;
     imageCounts?: {
-      inbox?: number;
-      collection?: number;
-      archive?: number;
+      inbox: number;
+      collection: number;
+      archive: number;
     };
-    includeCorruptImages?: boolean;
-    includeDuplicates?: boolean;
-    simulateDatabaseIssues?: boolean;
     imageFormats?: Array<'jpeg' | 'png' | 'webp'>;
   } = {}): Promise<Collection> {
 
     const {
       collectionId = `test-collection-${Date.now()}`,
-      basePath: customBasePath,
-      imageCounts = { inbox: 2, collection: 2, archive: 1 },
-      includeCorruptImages = false,
-      includeDuplicates = false,
-      simulateDatabaseIssues = false,
+      useTmpDir = false,
+      imageCounts = { inbox: 0, collection: 0, archive: 0 },
       imageFormats = ['jpeg', 'png', 'webp']
     } = options;
 
-    const basePath = customBasePath || await fs.mkdtemp(path.join(tmpdir(), 'collection-fixture-'));
+    const basePath = useTmpDir ? await fs.mkdtemp(path.join(tmpdir(), 'collection-fixture-')) : COLLECTIONS_DIRECTORY;
     
-    // Create the collection
-    let collection: Collection;
-    try {
-      collection = await Collection.create(collectionId, basePath);
-    } catch (error) {
-      if (simulateDatabaseIssues) {
-        // Re-throw for testing error scenarios
-        throw error;
-      }
-      throw new Error(`Collection fixture creation failed for "${collectionId}": ${error}`);
-    }
+    const collectionPath = path.join(basePath, collectionId);
 
-    // Create images for each status
-    const statuses: Array<{ status: ImageStatus; count: number }> = [
-      { status: 'INBOX', count: imageCounts.inbox || 0 },
-      { status: 'COLLECTION', count: imageCounts.collection || 0 },
-      { status: 'ARCHIVE', count: imageCounts.archive || 0 }
-    ];
+    console.log(`Creating collection fixture: ${collectionId} at ${collectionPath}`);
 
-    const allImageFiles: { path: string; status: ImageStatus; originalName: string }[] = [];
+    const collection = await Collection.create(collectionId, basePath);
 
-    for (const { status, count } of statuses) {
-      for (let i = 0; i < count; i++) {
-        const format = imageFormats[i % imageFormats.length];
-        const shouldCorrupt = includeCorruptImages && i === count - 1;
-
-        try {
-          const imageFile = await ImageFixtures.create({
-            imageId: `${status.toLowerCase()}-image-${i + 1}`,
-            format,
-            originalName: `${status.toLowerCase()}-photo-${i + 1}.${format === 'jpeg' ? 'jpg' : format}`,
-            simulateCorruption: shouldCorrupt
-          });
-
-          allImageFiles.push(imageFile);
-
-          // Add image to collection
-          const imageMetadata = await collection.addImage(imageFile.filePath);
-          
-          // Update status if not INBOX (default)
-          if (status !== 'INBOX') {
-            await collection.updateImageStatus(imageMetadata.id, status);
-          }
-
-        } catch (error) {
-          if (shouldCorrupt) {
-            // Expected to fail for corrupt images
-            continue;
-          }
-          throw new Error(`Collection fixture failed to add image ${i + 1} with status ${status}: ${error}`);
-        }
-      }
-    }
-
-    // Create duplicate images if requested
-    if (includeDuplicates && allImageFiles.length > 0) {
-      const originalImage = allImageFiles[0];
-      const duplicates = await ImageFixtures.createDuplicates({
-        originalImage,
-        count: 2,
-        differentNames: true
+    for (let i = 0; i < imageCounts.inbox ; i++) {
+      const imageFile = await ImageFixtures.create({
+        originalName: `inbox-photo-${i + 1}`,
+        extension: imageFormats[i % imageFormats.length]
       });
 
-      // Try to add the duplicate (should fail)
-      for (let i = 1; i < duplicates.length; i++) {
-        try {
-          await collection.addImage(duplicates[i].filePath);
-          // If we reach here, duplicate detection failed
-          throw new Error('Duplicate detection should have prevented this addition');
-        } catch (error: unknown) {
-          if (!error.message.includes('Duplicate Image')) {
-            throw new Error(`Duplicate detection test failed: expected "Duplicate Image" error but got "${error.message}"`);
-          }
-          // Expected duplicate error - continue
-        }
-      }
+      await collection.addImage(imageFile.filePath);
     }
 
+    for (let i = 0; i < imageCounts.collection ; i++) {
+      const imageFile = await ImageFixtures.create({
+        originalName: `collection-photo-${i + 1}`,
+        extension: imageFormats[i % imageFormats.length]
+      });
+
+      const imageMetadata = await collection.addImage(imageFile.filePath);
+      await collection.updateImageStatus(imageMetadata.id, 'COLLECTION');
+    }
+
+    for (let i = 0; i < imageCounts.archive ; i++) {
+      const imageFile = await ImageFixtures.create({
+        originalName: `archive-photo-${i + 1}`,
+        extension: imageFormats[i % imageFormats.length]
+      });
+
+      const imageMetadata = await collection.addImage(imageFile.filePath);
+      await collection.updateImageStatus(imageMetadata.id, 'ARCHIVE');
+    };
+
     const cleanup = async () => {
-      try {
-        // Collection cleanup will be handled by its own database connection cleanup
-        await fs.rm(basePath, { recursive: true, force: true });
-      } catch {
-        // Fixture cleanup errors are non-fatal but should be tracked
-      }
+      await fs.rm(collectionPath, { recursive: true, force: true })
+        .catch(() => { console.warn(`Failed to remove collection directory at ${collectionPath}` );});
     };
 
     this.addCleanup(cleanup);
-    return collection;
-  }
 
-  /**
-   * Creates a collection with images in multiple statuses for filtering tests
-   */
-  static async createWithMixedStatuses(options: {
-    collectionId?: string;
-    basePath?: string;
-    statusCounts?: Record<ImageStatus, number>;
-  } = {}): Promise<Collection> {
-
-    const {
-      collectionId = `mixed-status-collection-${Date.now()}`,
-      basePath,
-      statusCounts = { 'INBOX': 3, 'COLLECTION': 5, 'ARCHIVE': 2 }
-    } = options;
-
-    return this.create({
-      collectionId,
-      basePath,
-      imageCounts: {
-        inbox: statusCounts.INBOX,
-        collection: statusCounts.COLLECTION,
-        archive: statusCounts.ARCHIVE
-      }
-    });
-  }
-
-  /**
-   * Creates a collection with no images (empty collection)
-   */
-  static async createEmpty(options: {
-    collectionId?: string;
-    basePath?: string;
-  } = {}): Promise<Collection> {
-
-    const { collectionId = `empty-collection-${Date.now()}`, basePath } = options;
-
-    return this.create({
-      collectionId,
-      basePath,
-      imageCounts: { inbox: 0, collection: 0, archive: 0 }
-    });
-  }
-
-  /**
-   * Creates a collection with processing failure scenarios
-   */
-  static async createWithFailures(options: {
-    collectionId?: string;
-    failureType?: 'processing' | 'storage' | 'duplicate';
-  } = {}): Promise<Collection> {
-
-    const {
-      collectionId = `failure-test-collection-${Date.now()}`,
-      failureType = 'processing'
-    } = options;
-
-    const baseOptions = {
-      collectionId,
-      imageCounts: { inbox: 1, collection: 0, archive: 0 }
-    };
-
-    switch (failureType) {
-      case 'processing':
-        return this.create({
-          ...baseOptions,
-          includeCorruptImages: true
-        });
-      
-      case 'duplicate':
-        return this.create({
-          ...baseOptions,
-          imageCounts: { inbox: 2, collection: 0, archive: 0 },
-          includeDuplicates: true
-        });
-      
-      case 'storage':
-        return this.create({
-          ...baseOptions,
-          simulateDatabaseIssues: true
-        });
-      
-      default:
-        throw new Error(`Unknown failure type: ${failureType}`);
-    }
-  }
-
-  /**
-   * Creates a collection for database error testing
-   */
-  static async createWithDatabaseIssues(options: {
-    collectionId?: string;
-    basePath?: string;
-    issueType?: 'connection' | 'corruption' | 'permissions';
-  } = {}): Promise<Collection> {
-
-    const {
-      collectionId = `db-issue-collection-${Date.now()}`,
-      basePath,
-      issueType = 'connection'
-    } = options;
-
-    // Create normal collection first
-    const collection = await this.create({
-      collectionId,
-      basePath,
-      imageCounts: { inbox: 2, collection: 1, archive: 1 }
-    });
-
-    // Then simulate the database issue
-    const collectionPath = collection.basePath;
-    const dbPath = path.join(collectionPath, collectionId, 'collection.db');
-
-    // Close the existing database connection first
-    await collection.close();
-
-    switch (issueType) {
-      case 'corruption':
-        // Corrupt the database file
-        await fs.writeFile(dbPath, 'CORRUPTED_DATABASE_DATA');
-        break;
-      
-      case 'permissions':
-        // Remove read permissions
-        await fs.chmod(dbPath, 0o000);
-        break;
-      
-      case 'connection':
-        // Delete the database file entirely
-        await fs.unlink(dbPath);
-        break;
-    }
-
-    // The collection now has a closed connection and corrupted database
+    console.log(`✓ Collection fixture created`);
     return collection;
   }
 
@@ -313,9 +137,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
           }
           
           const imageFile = await ImageFixtures.create({
-            imageId: `time-image-${imageIndex + 1}`,
-            originalName: `${status.toLowerCase()}-photo-${i + 1}.jpg`,
-            format: 'jpeg'
+            originalName: `${status.toLowerCase()}-photo-${i + 1}`,
           });
 
           // Add image to collection - this will use the fake time
@@ -345,106 +167,5 @@ export class CollectionFixtures extends Fixtures<Collection> {
 
     this.addCleanup(cleanup);
     return collection;
-  }
-
-  /**
-   * Creates a collection with a large number of images for pagination testing
-   */
-  static async createWithLargeImageSet(options: {
-    collectionId?: string;
-    basePath?: string;
-    totalImages?: number;
-    statusDistribution?: Record<ImageStatus, number>;
-  } = {}): Promise<Collection> {
-
-    const {
-      collectionId = `large-collection-${Date.now()}`,
-      basePath: customBasePath,
-      totalImages = 250,
-      statusDistribution = {
-        'INBOX': Math.floor(totalImages * 0.4),
-        'COLLECTION': Math.floor(totalImages * 0.4), 
-        'ARCHIVE': Math.floor(totalImages * 0.2)
-      }
-    } = options;
-
-    const basePath = customBasePath || await fs.mkdtemp(path.join(tmpdir(), 'large-collection-fixture-'));
-    const collection = await Collection.create(collectionId, basePath);
-
-    // Create images in batches for better performance
-    const statuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
-    let imageIndex = 0;
-
-    for (const status of statuses) {
-      const count = statusDistribution[status];
-      
-      // Create images in batches of 20 for performance
-      const batchSize = 20;
-      for (let batchStart = 0; batchStart < count; batchStart += batchSize) {
-        const batchEnd = Math.min(batchStart + batchSize, count);
-        const batchPromises = [];
-
-        for (let i = batchStart; i < batchEnd; i++) {
-          const promise = (async () => {
-            const format = ['jpeg', 'png', 'webp'][i % 3] as 'jpeg' | 'png' | 'webp';
-            const imageFile = await ImageFixtures.create({
-              imageId: `large-image-${imageIndex + 1}`,
-              originalName: `${status.toLowerCase()}-batch-${Math.floor(i / batchSize)}-image-${(i % batchSize) + 1}.${format === 'jpeg' ? 'jpg' : format}`,
-              format,
-              includeVisualContent: false // Use minimal images for performance
-            });
-
-            const imageMetadata = await collection.addImage(imageFile.filePath);
-            
-            if (status !== 'INBOX') {
-              await collection.updateImageStatus(imageMetadata.id, status);
-            }
-
-            imageIndex++;
-          })();
-          
-          batchPromises.push(promise);
-        }
-
-        // Wait for batch to complete before starting next batch
-        await Promise.all(batchPromises);
-      }
-    }
-
-    const cleanup = async () => {
-      try {
-        await fs.rm(basePath, { recursive: true, force: true });
-      } catch {
-        // Non-fatal cleanup error
-      }
-    };
-
-    this.addCleanup(cleanup);
-    return collection;
-  }
-
-  /**
-   * Creates a collection with specific images in ARCHIVE status for deletion testing
-   */
-  static async createWithArchiveImages(options: {
-    collectionId?: string;
-    archiveImageCount?: number;
-  } = {}): Promise<{ collection: Collection; archiveImageIds: string[] }> {
-
-    const {
-      collectionId = `archive-test-collection-${Date.now()}`,
-      archiveImageCount = 1
-    } = options;
-
-    const collection = await this.create({
-      collectionId,
-      imageCounts: { inbox: 0, collection: 0, archive: archiveImageCount }
-    });
-
-    // Get the archive images that were created
-    const archiveImages = await collection.getImages({ status: 'ARCHIVE' });
-    const archiveImageIds = archiveImages.map(img => img.id);
-
-    return { collection, archiveImageIds };
   }
 }

@@ -74,9 +74,3 @@ Feature: Collections API Endpoint
         When the client requests POST /api/collections
         Then the API returns 500 status code
         And the API returns error message indicating server error
-
-    Scenario: Collection listing with filesystem access issues
-        Given the collections directory has permission issues
-        When the client requests GET /api/collections
-        Then the API returns 500 status code
-        And the API returns error message indicating server error

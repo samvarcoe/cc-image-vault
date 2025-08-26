@@ -2,41 +2,23 @@ import { test } from '@playwright/test';
 import { ImageVaultApp } from '../ui-model/image-vault-app';
 import { HomePageFixtures } from '../utils/home-page-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
+import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
+import fs from 'fs/promises';
+import path from 'path';
+
+
 
 test.describe('Home Page', { tag: '@sequential' }, () => {
+  test.beforeEach(async () => {
+    await CollectionFixtures.clearDirectory();
+  });
+
   test.afterEach(async () => {
     await Fixtures.cleanup();
   });
 
-  test('Collections exist in the system', async ({ page }) => {
-
-    // Given multiple collections exist in the system
-    const collections = await HomePageFixtures.createMultipleCollections({
-      collectionIds: ['zebra-photos', 'alpha-collection', 'mid-range-pics', 'beta-images']
-    });
-    const collectionIds = collections.map(c => c.id);
-
-    const app = new ImageVaultApp(page);
-
-    // When the user views the collections list
-    await app.homePage.visit();
-    console.log('Visited home page');
-
-    // Then all of the collections are displayed in alphabetical order
-    await app.homePage.shouldShowCollectionsInAlphabeticalOrder(collectionIds);
-
-    // And the collections link to their respective collection pages
-    for (const id of collectionIds) {
-      await app.homePage.shouldShowCollection(id);
-    }
-
-    await app.shouldHaveNoConsoleErrors();
-    await app.shouldHaveNoApiErrors();
-  });
-
   test('No collections exist in the system', async ({ page }) => {
     // Given no collections exist in the system
-    await HomePageFixtures.createEmptyCollectionsState();
 
     const app = new ImageVaultApp(page);
 
@@ -51,9 +33,40 @@ test.describe('Home Page', { tag: '@sequential' }, () => {
     await app.shouldHaveNoApiErrors();
   });
 
+  test('Collections exist in the system', async ({ page }) => {
+
+    const collectionIds = [
+      'zebra-photos',
+      'alpha-collection',
+      'mid-range-pics',
+      'beta-images'
+    ];
+
+    for (const id of collectionIds) {
+      await CollectionFixtures.create({'collectionId': id });
+    }
+
+    const app = new ImageVaultApp(page);
+
+    // When the user views the collections list
+    await app.homePage.visit();
+
+    // Then all of the collections are displayed in alphabetical order
+    for (const id of collectionIds) {
+      await app.homePage.shouldShowCollection(id);
+    }
+
+    await app.homePage.shouldShowCollectionsInAlphabeticalOrder(collectionIds);
+
+    await app.shouldHaveNoConsoleErrors();
+    await app.shouldHaveNoApiErrors();
+  });
+
+
   test('User creates their first collection', async ({ page }) => {
     // Given no collections exist in the system
-    const { newCollectionId } = await HomePageFixtures.createFirstCollectionScenario();
+    // const { newCollectionId } = await HomePageFixtures.createFirstCollectionScenario();
+    const newCollectionId = 'my-first-collection';
 
     const app = new ImageVaultApp(page);
     await app.homePage.visit();

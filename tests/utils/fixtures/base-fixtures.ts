@@ -2,7 +2,7 @@
  * Base fixtures class following the standard fixture pattern
  * Provides shared cleanup tracking for all fixture types
  */
-export abstract class Fixtures {
+export abstract class Fixtures<T> {
   private static cleanupFunctions: Array<() => Promise<void>> = [];
 
   protected static addCleanup(cleanupFn: () => Promise<void>): void {

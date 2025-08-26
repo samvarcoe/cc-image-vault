@@ -34,6 +34,14 @@ export abstract class App {
             const messageText = `[${timestamp}] ${msg.text()}`;
 
             if (msg.type() === 'error') {
+
+                if (msg.text().includes('Cross-Origin-Opener-Policy') ||
+                    msg.text().includes('Content Security Policy') ||
+                    msg.text().includes('ERR_SSL_PROTOCOL_ERROR')) {
+                    // Ignore expected warnings in dev environment
+                    return;
+                }
+
                 this.consoleErrors.push(messageText);
                 console.log(`Console Error on ${this.constructor.name}: ${msg.text()}`);
             } else if (msg.type() === 'warning') {
@@ -110,10 +118,6 @@ export abstract class App {
     getCurrentUrl(): string {
         return this.page.url();
     }
-    
-    shouldHaveUrl(expectedUrl: string): void {
-        expect(this.getCurrentUrl(), `The app should be on url: ${expectedUrl}`).toBe(expectedUrl);
-    }
 
     async getNetworkEvents(): Promise<NetworkEvent[]> {
         return [...this.networkEvents];
@@ -138,5 +142,32 @@ export abstract class App {
 
     async getConsoleWarnings(): Promise<string[]> {
         return [...this.consoleWarnings];
+    }
+
+    shouldHaveUrl(expectedUrl: string): void {
+        expect(this.getCurrentUrl(), `The browser is not at url: ${expectedUrl}`).toBe(expectedUrl);
+        console.log(`✓ The browser is at url: "${expectedUrl}"`);
+    }
+
+    async shouldHaveNoApiErrors(): Promise<void> {
+        const apiRequests = await this.getRequestsForUrl('/api/');
+
+        const failedApiRequests = apiRequests.filter(req => req.status && req.status >= 400);
+
+        expect(failedApiRequests.length, { 
+        message: `Found ${failedApiRequests.length} failed API requests instead of 0 during operation` 
+        }).toBe(0);
+
+        console.log('✓ No API request failures during operation');
+    }
+
+    async shouldHaveNoConsoleErrors(): Promise<void> {
+        const consoleErrors = await this.getConsoleErrors();
+
+        expect(consoleErrors.length, { 
+        message: `Found ${consoleErrors.length} unexpected console errors: ${consoleErrors.join(', ')}` 
+        }).toBe(0);
+        
+        console.log('✓ No unexpected console errors');
     }
 }

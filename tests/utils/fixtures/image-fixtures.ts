@@ -18,53 +18,52 @@ export interface ImageFile {
  */
 export class ImageFixtures extends Fixtures<ImageFile> {
   static async create(options: {
-    imageId?: string;
-    format?: 'jpeg' | 'png' | 'webp';
     width?: number;
     height?: number;
     quality?: number;
     originalName?: string;
+    extension?: 'jpeg' | 'png' | 'webp';
     includeVisualContent?: boolean;
     simulateCorruption?: boolean;
   } = {}): Promise<ImageFile> {
 
     const {
-      imageId = `test-image-${Date.now()}`,
-      format = 'jpeg',
-      width = 800,
+      width = 200,
       height = 600,
       quality = 80,
-      originalName,
+      originalName = `test-photo-${Date.now()}`,
+      extension = 'jpeg',
       includeVisualContent = true,
       simulateCorruption = false
     } = options;
 
-    const extension = format === 'jpeg' ? 'jpg' : format;
-    const fileName = originalName || `${imageId}.${extension}`;
     const tempDir = await fs.mkdtemp(path.join(tmpdir(), 'image-fixture-'));
-    const filePath = path.join(tempDir, fileName);
+    const filePath = path.join(tempDir, `${originalName}.${extension}`);
 
     let imageBuffer: Buffer;
 
-    if (includeVisualContent && !simulateCorruption) {
-      // Create a colorful test pattern with gradients and shapes
-      imageBuffer = await this.createTestPattern(width, height, format, quality);
-    } else if (simulateCorruption) {
+    // if (includeVisualContent && !simulateCorruption) {
+    //   // Create a colorful test pattern with gradients and shapes
+    //   imageBuffer = await this.createTestPattern(width, height, extension, quality);
+    // } else if (simulateCorruption) {
+    if (simulateCorruption) {
       // Create corrupt image data
-      imageBuffer = await this.createCorruptImage(format);
-    } else {
+      imageBuffer = await this.createCorruptImage(extension);
+    }
+    
+    else {
       // Create minimal valid image
-      imageBuffer = await this.createMinimalImage(width, height, format, quality);
+      imageBuffer = await this.createMinimalImage(width, height, extension, quality);
     }
 
     await fs.writeFile(filePath, imageBuffer);
 
     const stats = await fs.stat(filePath);
-    const mimeType = this.getMimeType(format);
+    const mimeType = this.getMimeType(extension);
 
     const imageFile: ImageFile = {
       filePath,
-      originalName: fileName,
+      originalName,
       size: stats.size,
       dimensions: { width, height },
       mimeType,
@@ -76,6 +75,7 @@ export class ImageFixtures extends Fixtures<ImageFile> {
     };
 
     this.addCleanup(cleanup);
+
     return imageFile;
   }
 
@@ -108,11 +108,10 @@ export class ImageFixtures extends Fixtures<ImageFile> {
       const shouldCorrupt = includeCorrupt && i === count - 1;
 
       const image = await this.create({
-        imageId: `batch-image-${i + 1}`,
-        format,
         width: size.width,
         height: size.height,
-        originalName: `test-photo-${i + 1}.${format === 'jpeg' ? 'jpg' : format}`,
+        originalName: `test-photo-${i + 1}`,
+        extension: format,
         simulateCorruption: shouldCorrupt
       });
 
@@ -137,7 +136,7 @@ export class ImageFixtures extends Fixtures<ImageFile> {
     // Create original if not provided
     if (!originalImage) {
       originalImage = await this.create({
-        originalName: 'original-photo.jpg',
+        originalName: 'original-photo',
         width: 600,
         height: 400
       });

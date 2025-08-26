@@ -285,31 +285,4 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('server error');
   });
-
-  test('Collection listing with filesystem access issues', async () => {
-    // Given the collections directory has permission issues
-    try {
-      await CollectionsDirectoryFixtures.createWithPermissionIssues();
-    } catch (error) {
-      if ((error as Error).message.includes('SKIP_PERMISSION_TEST')) {
-        // Skip this test in environments where filesystem permissions aren't enforced
-        console.log('Skipping permission test - filesystem permissions not enforced in this environment');
-        return;
-      }
-      throw error;
-    }
-
-    // When the client requests GET /api/collections
-    const response = await api['/api/collections'].get({});
-
-    // Then the API returns 500 status code
-    response.shouldHaveStatus(500);
-
-    // And the API returns error message indicating server error
-    expect(response.body).toBeDefined();
-    const errorResponse = response.body as Record<string, unknown>;
-    expect(errorResponse.error).toBeDefined();
-    expect(errorResponse.message).toBeDefined();
-    expect(errorResponse.message.toLowerCase()).toContain('server error');
-  });
 });

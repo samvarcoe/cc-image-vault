@@ -40,12 +40,12 @@ test.describe('Collections - Image Updates', () => {
   });
 
   test('Image deletion from archive status', async () => {
-    const { collection, archiveImageIds } = await CollectionFixtures.createWithArchiveImages({
+    const collection = await CollectionFixtures.create({
       collectionId: `deletion-test-${Date.now()}`,
-      archiveImageCount: 1
+      imageCounts: { inbox: 0, collection: 0, archive: 1 } 
     });
     
-    const imageId = archiveImageIds[0];
+    const imageId = (await collection.getImages())[0].id;
     const collectionPath = path.join(collection.basePath, collection.id);
     
     // Verify files exist before deletion
@@ -77,7 +77,7 @@ test.describe('Collections - Image Updates', () => {
   // Negative Scenarios
 
   test('Image update with non-existent identifier', async () => {
-    const collection = await CollectionFixtures.createEmpty({
+    const collection = await CollectionFixtures.create({
       collectionId: `nonexistent-update-${Date.now()}`
     });
     
@@ -179,7 +179,7 @@ test.describe('Collections - Image Updates', () => {
   });
 
   test('Image deletion with non-existent identifier', async () => {
-    const collection = await CollectionFixtures.createEmpty({
+    const collection = await CollectionFixtures.create({
       collectionId: `nonexistent-deletion-${Date.now()}`
     });
     
@@ -210,12 +210,12 @@ test.describe('Collections - Image Updates', () => {
   });
 
   test('Image deletion with file system failure', async () => {
-    const { collection, archiveImageIds } = await CollectionFixtures.createWithArchiveImages({
+    const collection = await CollectionFixtures.create({
       collectionId: `filesystem-failure-${Date.now()}`,
-      archiveImageCount: 1
+      imageCounts: { inbox: 0, collection: 0, archive: 1 }
     });
     
-    const imageId = archiveImageIds[0];
+    const imageId = (await collection.getImages())[0].id;
     const collectionPath = path.join(collection.basePath, collection.id);
     const databaseStateBefore = await TestUtils.captureDatabaseState(collection);
     

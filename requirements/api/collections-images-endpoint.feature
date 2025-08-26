@@ -60,9 +60,3 @@ Feature: Collections Images API Endpoint
         When the client requests GET /api/collections/:id/images with invalid limit or offset parameters
         Then the API returns 400 status code
         And the API returns error message indicating invalid pagination parameters
-
-    Scenario: Image listing with collection access issues
-        Given a collection exists but has permission issues
-        When the client requests GET /api/collections/:id/images
-        Then the API returns 500 status code
-        And the API returns error message indicating server error

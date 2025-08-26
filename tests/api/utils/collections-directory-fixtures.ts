@@ -9,7 +9,7 @@ export interface DirectoryState {
 
 /**
  * Fixtures for managing the ./private directory and collection state
- * Used specifically for API testing where we need to control filesystem state
+ * Used  where we need to control filesystem state
  */
 export class CollectionsDirectoryFixtures extends Fixtures<DirectoryState> {
   

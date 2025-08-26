@@ -12,12 +12,10 @@ test.describe('Collections - Creation and Loading', () => {
     await Fixtures.cleanup();
   });
 
-  // Positive Scenarios
-
   test('Collection creation with valid parameters', async () => {
     const collectionId = `test-collection-${Date.now()}`;
     
-    const collection = await CollectionFixtures.createEmpty({ collectionId });
+    const collection = await CollectionFixtures.create({ collectionId });
     
     expect(collection.id, { 
       message: `Collection has ID "${collection.id}" instead of "${collectionId}" after creation with valid parameters` 
@@ -37,7 +35,7 @@ test.describe('Collections - Creation and Loading', () => {
     const collectionId = `existing-collection-${Date.now()}`;
     
     // First create a collection using fixtures
-    const collection = await CollectionFixtures.createEmpty({ collectionId });
+    const collection = await CollectionFixtures.create({ collectionId });
     const collectionPath = path.join(collection.basePath, collectionId);
     
     const loadedCollection = await Collection.load(collectionPath);
@@ -52,8 +50,6 @@ test.describe('Collections - Creation and Loading', () => {
     
     console.log(`✓ Collection ${collectionId} successfully loaded from existing directory`);
   });
-
-  // Negative Scenarios
 
   test('Collection creation with invalid path', async () => {
     const collectionId = `invalid-path-collection-${Date.now()}`;
@@ -185,7 +181,7 @@ test.describe('Collections - Creation and Loading', () => {
     const collectionId = `access-issue-collection-${Date.now()}`;
     
     // First create a valid collection using fixtures
-    const collection = await CollectionFixtures.createEmpty({ collectionId });
+    const collection = await CollectionFixtures.create({ collectionId });
     const collectionPath = path.join(collection.basePath, collectionId);
     
     // Corrupt the database to simulate access issues

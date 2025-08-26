@@ -3,6 +3,7 @@ import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { ImageFixtures } from '../../utils/fixtures/image-fixtures';
 import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 import { TestUtils } from '../utils';
+import fs from 'fs/promises';
 
 test.describe('Collections - Image Operations', () => {
   
@@ -13,12 +14,12 @@ test.describe('Collections - Image Operations', () => {
   // Positive Scenarios
 
   test('Image addition with valid file', async () => {
-    const collection = await CollectionFixtures.createEmpty({
+    const collection = await CollectionFixtures.create({
       collectionId: `image-addition-${Date.now()}`
     });
     
     const imageFile = await ImageFixtures.create({
-      originalName: 'test-photo.jpg',
+      originalName: 'test-photo',
       width: 800,
       height: 600,
       includeVisualContent: true
@@ -46,9 +47,9 @@ test.describe('Collections - Image Operations', () => {
   });
 
   test('Image retrieval with status filter', async () => {
-    const collection = await CollectionFixtures.createWithMixedStatuses({
+    const collection = await CollectionFixtures.create({
       collectionId: `status-filter-${Date.now()}`,
-      statusCounts: { 'INBOX': 2, 'COLLECTION': 3, 'ARCHIVE': 1 }
+      imageCounts: { 'inbox': 2, 'collection': 3, 'archive': 1 }
     });
     
     // Get images to verify filtering against
@@ -80,9 +81,9 @@ test.describe('Collections - Image Operations', () => {
   });
 
   test('Image retrieval without filter', async () => {
-    const collection = await CollectionFixtures.createWithMixedStatuses({
+    const collection = await CollectionFixtures.create({
       collectionId: `no-filter-${Date.now()}`,
-      statusCounts: { 'INBOX': 2, 'COLLECTION': 2, 'ARCHIVE': 1 }
+      imageCounts: { 'inbox': 2, 'collection': 2, 'archive': 1 }
     });
     
     // Get images to verify against
@@ -162,7 +163,7 @@ test.describe('Collections - Image Operations', () => {
   });
 
   test('Image addition with processing failure', async () => {
-    const collection = await CollectionFixtures.createEmpty({
+    const collection = await CollectionFixtures.create({
       collectionId: `processing-fail-${Date.now()}`
     });
     
@@ -202,8 +203,9 @@ test.describe('Collections - Image Operations', () => {
   });
 
   test('Image addition with storage failure', async () => {
-    const collection = await CollectionFixtures.createEmpty({
-      collectionId: `storage-fail-${Date.now()}`
+    const collection = await CollectionFixtures.create({
+      collectionId: `storage-fail-${Date.now()}`,
+      useTmpDir: true
     });
     
     const collectionPath = collection.basePath;
@@ -243,10 +245,13 @@ test.describe('Collections - Image Operations', () => {
   });
 
   test('Image retrieval with database error', async () => {
-    const collection = await CollectionFixtures.createWithDatabaseIssues({
+    const collection = await CollectionFixtures.create({
       collectionId: `db-error-${Date.now()}`,
-      issueType: 'connection'
     });
+
+    // Simulate database connection failure by corrupting the database file
+    const databasePath = `${collection.basePath}/${collection.id}/collection.db`;
+    await fs.writeFile(databasePath, 'CORRUPTED_DATABASE_DATA');
     
     let errorThrown = false;
     let errorMessage = '';
