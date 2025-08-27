@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { promises as fs } from 'fs';
 import { CollectionsAPI } from '../utils/collections-api-model';
 import { CollectionsImagesAPIUtils } from '../utils/collections-images-api-utils';
 import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
@@ -15,7 +16,7 @@ test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
 
   // Setup private directory before each test
   test.beforeEach(async () => {
-    await import('fs').then(fs => fs.promises.mkdir('/workspace/image-vault/private', { recursive: true }));
+    await fs.mkdir('/workspace/image-vault/private', { recursive: true });
   });
 
   // Cleanup fixtures after each test

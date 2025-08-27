@@ -117,7 +117,7 @@ export class AssertableResponse<ResponseBody> {
         message: `${endpoint} response body is undefined or null, cannot verify key "${key}" presence`
       }).not.toBe(undefined);
       
-      expect(this.body, {
+      expect(this.body as Record<string, unknown>, {
         message: `${endpoint} response body missing required key "${key}". Available keys: ${this.getAvailableKeys()}`
       }).toHaveProperty(key);
       

@@ -337,7 +337,7 @@ export class TestUtils {
 
     const unchanged = sortedBefore.every((imageBefore, index) => {
       const imageAfter = sortedAfter[index];
-      return (
+      return imageAfter && (
         imageBefore.id === imageAfter.id &&
         imageBefore.status === imageAfter.status &&
         imageBefore.fileHash === imageAfter.fileHash &&
@@ -349,7 +349,7 @@ export class TestUtils {
     if (!unchanged) {
       const differences = sortedBefore.filter((imageBefore, index) => {
         const imageAfter = sortedAfter[index];
-        return !(
+        return !imageAfter || !(
           imageBefore.id === imageAfter.id &&
           imageBefore.status === imageAfter.status &&
           imageBefore.fileHash === imageAfter.fileHash
@@ -554,7 +554,7 @@ export class TestUtils {
 
     return sortedBefore.every((imageBefore, index) => {
       const imageAfter = sortedAfter[index];
-      return (
+      return imageAfter && (
         imageBefore.id === imageAfter.id &&
         imageBefore.status === imageAfter.status &&
         imageBefore.fileHash === imageAfter.fileHash &&

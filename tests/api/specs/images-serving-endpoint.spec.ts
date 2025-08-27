@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { CollectionsAPI } from '../utils/collections-api-model';
+import { CollectionsAPI, ErrorResponse } from '../utils/collections-api-model';
 import { ImageServingFixtures } from '../utils/image-serving-fixtures';
 import { BinaryResponseUtils } from '../utils/binary-response-utils';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
@@ -25,35 +25,36 @@ test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
     });
 
     const testImage = collection.images[0];
+    expect(testImage).toBeDefined();
 
     const response = await api['/api/images/:collectionId/:imageId'].get({
       pathParams: {
         collectionId: collection.collectionId,
-        imageId: testImage.id
+        imageId: testImage!.id
       }
     });
 
     expect(response.raw.status, {
-      message: `Original image serving returned HTTP ${response.raw.status} instead of 200 for image ${testImage.id} in collection ${collection.collectionId}`
+      message: `Original image serving returned HTTP ${response.raw.status} instead of 200 for image ${testImage!.id} in collection ${collection.collectionId}`
     }).toBe(200);
 
     expect(response.raw.ok, {
-      message: `Original image serving failed (HTTP ${response.raw.status}) for valid image ${testImage.id} in collection ${collection.collectionId}`
+      message: `Original image serving failed (HTTP ${response.raw.status}) for valid image ${testImage!.id} in collection ${collection.collectionId}`
     }).toBe(true);
 
     const responseBuffer = await BinaryResponseUtils.validateImageResponse(response.raw, {
-      expectedContentType: testImage.metadata.mimeType,
-      expectedContentLength: testImage.metadata.size.toString(),
+      expectedContentType: testImage!.metadata.mimeType,
+      expectedContentLength: testImage!.metadata.size.toString(),
       expectedCacheControl: 'max-age=31536000',
-      shouldMatchSourceFile: testImage.originalPath
+      shouldMatchSourceFile: testImage!.originalPath
     });
 
     // Validate image format using the already-read buffer
     if (responseBuffer) {
-      BinaryResponseUtils.validateImageFormatFromBuffer(responseBuffer, 'jpeg', '/api/images/' + collection.collectionId + '/' + testImage.id);
+      BinaryResponseUtils.validateImageFormatFromBuffer(responseBuffer, 'jpeg', '/api/images/' + collection.collectionId + '/' + testImage!.id);
     }
 
-    console.log(`✓ Original image ${testImage.id} served successfully with correct headers and content`);
+    console.log(`✓ Original image ${testImage!.id} served successfully with correct headers and content`);
   });
 
   test('Thumbnail image serving with valid collection and image IDs', async () => {
@@ -65,40 +66,41 @@ test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
     });
 
     const testImage = collection.images[0];
-    expect(testImage.thumbnailPath, {
-      message: `Test image ${testImage.id} missing thumbnail file during fixture setup`
+    expect(testImage).toBeDefined();
+    expect(testImage!.thumbnailPath, {
+      message: `Test image ${testImage!.id} missing thumbnail file during fixture setup`
     }).toBeDefined();
 
     const response = await api['/api/images/:collectionId/:imageId/thumbnail'].get({
       pathParams: {
         collectionId: collection.collectionId,
-        imageId: testImage.id
+        imageId: testImage!.id
       }
     });
 
     expect(response.raw.status, {
-      message: `Thumbnail serving returned HTTP ${response.raw.status} instead of 200 for image ${testImage.id} in collection ${collection.collectionId}`
+      message: `Thumbnail serving returned HTTP ${response.raw.status} instead of 200 for image ${testImage!.id} in collection ${collection.collectionId}`
     }).toBe(200);
 
     expect(response.raw.ok, {
-      message: `Thumbnail serving failed (HTTP ${response.raw.status}) for valid image ${testImage.id} with existing thumbnail`
+      message: `Thumbnail serving failed (HTTP ${response.raw.status}) for valid image ${testImage!.id} with existing thumbnail`
     }).toBe(true);
 
-    const thumbnailStats = await ImageServingFixtures.getImageStats(testImage.thumbnailPath!);
+    const thumbnailStats = await ImageServingFixtures.getImageStats(testImage!.thumbnailPath!);
 
     const responseBuffer = await BinaryResponseUtils.validateImageResponse(response.raw, {
       expectedContentType: 'image/jpeg',
       expectedContentLength: thumbnailStats.size.toString(),
       expectedCacheControl: 'max-age=31536000',
-      shouldMatchSourceFile: testImage.thumbnailPath!
+      shouldMatchSourceFile: testImage!.thumbnailPath!
     });
 
     // Validate image format using the already-read buffer
     if (responseBuffer) {
-      BinaryResponseUtils.validateImageFormatFromBuffer(responseBuffer, 'jpeg', '/api/images/' + collection.collectionId + '/' + testImage.id + '/thumbnail');
+      BinaryResponseUtils.validateImageFormatFromBuffer(responseBuffer, 'jpeg', '/api/images/' + collection.collectionId + '/' + testImage!.id + '/thumbnail');
     }
 
-    console.log(`✓ Thumbnail for image ${testImage.id} served successfully as JPEG with correct headers`);
+    console.log(`✓ Thumbnail for image ${testImage!.id} served successfully as JPEG with correct headers`);
   });
 
   test('Image serving with non-existent collection', async () => {
@@ -121,7 +123,7 @@ test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
     }).toBe(false);
 
     if (response.body) {
-      const errorBody = response.body as Record<string, unknown>;
+      const errorBody = response.body as unknown as ErrorResponse;
       expect(errorBody, {
         message: `Error response missing 'error' field for non-existent collection "${nonExistentCollectionId}"`
       }).toHaveProperty('error');
@@ -163,7 +165,7 @@ test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
     }).toBe(false);
 
     if (response.body) {
-      const errorBody = response.body as Record<string, unknown>;
+      const errorBody = response.body as unknown as ErrorResponse;
       expect(errorBody, {
         message: `Error response missing 'error' field for non-existent image "${nonExistentImageId}" in collection "${collection.collectionId}"`
       }).toHaveProperty('error');
@@ -209,7 +211,7 @@ test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
     }).toBe(false);
 
     if (response.body) {
-      const errorBody = response.body as Record<string, unknown>;
+      const errorBody = response.body as unknown as ErrorResponse;
       expect(errorBody, {
         message: `Error response missing 'error' field for missing thumbnail of image "${imageWithoutThumbnail!.id}"`
       }).toHaveProperty('error');

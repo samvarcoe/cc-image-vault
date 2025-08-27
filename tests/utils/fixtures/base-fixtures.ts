@@ -2,7 +2,8 @@
  * Base fixtures class following the standard fixture pattern
  * Provides shared cleanup tracking for all fixture types
  */
-export abstract class Fixtures<T> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export abstract class Fixtures<T = unknown> {
   private static cleanupFunctions: Array<() => Promise<void>> = [];
 
   protected static addCleanup(cleanupFn: () => Promise<void>): void {

@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import crypto from 'crypto';
+import { promises as fs } from 'fs';
 
 export interface BinaryResponseValidation {
   expectedSize?: number;
@@ -67,8 +68,7 @@ export class BinaryResponseUtils {
     const responseBufferNode = Buffer.from(responseBuffer);
     const responseHash = crypto.createHash('sha256').update(responseBufferNode).digest('hex');
 
-    const fs = await import('fs');
-    const sourceBuffer = await fs.promises.readFile(sourceFilePath);
+    const sourceBuffer = await fs.readFile(sourceFilePath);
     const sourceHash = crypto.createHash('sha256').update(sourceBuffer).digest('hex');
 
     expect(responseHash, {
@@ -129,6 +129,9 @@ export class BinaryResponseUtils {
 
     if (expectedFormat) {
       const expectedSignature = signatures[expectedFormat];
+      if (!expectedSignature) {
+        throw new Error(`Unknown image format: ${expectedFormat}`);
+      }
       const actualStart = responseBuffer.subarray(0, expectedSignature.length);
       
       expect(actualStart.equals(expectedSignature), {

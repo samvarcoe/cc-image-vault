@@ -33,9 +33,12 @@ export class ImageFixtures extends Fixtures<ImageFile> {
       quality = 80,
       originalName = `test-photo-${Date.now()}`,
       extension = 'jpeg',
-      includeVisualContent = true,
+      includeVisualContent = true, // TODO: implement visual content generation
       simulateCorruption = false
     } = options;
+
+    // Temporarily suppress unused variable warning for future implementation
+    void includeVisualContent;
 
     const tempDir = await fs.mkdtemp(path.join(tmpdir(), 'image-fixture-'));
     const filePath = path.join(tempDir, `${originalName}.${extension}`);
@@ -106,6 +109,10 @@ export class ImageFixtures extends Fixtures<ImageFile> {
       const format = formats[i % formats.length];
       const size = sizes[i % sizes.length];
       const shouldCorrupt = includeCorrupt && i === count - 1;
+
+      if (!size) {
+        throw new Error(`Unable to get size at index ${i % sizes.length}`);
+      }
 
       const image = await this.create({
         width: size.width,
