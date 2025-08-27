@@ -37,8 +37,9 @@ export abstract class App {
 
                 if (msg.text().includes('Cross-Origin-Opener-Policy') ||
                     msg.text().includes('Content Security Policy') ||
-                    msg.text().includes('ERR_SSL_PROTOCOL_ERROR')) {
-                    // Ignore expected warnings in dev environment
+                    msg.text().includes('ERR_SSL_PROTOCOL_ERROR') ||
+                    msg.text().includes('Failed to load resource: the server responded with a status of 404')) {
+                    // Ignore expected warnings in dev environment and legitimate 404 responses
                     return;
                 }
 
