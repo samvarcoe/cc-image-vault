@@ -14,6 +14,8 @@ import {
 } from './collection-utils';
 import { HomePageModel } from '../ui/pages/home/model';
 import { HomePageView } from '../ui/pages/home/view';
+import { CollectionPageModel } from '../ui/pages/collection/model';
+import { CollectionPageView } from '../ui/pages/collection/view';
 import { renderPage } from '../ui/mvc';
 
 const app = express();
@@ -60,6 +62,42 @@ app.get('/', async (req, res) => {
   } catch (error: unknown) {
     console.error('Error rendering home page:', error);
     res.status(500).send('Internal Server Error');
+  }
+});
+
+// Collection page route
+app.get('/collection/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const status = req.query.status as string;
+    
+    // Check if collection exists
+    if (!await collectionDirectoryExists(basePath, id)) {
+      // 404 page for non-existent collection
+      const model = new CollectionPageModel(id, [], 'COLLECTION', false, 'Collection not found');
+      const view = new CollectionPageView(model);
+      const html = renderPage(view, model, 'collection');
+      return res.status(404).send(html);
+    }
+    
+    // Validate and normalize status parameter
+    const validStatuses = ['INBOX', 'COLLECTION', 'ARCHIVE'];
+    const normalizedStatus = validStatuses.includes(status) ? status : 'COLLECTION';
+    
+    // Load collection and get images
+    const collectionPath = path.join(basePath, id);
+    const collection = await Collection.load(collectionPath);
+    const images = await collection.getImages({ status: normalizedStatus as 'INBOX' | 'COLLECTION' | 'ARCHIVE' });
+    await collection.close();
+    
+    // Create model and view
+    const model = new CollectionPageModel(id, images, normalizedStatus as 'INBOX' | 'COLLECTION' | 'ARCHIVE');
+    const view = new CollectionPageView(model);
+    const html = renderPage(view, model, 'collection');
+    return res.send(html);
+  } catch (error: unknown) {
+    console.error('Error rendering collection page:', error);
+    return res.status(500).send('Internal Server Error');
   }
 });
 
