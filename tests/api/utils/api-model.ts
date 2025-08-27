@@ -14,7 +14,7 @@ const getMatchingPathParams = (path: string): string[] => {
   const matches: string[] = [];
   let match;
   while ((match = pathParamRegex.exec(path)) !== null) {
-    matches.push(match[1]);
+    if (match[1]) matches.push(match[1]);
   }
   return matches;
 };
@@ -56,7 +56,7 @@ export class APIModel {
         // Replace each parameter, we know the keys are valid as we checked above
         // match represents the thing we are replacing, key is the name of the parameter, eg match is "/:x" and key is "x"
         url.pathname = url.pathname.replace(/:([a-zA-Z0-9_-]+)(?=\/|$)/g, (match, key) => {
-          return encodeURIComponent(options.pathParams![key]);
+          return encodeURIComponent(options.pathParams![key] || '');
         });
       }
 

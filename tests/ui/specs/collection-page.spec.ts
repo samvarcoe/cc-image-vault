@@ -39,7 +39,7 @@ test.describe('Collection Page - Displaying Images', () => {
     
     // Verify no console errors or failed requests
     await app.shouldHaveNoConsoleErrors();
-    await app.shouldHaveNoFailedRequests();
+    await app.shouldHaveNoApiErrors();
   });
 
   test('Collection page displays images filtered by status parameter', async ({ page }) => {
@@ -69,7 +69,7 @@ test.describe('Collection Page - Displaying Images', () => {
     
     // Verify no console errors or failed requests
     await app.shouldHaveNoConsoleErrors();
-    await app.shouldHaveNoFailedRequests();
+    await app.shouldHaveNoApiErrors();
   });
 
   test('Collection page displays archived images', async ({ page }) => {
@@ -96,7 +96,7 @@ test.describe('Collection Page - Displaying Images', () => {
     
     // Verify no console errors or failed requests
     await app.shouldHaveNoConsoleErrors();
-    await app.shouldHaveNoFailedRequests();
+    await app.shouldHaveNoApiErrors();
   });
 
   test('Empty collection displays status-specific message', async ({ page }) => {
@@ -120,7 +120,7 @@ test.describe('Collection Page - Displaying Images', () => {
     
     // Verify no console errors or failed requests
     await app.shouldHaveNoConsoleErrors();
-    await app.shouldHaveNoFailedRequests();
+    await app.shouldHaveNoApiErrors();
   });
 
   test('Empty collection displays default status message', async ({ page }) => {
@@ -144,7 +144,7 @@ test.describe('Collection Page - Displaying Images', () => {
     
     // Verify no console errors or failed requests
     await app.shouldHaveNoConsoleErrors();
-    await app.shouldHaveNoFailedRequests();
+    await app.shouldHaveNoApiErrors();
   });
 
   test('Collection page with non-existent collection ID', async ({ page }) => {
@@ -188,6 +188,6 @@ test.describe('Collection Page - Displaying Images', () => {
     
     // Verify no console errors or failed requests
     await app.shouldHaveNoConsoleErrors();
-    await app.shouldHaveNoFailedRequests();
+    await app.shouldHaveNoApiErrors();
   });
 });

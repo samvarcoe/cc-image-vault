@@ -65,8 +65,7 @@ export class ImageServingFixtures extends Fixtures<ImageServingState> {
       
       // Create original image file
       const originalImage = await ImageFixtures.create({
-        imageId: `temp-${i}`,
-        format,
+        extension: format,
         width: 800 + (i * 200), // Vary sizes
         height: 600 + (i * 150),
         originalName: `test-photo-${i + 1}.${extension}`,

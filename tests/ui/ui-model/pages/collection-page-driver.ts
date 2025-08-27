@@ -35,7 +35,10 @@ export class CollectionPageDriver extends PageObject {
   // Navigation methods
   async visitCollection(collectionId: string, status?: string): Promise<void> {
     const queryParam = status ? `?status=${status}` : '';
-    await this.visit(`/collection/${collectionId}${queryParam}`);
+    const path = `/collection/${collectionId}${queryParam}`;
+    console.log(`Navigating to collection page: ${path}`);
+    await this.page.goto(path);
+    await this.page.waitForLoadState('load', { timeout: 10000 });
   }
 
   // Page assertions - URL and basic structure
@@ -96,9 +99,9 @@ export class CollectionPageDriver extends PageObject {
       await this.imageThumbnail(imageId).shouldBeDisplayed();
       
       // Verify thumbnail has proper src attribute and lazy loading
-      const thumbnailElement = await this.imageThumbnail(imageId).locator;
-      const src = await thumbnailElement.getAttribute('src');
-      const loading = await thumbnailElement.getAttribute('loading');
+      const thumbnailElement = this.imageThumbnail(imageId);
+      const src = await this.page.locator(thumbnailElement.selector).getAttribute('src');
+      const loading = await this.page.locator(thumbnailElement.selector).getAttribute('loading');
       
       expect(src, {
         message: `Image ${imageId} thumbnail has no src attribute or invalid URL`
@@ -185,7 +188,7 @@ export class CollectionPageDriver extends PageObject {
 
   async shouldMaintainPageLayout(): Promise<void> {
     // Verify page structure is maintained even when empty
-    await this.page.locator('body').shouldBeVisible();
+    await expect(this.page.locator('body')).toBeVisible();
     
     const pageStructure = await this.page.evaluate(() => {
       const body = document.body;
@@ -272,7 +275,7 @@ export class CollectionPageDriver extends PageObject {
     
     // Check if page is showing collection status behavior
     const hasCollectionImages = await this.page.locator('[data-testid^="image-item-"]').count() > 0;
-    const hasEmptyState = await this.emptyStateMessage.isVisible();
+    const hasEmptyState = await this.emptyStateMessage.displayed();
     
     // One of these should be true for valid COLLECTION status handling
     expect(hasCollectionImages || hasEmptyState, {

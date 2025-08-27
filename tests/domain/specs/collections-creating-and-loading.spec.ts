@@ -4,6 +4,7 @@ import path from 'path';
 import { Collection } from '../../../src/domain/collection';
 import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
+import { ImageFixtures } from '../../utils/fixtures/image-fixtures';
 import { TestUtils } from '../utils';
 
 test.describe('Collections - Creation and Loading', () => {
@@ -63,7 +64,7 @@ test.describe('Collections - Creation and Loading', () => {
       await Collection.create(collectionId, invalidPath);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
     expect(errorThrown, { 
@@ -87,7 +88,7 @@ test.describe('Collections - Creation and Loading', () => {
     const restrictedPath = await TestUtils.createNoWritePermissionPath();
     
     // Add manual cleanup for this specific test resource
-    (Fixtures as { addCleanup: (fn: () => Promise<void>) => void }).addCleanup(async () => {
+    ImageFixtures['addCleanup'](async () => {
       try {
         await fs.rm(restrictedPath, { recursive: true, force: true });
       } catch {
@@ -103,7 +104,7 @@ test.describe('Collections - Creation and Loading', () => {
       await Collection.create(collectionId, restrictedPath);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
     expect(errorThrown, { 
@@ -128,7 +129,7 @@ test.describe('Collections - Creation and Loading', () => {
     
     // Use fixtures to create a temp directory that will be cleaned up
     const tempDir = await fs.mkdtemp('/tmp/db-fail-test-');
-    (Fixtures as { addCleanup: (fn: () => Promise<void>) => void }).addCleanup(async () => {
+    ImageFixtures['addCleanup'](async () => {
       try {
         await fs.rm(tempDir, { recursive: true, force: true });
       } catch {
@@ -152,7 +153,7 @@ test.describe('Collections - Creation and Loading', () => {
       await Collection.create(collectionId, tempDir);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
     expect(errorThrown, { 
@@ -195,7 +196,7 @@ test.describe('Collections - Creation and Loading', () => {
       await Collection.load(collectionPath);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
     expect(errorThrown, { 

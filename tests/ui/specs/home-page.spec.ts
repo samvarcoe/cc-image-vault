@@ -3,8 +3,6 @@ import { ImageVaultApp } from '../ui-model/image-vault-app';
 import { HomePageFixtures } from '../utils/home-page-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
-import fs from 'fs/promises';
-import path from 'path';
 
 
 

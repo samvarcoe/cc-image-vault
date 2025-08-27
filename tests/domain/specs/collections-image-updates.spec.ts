@@ -21,22 +21,23 @@ test.describe('Collections - Image Updates', () => {
     
     // Get the inbox image
     const inboxImages = await collection.getImages({ status: 'INBOX' });
+    expect(inboxImages).toHaveLength(1);
     const testImage = inboxImages[0];
-    const originalUpdatedAt = testImage.updatedAt;
+    const originalUpdatedAt = testImage!.updatedAt;
     
-    const updatedImageMetadata = await collection.updateImageStatus(testImage.id, 'COLLECTION');
+    const updatedImageMetadata = await collection.updateImageStatus(testImage!.id, 'COLLECTION');
     
-    expect(updatedImageMetadata, { message: `Status update operation returned null metadata instead of updated image data for image ${testImage.id}` }).toBeTruthy();
-    expect(updatedImageMetadata.status, { message: `Image ${testImage.id} has status "${updatedImageMetadata.status}" instead of "COLLECTION" after status update operation` }).toBe('COLLECTION');
-    console.log(`✓ Image ${testImage.id} status updated from INBOX to COLLECTION`);
+    expect(updatedImageMetadata, { message: `Status update operation returned null metadata instead of updated image data for image ${testImage!.id}` }).toBeTruthy();
+    expect(updatedImageMetadata.status, { message: `Image ${testImage!.id} has status "${updatedImageMetadata.status}" instead of "COLLECTION" after status update operation` }).toBe('COLLECTION');
+    console.log(`✓ Image ${testImage!.id} status updated from INBOX to COLLECTION`);
     
-    expect(updatedImageMetadata.updatedAt.getTime() > originalUpdatedAt.getTime(), { message: `Image ${testImage.id} updated_at timestamp ${updatedImageMetadata.updatedAt.toISOString()} is not later than original ${originalUpdatedAt.toISOString()}` }).toBe(true);
-    console.log(`✓ Image ${testImage.id} updated_at timestamp refreshed during status change`);
+    expect(updatedImageMetadata.updatedAt.getTime() > originalUpdatedAt.getTime(), { message: `Image ${testImage!.id} updated_at timestamp ${updatedImageMetadata.updatedAt.toISOString()} is not later than original ${originalUpdatedAt.toISOString()}` }).toBe(true);
+    console.log(`✓ Image ${testImage!.id} updated_at timestamp refreshed during status change`);
     
     TestUtils.shouldHaveValidMetadata(updatedImageMetadata);
-    expect(updatedImageMetadata.id, { message: `Updated image has ID "${updatedImageMetadata.id}" instead of original ID "${testImage.id}"` }).toBe(testImage.id);
-    expect(updatedImageMetadata.fileHash, { message: `Updated image has fileHash "${updatedImageMetadata.fileHash}" instead of original fileHash "${testImage.fileHash}"` }).toBe(testImage.fileHash);
-    console.log(`✓ Image ${testImage.id} metadata integrity preserved during status update`);
+    expect(updatedImageMetadata.id, { message: `Updated image has ID "${updatedImageMetadata.id}" instead of original ID "${testImage!.id}"` }).toBe(testImage!.id);
+    expect(updatedImageMetadata.fileHash, { message: `Updated image has fileHash "${updatedImageMetadata.fileHash}" instead of original fileHash "${testImage!.fileHash}"` }).toBe(testImage!.fileHash);
+    console.log(`✓ Image ${testImage!.id} metadata integrity preserved during status update`);
   });
 
   test('Image deletion from archive status', async () => {
@@ -45,7 +46,13 @@ test.describe('Collections - Image Updates', () => {
       imageCounts: { inbox: 0, collection: 0, archive: 1 } 
     });
     
-    const imageId = (await collection.getImages())[0].id;
+    const images = await collection.getImages();
+    expect(images).toHaveLength(1);
+    const firstImage = images[0];
+    if (!firstImage) {
+      throw new Error('No images found in collection');
+    }
+    const imageId = firstImage.id;
     const collectionPath = path.join(collection.basePath, collection.id);
     
     // Verify files exist before deletion
@@ -91,7 +98,7 @@ test.describe('Collections - Image Updates', () => {
       await collection.updateImageStatus(nonExistentImageId, 'COLLECTION');
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
     expect(errorThrown, { message: `Collection did not reject status update for non-existent image ID "${nonExistentImageId}"` }).toBe(true);
@@ -114,6 +121,7 @@ test.describe('Collections - Image Updates', () => {
     });
     
     const images = await collection.getImages({ status: 'INBOX' });
+    expect(images).toHaveLength(1);
     const testImage = images[0];
     const databaseStateBefore = await TestUtils.captureDatabaseState(collection);
     
@@ -123,15 +131,15 @@ test.describe('Collections - Image Updates', () => {
     let errorMessage = '';
     
     try {
-      await collection.updateImageStatus(testImage.id, invalidStatus);
+      await collection.updateImageStatus(testImage!.id, invalidStatus);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
-    expect(errorThrown, { message: `Collection did not reject invalid status "${invalidStatus}" for image ${testImage.id}` }).toBe(true);
+    expect(errorThrown, { message: `Collection did not reject invalid status "${invalidStatus}" for image ${testImage!.id}` }).toBe(true);
     expect(errorMessage, { message: `Error message "${errorMessage}" does not indicate "Invalid status" for unrecognized status value` }).toContain('Invalid status');
-    console.log(`✓ Collection rejected invalid status "${invalidStatus}" for image ${testImage.id}`);
+    console.log(`✓ Collection rejected invalid status "${invalidStatus}" for image ${testImage!.id}`);
     
     const hasValidOptions = ['INBOX', 'COLLECTION', 'ARCHIVE'].some(status => errorMessage.includes(status));
     expect(hasValidOptions, { message: `Error message "${errorMessage}" does not list valid status options for user guidance` }).toBe(true);
@@ -139,7 +147,7 @@ test.describe('Collections - Image Updates', () => {
     
     const databaseStateAfter = await TestUtils.captureDatabaseState(collection);
     const databaseUnchanged = TestUtils.compareDatabaseStates(databaseStateBefore, databaseStateAfter);
-    expect(databaseUnchanged, { message: `Database state modified after invalid status "${invalidStatus}" update rejection for image ${testImage.id}` }).toBe(true);
+    expect(databaseUnchanged, { message: `Database state modified after invalid status "${invalidStatus}" update rejection for image ${testImage!.id}` }).toBe(true);
     console.log(`✓ Database state preserved after invalid status update rejection`);
   });
 
@@ -150,6 +158,7 @@ test.describe('Collections - Image Updates', () => {
     });
     
     const images = await collection.getImages({ status: 'INBOX' });
+    expect(images).toHaveLength(1);
     const testImage = images[0];
     
     const cleanupConstraintViolation = await TestUtils.simulateConstraintViolation(collection);
@@ -158,18 +167,18 @@ test.describe('Collections - Image Updates', () => {
     let errorMessage = '';
     
     try {
-      await collection.updateImageStatus(testImage.id, 'COLLECTION');
+      await collection.updateImageStatus(testImage!.id, 'COLLECTION');
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     } finally {
       await cleanupConstraintViolation();
     }
     
-    expect(errorThrown, { message: `Collection did not handle database constraint violation during status update for image ${testImage.id}` }).toBe(true);
+    expect(errorThrown, { message: `Collection did not handle database constraint violation during status update for image ${testImage!.id}` }).toBe(true);
     const hasConstraintError = /\b(constraint|violation|database|error)\b/i.test(errorMessage);
     expect(hasConstraintError, { message: `Error message "${errorMessage}" does not indicate database constraint violation condition` }).toBe(true);
-    console.log(`✓ Collection reported database constraint violation for image ${testImage.id} status update`);
+    console.log(`✓ Collection reported database constraint violation for image ${testImage!.id} status update`);
     
     // After cleanup, the collection should be in a consistent state
     // We can verify this by checking that normal operations work
@@ -193,7 +202,7 @@ test.describe('Collections - Image Updates', () => {
       await collection.deleteImage(nonExistentImageId);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
     expect(errorThrown, { message: `Collection did not reject deletion request for non-existent image ID "${nonExistentImageId}"` }).toBe(true);
@@ -215,7 +224,13 @@ test.describe('Collections - Image Updates', () => {
       imageCounts: { inbox: 0, collection: 0, archive: 1 }
     });
     
-    const imageId = (await collection.getImages())[0].id;
+    const images = await collection.getImages();
+    expect(images).toHaveLength(1);
+    const firstImage = images[0];
+    if (!firstImage) {
+      throw new Error('No images found in collection');
+    }
+    const imageId = firstImage.id;
     const collectionPath = path.join(collection.basePath, collection.id);
     const databaseStateBefore = await TestUtils.captureDatabaseState(collection);
     
@@ -228,7 +243,7 @@ test.describe('Collections - Image Updates', () => {
       await collection.deleteImage(imageId);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     } finally {
       await cleanupFileFailure();
     }

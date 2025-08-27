@@ -154,12 +154,12 @@ export class CollectionsImagesAPIUtils {
       
       if (orderDirection === 'ASC') {
         expect(current, {
-          message: `Collection ${collectionId} images not sorted by ${orderBy} ASC: image ${i} (${images[i].originalName}) has earlier ${orderBy} than image ${i-1} (${images[i-1].originalName})`
-        }).toBeGreaterThanOrEqual(previous);
+          message: `Collection ${collectionId} images not sorted by ${orderBy} ASC: image ${i} (${images[i]?.originalName}) has earlier ${orderBy} than image ${i-1} (${images[i-1]?.originalName})`
+        }).toBeGreaterThanOrEqual(previous!);
       } else {
         expect(current, {
-          message: `Collection ${collectionId} images not sorted by ${orderBy} DESC: image ${i} (${images[i].originalName}) has later ${orderBy} than image ${i-1} (${images[i-1].originalName})`
-        }).toBeLessThanOrEqual(previous);
+          message: `Collection ${collectionId} images not sorted by ${orderBy} DESC: image ${i} (${images[i]?.originalName}) has later ${orderBy} than image ${i-1} (${images[i-1]?.originalName})`
+        }).toBeLessThanOrEqual(previous!);
       }
     }
 
@@ -181,12 +181,14 @@ export class CollectionsImagesAPIUtils {
       message: `Error response missing 'error' field for ${expectedStatus} status` 
     }).toBeDefined();
     
-    expect(errorBody.message, { 
+    const errorResponse = errorBody as { error?: string; message?: string };
+    
+    expect(errorResponse.message, { 
       message: `Error response missing 'message' field for ${expectedStatus} status` 
     }).toBeDefined();
 
-    expect(errorBody.message.toLowerCase(), {
-      message: `Error message "${errorBody.message}" does not contain expected error type "${expectedErrorType}"`
+    expect(errorResponse.message?.toLowerCase(), {
+      message: `Error message "${errorResponse.message}" does not contain expected error type "${expectedErrorType}"`
     }).toContain(expectedErrorType.toLowerCase());
 
     console.log(`✓ Error response has correct structure and contains "${expectedErrorType}" message`);

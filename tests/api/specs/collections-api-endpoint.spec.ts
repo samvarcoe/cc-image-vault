@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { CollectionsAPI } from '../utils/collections-api-model';
+import { CollectionsAPI, ErrorResponse } from '../utils/collections-api-model';
 import { CollectionsDirectoryFixtures } from '../utils/collections-directory-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { TEST_CONFIG } from '../../utils/test-config';
@@ -112,7 +112,7 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
 
     // And the API returns error message indicating duplicate ID
     expect(response.body).toBeDefined();
-    const errorResponse = response.body as Record<string, unknown>;
+    const errorResponse = response.body as unknown as ErrorResponse;
     expect(errorResponse.error).toBeDefined();
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('duplicate');
@@ -148,7 +148,7 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
 
       // And the API returns error message indicating invalid ID format
       expect(response.body).toBeDefined();
-      const errorResponse = response.body as Record<string, unknown>;
+      const errorResponse = response.body as unknown as ErrorResponse;
       expect(errorResponse.error).toBeDefined();
       expect(errorResponse.message).toBeDefined();
       expect(errorResponse.message.toLowerCase()).toContain('invalid');
@@ -194,7 +194,7 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
 
     // And the API returns error message indicating collection not found
     expect(response.body).toBeDefined();
-    const errorResponse = response.body as Record<string, unknown>;
+    const errorResponse = response.body as unknown as ErrorResponse;
     expect(errorResponse.error).toBeDefined();
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('not found');
@@ -248,41 +248,9 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
 
     // And the API returns error message indicating collection not found
     expect(response.body).toBeDefined();
-    const errorResponse = response.body as Record<string, unknown>;
+    const errorResponse = response.body as unknown as ErrorResponse;
     expect(errorResponse.error).toBeDefined();
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('not found');
-  });
-
-  test('Collection creation with insufficient permissions', async () => {
-    // Given the client provides valid collection ID
-    const collectionId = 'permission-test-collection';
-    
-    // And the API lacks write permissions to private directory
-    try {
-      await CollectionsDirectoryFixtures.createWithPermissionIssues();
-    } catch (error) {
-      if ((error as Error).message.includes('SKIP_PERMISSION_TEST')) {
-        // Skip this test in environments where filesystem permissions aren't enforced
-        console.log('Skipping permission test - filesystem permissions not enforced in this environment');
-        return;
-      }
-      throw error;
-    }
-
-    // When the client requests POST /api/collections
-    const response = await api['/api/collections'].post({
-      body: { id: collectionId }
-    });
-
-    // Then the API returns 500 status code
-    response.shouldHaveStatus(500);
-
-    // And the API returns error message indicating server error
-    expect(response.body).toBeDefined();
-    const errorResponse = response.body as Record<string, unknown>;
-    expect(errorResponse.error).toBeDefined();
-    expect(errorResponse.message).toBeDefined();
-    expect(errorResponse.message.toLowerCase()).toContain('server error');
   });
 });

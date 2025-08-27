@@ -44,7 +44,8 @@ export class ConfirmationDialogComponent extends Element {
   async shouldShowWarningMessage(): Promise<void> {
     await this.warningMessage.shouldBeDisplayed();
     const warningText = await this.warningMessage.getText();
-    expect(warningText.length, {
+    expect(warningText).toBeTruthy();
+    expect(warningText!.length, {
       message: 'Warning message should contain text about deletion consequences'
     }).toBeGreaterThan(0);
     console.log('✓ Confirmation dialog shows warning message about deletion');

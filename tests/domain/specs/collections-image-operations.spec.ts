@@ -73,9 +73,13 @@ test.describe('Collections - Image Operations', () => {
     // Expected order for comparison
     TestUtils.sortImages(expectedCollectionImages, 'updated_at', 'DESC');
     for (let i = 0; i < collectionImages.length - 1; i++) {
-      const currentTime = collectionImages[i].updatedAt.getTime();
-      const nextTime = collectionImages[i + 1].updatedAt.getTime();
-      expect(currentTime >= nextTime, { message: `Image ${collectionImages[i].id} at position ${i} has updated_at ${collectionImages[i].updatedAt.toISOString()} which is earlier than image ${collectionImages[i+1].id} at position ${i+1} with updated_at ${collectionImages[i+1].updatedAt.toISOString()}` }).toBe(true);
+      const current = collectionImages[i];
+      const next = collectionImages[i + 1];
+      if (!current || !next) continue;
+      
+      const currentTime = current.updatedAt.getTime();
+      const nextTime = next.updatedAt.getTime();
+      expect(currentTime >= nextTime, { message: `Image ${current.id} at position ${i} has updated_at ${current.updatedAt.toISOString()} which is earlier than image ${next.id} at position ${i+1} with updated_at ${next.updatedAt.toISOString()}` }).toBe(true);
     }
     console.log(`✓ ${collectionImages.length} filtered images ordered by updated_at DESC`);
   });
@@ -102,9 +106,13 @@ test.describe('Collections - Image Operations', () => {
     // Expected order for comparison
     TestUtils.sortImages(allImages, 'updated_at', 'DESC');
     for (let i = 0; i < retrievedImages.length - 1; i++) {
-      const currentTime = retrievedImages[i].updatedAt.getTime();
-      const nextTime = retrievedImages[i + 1].updatedAt.getTime();
-      expect(currentTime >= nextTime, { message: `Image ${retrievedImages[i].id} at position ${i} has updated_at ${retrievedImages[i].updatedAt.toISOString()} which is earlier than image ${retrievedImages[i+1].id} at position ${i+1} with updated_at ${retrievedImages[i+1].updatedAt.toISOString()}` }).toBe(true);
+      const current = retrievedImages[i];
+      const next = retrievedImages[i + 1];
+      if (!current || !next) continue;
+      
+      const currentTime = current.updatedAt.getTime();
+      const nextTime = next.updatedAt.getTime();
+      expect(currentTime >= nextTime, { message: `Image ${current.id} at position ${i} has updated_at ${current.updatedAt.toISOString()} which is earlier than image ${next.id} at position ${i+1} with updated_at ${next.updatedAt.toISOString()}` }).toBe(true);
     }
     console.log(`✓ ${retrievedImages.length} unfiltered images ordered by updated_at DESC`);
   });
@@ -131,6 +139,10 @@ test.describe('Collections - Image Operations', () => {
     });
     const duplicateImage = duplicateImages[1]; // Second image is the duplicate
     
+    if (!duplicateImage) {
+      throw new Error('Failed to create duplicate image for testing');
+    }
+    
     let errorThrown = false;
     let errorMessage = '';
     
@@ -138,7 +150,7 @@ test.describe('Collections - Image Operations', () => {
       await collection.addImage(duplicateImage.filePath);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
     expect(errorThrown, { message: `Collection did not reject duplicate image "${duplicateImage.originalName}" with matching hash` }).toBe(true);
@@ -149,7 +161,8 @@ test.describe('Collections - Image Operations', () => {
     const contentsAfter = await TestUtils.captureFilesystemState(collectionPath);
     // Reference to duplicate image path for context - ensuring we have access to the path
     void duplicateImage.filePath;
-    const duplicateImageCopied = contentsAfter.some(path => path.includes(duplicateImage.originalName.split('.')[0]));
+    const imageBaseName = duplicateImage.originalName.split('.')[0];
+    const duplicateImageCopied = imageBaseName ? contentsAfter.some(path => path.includes(imageBaseName)) : false;
     expect(duplicateImageCopied, { message: `Duplicate image "${duplicateImage.originalName}" was copied to collection filesystem despite hash collision detection` }).toBe(false);
     console.log(`✓ No files created for rejected duplicate image "${duplicateImage.originalName}"`);
     
@@ -179,7 +192,7 @@ test.describe('Collections - Image Operations', () => {
       await collection.addImage(corruptImage.filePath);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
     expect(errorThrown, { message: `Collection did not reject corrupt image file "${corruptImage.originalName}" during processing` }).toBe(true);
@@ -225,7 +238,7 @@ test.describe('Collections - Image Operations', () => {
       await collection.addImage(imageFile.filePath);
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     } finally {
       await cleanupStorageFailure();
     }
@@ -260,7 +273,7 @@ test.describe('Collections - Image Operations', () => {
       await collection.getImages();
     } catch (error: unknown) {
       errorThrown = true;
-      errorMessage = error.message;
+      errorMessage = (error as Error).message;
     }
     
     expect(errorThrown, { message: `Collection did not handle database connection failure during image retrieval operation` }).toBe(true);
