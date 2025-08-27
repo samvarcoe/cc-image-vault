@@ -4,7 +4,7 @@ import { Element } from '../element';
 import { ConfirmationDialogComponent } from '../components/confirmation-dialog-component';
 import { TEST_CONFIG } from '../../../utils/test-config';
 
-export class HomePageDriver extends PageObject {
+export class HomePage extends PageObject {
   protected url = '/';
 
   // Main elements

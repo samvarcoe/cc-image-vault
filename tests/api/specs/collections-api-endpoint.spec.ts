@@ -3,12 +3,14 @@ import { CollectionsAPI, ErrorResponse } from '../utils/collections-api-model';
 import { CollectionsDirectoryFixtures } from '../utils/collections-directory-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { TEST_CONFIG } from '../../utils/test-config';
+import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 
 test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
   let api: CollectionsAPI;
 
   // Setup API client using shared test configuration
   test.beforeAll(() => {
+    CollectionFixtures.clearDirectory();
     api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
 
   });

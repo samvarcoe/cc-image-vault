@@ -11,6 +11,7 @@ test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
 
   // Setup API client using shared test configuration
   test.beforeAll(() => {
+    CollectionFixtures.clearDirectory();
     api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
   });
 

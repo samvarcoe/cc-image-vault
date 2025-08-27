@@ -94,8 +94,8 @@ export class CollectionPageView extends View {
           alt="${escapeHtml(image.originalName)}"
           loading="lazy"
           class="image-thumbnail"
-          width="${image.dimensions.width}"
-          height="${image.dimensions.height}"
+          width="480"
+          aspect-ratio="${image.aspectRatio}"
         />
         <div class="image-info">
           <div class="image-name" title="${escapeHtml(image.originalName)}">

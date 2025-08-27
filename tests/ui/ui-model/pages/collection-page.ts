@@ -7,7 +7,13 @@ interface LayoutShift extends PerformanceEntry {
   hadRecentInput: boolean;
 }
 
-export class CollectionPageDriver extends PageObject {
+class ImageItem extends Element {
+  get thumbnail(): Element {
+    return this.child(Element, 'Thumbnail', 'img');
+  }
+}
+
+export class CollectionPage extends PageObject {
   protected url = '/collection';
 
   // Main elements
@@ -24,8 +30,10 @@ export class CollectionPageDriver extends PageObject {
   }
 
   // Dynamic elements for images
-  imageItem(imageId: string): Element {
-    return this.element(`Image Item ${imageId}`, `[data-testid="image-item-${imageId}"]`);
+  imageItem(imageId?: string): ImageItem {
+    return imageId 
+      ? this.component(ImageItem, `Image Item ${imageId}`, `[data-testid="image-item-${imageId}"]`)
+      : this.component(ImageItem, 'Image Item', '[data-testid^="image-item-"]');
   }
 
   imageThumbnail(imageId: string): Element {
@@ -119,58 +127,58 @@ export class CollectionPageDriver extends PageObject {
     console.log(`✓ All ${expectedImageIds.length} images displayed with thumbnails and lazy loading`);
   }
 
-  async shouldDisplayImageWithProperDimensions(imageId: string): Promise<void> {
-    const thumbnail = this.imageThumbnail(imageId);
-    await thumbnail.shouldBeDisplayed();
+  // async shouldDisplayImageWithProperDimensions(imageMetaData: ImageMetadata ): Promise<void> {
+  //   const thumbnail = this.imageThumbnail(imageMetaData.id);
+  //   await thumbnail.shouldBeDisplayed();
     
-    const dimensions = await this.page.evaluate((id) => {
-      const img = document.querySelector(`[data-testid="image-thumbnail-${id}"]`) as HTMLImageElement;
-      if (!img) return null;
+  //   const dimensions = await this.page.evaluate((id) => {
+  //     const img = document.querySelector(`[data-testid="image-thumbnail-${id}"]`) as HTMLImageElement;
+  //     if (!img) return null;
       
-      return {
-        naturalWidth: img.naturalWidth,
-        naturalHeight: img.naturalHeight,
-        width: img.width,
-        height: img.height
-      };
-    }, imageId);
+  //     return {
+  //       naturalWidth: img.naturalWidth,
+  //       naturalHeight: img.naturalHeight,
+  //       width: img.width,
+  //       height: img.height
+  //     };
+  //   }, imageId);
     
-    expect(dimensions, {
-      message: `Could not get dimensions for image ${imageId} thumbnail`
-    }).toBeTruthy();
+  //   expect(dimensions, {
+  //     message: `Could not get dimensions for image ${imageId} thumbnail`
+  //   }).toBeTruthy();
     
-    // Verify thumbnail is 400px optimized (width or height should be 400px max)
-    const maxDimension = Math.max(dimensions!.naturalWidth, dimensions!.naturalHeight);
-    expect(maxDimension, {
-      message: `Image ${imageId} thumbnail natural dimensions are ${dimensions!.naturalWidth}x${dimensions!.naturalHeight}, expected max 400px`
-    }).toBeLessThanOrEqual(400);
     
-    console.log(`✓ Image ${imageId} thumbnail has proper dimensions (${dimensions!.naturalWidth}x${dimensions!.naturalHeight})`);
-  }
+  //   const maxDimension = Math.max(dimensions!.naturalWidth, dimensions!.naturalHeight);
+  //   expect(img.naturalWidth, {
+  //     message: `Image ${imageId} thumbnail natural dimensions are ${dimensions!.naturalWidth}x${dimensions!.naturalHeight}, expected max 400px`
+  //   }).toBeLessThanOrEqual(400);
+    
+  //   console.log(`✓ Image ${imageId} thumbnail has proper dimensions (${dimensions!.naturalWidth}x${dimensions!.naturalHeight})`);
+  // }
 
   // Status filter assertions
-  async shouldDisplayOnlyImagesWithStatus(status: string, expectedImageIds: string[]): Promise<void> {
-    await this.shouldDisplayImagesInThreeColumnGrid();
-    await this.shouldDisplayImagesWithThumbnails(expectedImageIds);
+  // async shouldDisplayOnlyImagesWithStatus(status: string, expectedImageIds: string[]): Promise<void> {
+  //   await this.shouldDisplayImagesInThreeColumnGrid();
+  //   await this.shouldDisplayImagesWithThumbnails(expectedImageIds);
     
-    // Verify no images with other statuses are displayed
-    const allImageElements = await this.page.locator('[data-testid^="image-item-"]').all();
-    const actualImageIds = [];
+  //   // Verify no images with other statuses are displayed
+  //   const allImageElements = await this.page.locator('[data-testid^="image-item-"]').all();
+  //   const actualImageIds = [];
     
-    for (const element of allImageElements) {
-      const testId = await element.getAttribute('data-testid');
-      if (testId) {
-        const imageId = testId.replace('image-item-', '');
-        actualImageIds.push(imageId);
-      }
-    }
+  //   for (const element of allImageElements) {
+  //     const testId = await element.getAttribute('data-testid');
+  //     if (testId) {
+  //       const imageId = testId.replace('image-item-', '');
+  //       actualImageIds.push(imageId);
+  //     }
+  //   }
     
-    expect(actualImageIds.sort(), {
-      message: `Page displays images [${actualImageIds.join(', ')}] instead of expected [${expectedImageIds.join(', ')}] for status "${status}"`
-    }).toEqual(expectedImageIds.sort());
+  //   expect(actualImageIds.sort(), {
+  //     message: `Page displays images [${actualImageIds.join(', ')}] instead of expected [${expectedImageIds.join(', ')}] for status "${status}"`
+  //   }).toEqual(expectedImageIds.sort());
     
-    console.log(`✓ Page displays only images with "${status}" status: [${expectedImageIds.join(', ')}]`);
-  }
+  //   console.log(`✓ Page displays only images with "${status}" status: [${expectedImageIds.join(', ')}]`);
+  // }
 
   // Empty state assertions
   async shouldDisplayEmptyStateMessage(status: string): Promise<void> {

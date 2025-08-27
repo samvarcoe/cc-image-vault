@@ -28,6 +28,7 @@ export interface ImageDisplayData {
     width: number;
     height: number;
   };
+  aspectRatio: number;
 }
 
 export interface CollectionPageData {
@@ -52,7 +53,8 @@ export class CollectionPageModel extends Model<CollectionPageData> {
       thumbnailUrl: `/api/images/${collectionId}/${img.id}/thumbnail`,
       originalName: img.originalName,
       status: img.status,
-      dimensions: img.dimensions
+      dimensions: img.dimensions,
+      aspectRatio: img.aspectRatio
     }));
 
     super({

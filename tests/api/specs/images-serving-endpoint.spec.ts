@@ -4,11 +4,13 @@ import { ImageServingFixtures } from '../utils/image-serving-fixtures';
 import { BinaryResponseUtils } from '../utils/binary-response-utils';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { TEST_CONFIG } from '../../utils/test-config';
+import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 
 test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
   let api: CollectionsAPI;
 
   test.beforeAll(() => {
+    CollectionFixtures.clearDirectory();
     api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
   });
 
@@ -97,10 +99,10 @@ test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
 
     // Validate image format using the already-read buffer
     if (responseBuffer) {
-      BinaryResponseUtils.validateImageFormatFromBuffer(responseBuffer, 'jpeg', '/api/images/' + collection.collectionId + '/' + testImage!.id + '/thumbnail');
+      BinaryResponseUtils.validateImageFormatFromBuffer(responseBuffer, 'webp', '/api/images/' + collection.collectionId + '/' + testImage!.id + '/thumbnail');
     }
 
-    console.log(`✓ Thumbnail for image ${testImage!.id} served successfully as JPEG with correct headers`);
+    console.log(`✓ Thumbnail for image ${testImage!.id} served successfully as WEBP with correct headers`);
   });
 
   test('Image serving with non-existent collection', async () => {

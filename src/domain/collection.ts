@@ -231,14 +231,14 @@ export class Collection {
     return mimeTypes[extension] || 'application/octet-stream';
   }
 
-  private async generateThumbnail(originalPath: string, thumbnailPath: string, maxDimension: number = 300): Promise<void> {
+  private async generateThumbnail(originalPath: string, thumbnailPath: string, width: number = 480): Promise<void> {
     try {
       await sharp(originalPath)
-        .resize(maxDimension, maxDimension, {
+        .resize(width, null, {
           fit: 'inside',
           withoutEnlargement: true
         })
-        .jpeg({ quality: 80 })
+        .webp({ quality: 80 })
         .toFile(thumbnailPath);
     } catch (error: unknown) {
       throw new Error('Unable to process image: failed to generate thumbnail - ' + (error as Error).message);

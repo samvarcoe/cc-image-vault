@@ -1,5 +1,6 @@
 import express from 'express';
 import helmet from 'helmet';
+import compression from 'compression';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { Collection } from '../domain/collection';
@@ -17,6 +18,7 @@ import { HomePageView } from '../ui/pages/home/view';
 import { CollectionPageModel } from '../ui/pages/collection/model';
 import { CollectionPageView } from '../ui/pages/collection/view';
 import { renderPage } from '../ui/mvc';
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -37,6 +39,8 @@ app.use(helmet({
 
 // Parse JSON bodies
 app.use(express.json());
+
+app.use(compression());
 
 // Serve static files
 app.use('/css', express.static(path.join(__dirname, '../../public/css')));

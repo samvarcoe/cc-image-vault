@@ -14,7 +14,7 @@ export default defineConfig({
   use: {
     baseURL: TEST_CONFIG.UI_BASE_URL,
     // trace: 'on-first-retry',
-    // screenshot: 'only-on-failure',
+    screenshot: 'only-on-failure',
     headless: true,
     connectOptions: {
       wsEndpoint: 'ws://playwright-server:8080',  // Connect to the remote playwright server

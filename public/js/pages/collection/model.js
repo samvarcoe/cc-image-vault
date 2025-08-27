@@ -6,7 +6,8 @@ export class CollectionPageModel extends Model {
             thumbnailUrl: `/api/images/${collectionId}/${img.id}/thumbnail`,
             originalName: img.originalName,
             status: img.status,
-            dimensions: img.dimensions
+            dimensions: img.dimensions,
+            aspectRatio: img.aspectRatio
         }));
         super({
             collectionId,

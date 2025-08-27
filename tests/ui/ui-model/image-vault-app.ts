@@ -1,18 +1,18 @@
 import { Page } from 'playwright/test';
 import { App } from './app';
-import { HomePageDriver } from './pages/home-page-driver';
-import { CollectionPageDriver } from './pages/collection-page-driver';
+import { HomePage } from './pages/home-page';
+import { CollectionPage } from './pages/collection-page';
 
 export class ImageVaultApp extends App {
   constructor(page: Page) {
     super(page);
   }
 
-  get homePage(): HomePageDriver {
-    return this.pageObject(HomePageDriver);
+  get homePage(): HomePage {
+    return this.pageObject(HomePage);
   }
 
-  get collectionPage(): CollectionPageDriver {
-    return this.pageObject(CollectionPageDriver);
+  get collectionPage(): CollectionPage {
+    return this.pageObject(CollectionPage);
   }
 }
