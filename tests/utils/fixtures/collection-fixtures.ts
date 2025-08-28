@@ -48,10 +48,23 @@ export class CollectionFixtures extends Fixtures<Collection> {
 
     const collection = await Collection.create(collectionId, basePath);
 
+    // sizes and aspect ratios should vary for testing
+    // vary between a max amd min width/height transitioning from landscape to portrait
+
+    const maxWidth = 640;
+    const minWidth = 320;
+    const maxHeight = 640;
+    const minHeight = 320;
+
+    const variedWidth = (i: number, total: number) => Math.round(minWidth + (i/total) * (maxWidth - minWidth));
+    const variedHeight = (i: number, total: number) => Math.round(maxHeight - (i/total) * (maxHeight - minHeight));
+
     for (let i = 0; i < imageCounts.inbox ; i++) {
       const imageFile = await ImageFixtures.create({
         originalName: `inbox-photo-${i + 1}`,
-        extension: imageFormats[i % imageFormats.length]
+        extension: imageFormats[i % imageFormats.length],
+        width: variedWidth(i, imageCounts.inbox),
+        height: variedHeight(i, imageCounts.inbox)
       });
 
       await collection.addImage(imageFile.filePath);
@@ -60,7 +73,9 @@ export class CollectionFixtures extends Fixtures<Collection> {
     for (let i = 0; i < imageCounts.collection ; i++) {
       const imageFile = await ImageFixtures.create({
         originalName: `collection-photo-${i + 1}`,
-        extension: imageFormats[i % imageFormats.length]
+        extension: imageFormats[i % imageFormats.length],
+        width: variedWidth(i, imageCounts.collection),
+        height: variedHeight(i, imageCounts.collection)
       });
 
       const imageMetadata = await collection.addImage(imageFile.filePath);
@@ -70,7 +85,9 @@ export class CollectionFixtures extends Fixtures<Collection> {
     for (let i = 0; i < imageCounts.archive ; i++) {
       const imageFile = await ImageFixtures.create({
         originalName: `archive-photo-${i + 1}`,
-        extension: imageFormats[i % imageFormats.length]
+        extension: imageFormats[i % imageFormats.length],
+        width: variedWidth(i, imageCounts.archive),
+        height: variedHeight(i, imageCounts.archive)
       });
 
       const imageMetadata = await collection.addImage(imageFile.filePath);

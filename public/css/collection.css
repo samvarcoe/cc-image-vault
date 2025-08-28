@@ -31,46 +31,13 @@ body {
   margin-bottom: 1rem;
 }
 
-/* Status filter navigation */
-.status-filter {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.status-filter label {
-  font-weight: 500;
-  color: #666;
-}
-
-.status-filter-link {
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  color: #3498db;
-  border: 1px solid #3498db;
-  transition: all 0.2s ease;
-  font-weight: 500;
-}
-
-.status-filter-link:hover {
-  background-color: #3498db;
-  color: white;
-}
-
-.status-filter-link.active {
-  background-color: #3498db;
-  color: white;
-}
 
 /* Main content area */
 .collection-content {
   min-height: 400px;
 }
 
-/* 3-column CSS Grid layout for images */
+/* 3-column grid layout for images */
 .image-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -78,19 +45,17 @@ body {
   padding: 1rem 0;
 }
 
+/* Individual column within the grid */
+.image-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
 /* Individual image item */
 .image-item {
   background: white;
-  border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-  cursor: pointer;
-}
-
-.image-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
 }
 
 /* Image thumbnail */
@@ -98,24 +63,9 @@ body {
   width: 100%;
   height: auto;
   display: block;
-  object-fit: cover;
-  aspect-ratio: 1; /* Square aspect ratio for uniform grid */
   background-color: #f8f9fa;
 }
 
-/* Image info section */
-.image-info {
-  padding: 1rem;
-}
-
-.image-name {
-  font-size: 0.9rem;
-  color: #555;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 500;
-}
 
 /* Empty state */
 .empty-state {
@@ -147,108 +97,7 @@ body {
   margin-top: 1rem;
 }
 
-/* Loading state (for future use) */
-.loading-spinner {
-  display: inline-block;
-  width: 2rem;
-  height: 2rem;
-  border: 3px solid #f3f3f3;
-  border-top: 3px solid #3498db;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
 
-/* Responsive design */
-@media (max-width: 1200px) {
-  [data-testid="main-content"] {
-    max-width: 1000px;
-    padding: 1.5rem;
-  }
-  
-  .image-grid {
-    gap: 1rem;
-  }
-}
 
-@media (max-width: 900px) {
-  /* Switch to 2-column layout on tablets */
-  .image-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .collection-header h1 {
-    font-size: 2rem;
-  }
-  
-  .status-filter {
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-}
 
-@media (max-width: 600px) {
-  /* Switch to single column on mobile */
-  .image-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  [data-testid="main-content"] {
-    padding: 1rem;
-  }
-  
-  .collection-header h1 {
-    font-size: 1.8rem;
-  }
-  
-  .status-filter {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .status-filter-link {
-    text-align: center;
-  }
-  
-  .image-item {
-    max-width: 400px;
-    margin: 0 auto;
-  }
-}
-
-/* Performance optimizations */
-.image-thumbnail {
-  /* Optimize for layout stability */
-  contain: layout style paint;
-}
-
-/* Accessibility improvements */
-.image-item:focus {
-  outline: 2px solid #3498db;
-  outline-offset: 2px;
-}
-
-.status-filter-link:focus {
-  outline: 2px solid #3498db;
-  outline-offset: 2px;
-}
-
-/* Print styles */
-@media print {
-  .status-filter {
-    display: none;
-  }
-  
-  .image-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-  }
-  
-  .image-item {
-    break-inside: avoid;
-  }
-}

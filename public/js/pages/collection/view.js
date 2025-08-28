@@ -1,13 +1,15 @@
-import { View, escapeHtml } from '../../mvc.js';
-export class CollectionPageView extends View {
+import { View } from '../../mvc.js';
+export default class CollectionPageView extends View {
     constructor(model) {
-        super(model);
+        super(model, 'collection');
     }
-    getTitle() {
-        const model = this.model;
-        return model.getPageTitle();
+    title() {
+        const collectionId = this.model.getCollectionId();
+        return collectionId
+            ? `Collection ${collectionId} - Image Vault`
+            : 'Collection Not Found - Image Vault';
     }
-    render() {
+    renderContent() {
         const model = this.model;
         if (model.isNotFoundError()) {
             return this.renderNotFoundPage();
@@ -25,44 +27,12 @@ export class CollectionPageView extends View {
     `;
     }
     renderCollectionPage() {
-        const model = this.model;
         return `
       <div data-testid="main-content">
-        <header class="collection-header">
-          <h1>${escapeHtml(`Collection ${model.getCollectionId()}`)}</h1>
-          ${this.renderStatusFilter()}
-        </header>
-        
         <main class="collection-content">
           ${this.renderImageGrid()}
         </main>
       </div>
-    `;
-    }
-    renderStatusFilter() {
-        const model = this.model;
-        const currentStatus = model.getStatusFilter();
-        return `
-      <div class="status-filter">
-        <label>View: </label>
-        ${this.renderStatusFilterLink('COLLECTION', currentStatus)}
-        ${this.renderStatusFilterLink('INBOX', currentStatus)}
-        ${this.renderStatusFilterLink('ARCHIVE', currentStatus)}
-      </div>
-    `;
-    }
-    renderStatusFilterLink(status, currentStatus) {
-        const model = this.model;
-        const collectionId = model.getCollectionId();
-        const isActive = status === currentStatus;
-        const href = status === 'COLLECTION'
-            ? `/collection/${collectionId}`
-            : `/collection/${collectionId}?status=${status}`;
-        const className = isActive ? 'status-filter-link active' : 'status-filter-link';
-        return `
-      <a href="${escapeHtml(href)}" class="${className}">
-        ${escapeHtml(status)}
-      </a>
     `;
     }
     renderImageGrid() {
@@ -71,9 +41,17 @@ export class CollectionPageView extends View {
             return this.renderEmptyState();
         }
         const images = model.getImages();
+        const columns = [[], [], []];
+        images.forEach((image, index) => {
+            columns[index % 3].push(image);
+        });
         return `
       <div data-testid="image-grid" class="image-grid">
-        ${images.map(image => this.renderImageItem(image)).join('')}
+        ${columns.map((columnImages) => `
+          <div class="image-column">
+            ${columnImages.map(image => this.renderImageItem(image)).join('')}
+          </div>
+        `).join('')}
       </div>
     `;
     }
@@ -81,27 +59,27 @@ export class CollectionPageView extends View {
         const model = this.model;
         return `
       <div class="empty-state">
-        <div data-testid="empty-state-message">${escapeHtml(model.getEmptyStateMessage())}</div>
+        <div data-testid="empty-state-message">${model.getEmptyStateMessage()}</div>
       </div>
     `;
     }
     renderImageItem(image) {
         return `
-      <div data-testid="image-item-${escapeHtml(image.id)}" class="image-item">
+      <div
+        data-testid="image-item-${image.id}"
+        class="image-item"
+        width="480"
+        height="${Math.round(480 / image.aspectRatio)}"
+      >
         <img 
-          data-testid="image-thumbnail-${escapeHtml(image.id)}"
-          src="${escapeHtml(image.thumbnailUrl)}"
-          alt="${escapeHtml(image.originalName)}"
+          data-testid="image-thumbnail-${image.id}"
+          src="${image.thumbnailUrl}"
+          alt="${image.originalName}"
           loading="lazy"
           class="image-thumbnail"
           width="480"
-          aspect-ratio="${image.aspectRatio}"
+          height="${Math.round(480 / image.aspectRatio)}"
         />
-        <div class="image-info">
-          <div class="image-name" title="${escapeHtml(image.originalName)}">
-            ${escapeHtml(image.originalName)}
-          </div>
-        </div>
       </div>
     `;
     }

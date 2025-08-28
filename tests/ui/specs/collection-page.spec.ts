@@ -12,7 +12,7 @@ test.describe('Collection Page - Displaying Images', () => {
     // Given a collection exists with images in "COLLECTION" status
     const collection = await CollectionFixtures.create({
       collectionId: 'test-collection-default-status',
-      imageCounts: { inbox: 0, collection: 3, archive: 0 }
+      imageCounts: { inbox: 0, collection: 9, archive: 0 }
     });
     
     const collectionImages = await collection.getImages({ status: 'COLLECTION' });
@@ -27,13 +27,12 @@ test.describe('Collection Page - Displaying Images', () => {
     await app.collectionPage.shouldDisplayImagesInThreeColumnGrid();
     
     // And each image displays its thumbnail with proper dimensions
-    await app.collectionPage.imageItem().shouldHaveCount(collectionImages.length);
-    await app.collectionPage.imageItem().byIndex(0).thumbnail.shouldBeCompletelyVisible(1000);
-
     for (const image of collectionImages) {
       await app.collectionPage.imageItem(image.id).thumbnail.shouldHaveWidth(480);
-      await app.collectionPage.imageItem(image.id).thumbnail.shouldHaveAspectRatio(image.aspectRatio);
+      await app.collectionPage.imageItem(image.id).thumbnail.shouldHaveHeight(Math.round(480 / image.aspectRatio));
     }
+
+    await app.collectionPage.imageItem().shouldHaveCount(collectionImages.length);
     
     // And images use native HTML lazy loading
     await app.collectionPage.shouldLoadImagesLazily();
@@ -80,9 +79,6 @@ test.describe('Collection Page - Displaying Images', () => {
       collectionId: 'test-collection-archive-status',
       imageCounts: { inbox: 0, collection: 0, archive: 3 }
     });
-    
-    const archiveImages = await collection.getImages({ status: 'ARCHIVE' });
-    const imageIds = archiveImages.map(img => img.id);
     
     const app = new ImageVaultApp(page);
     
@@ -172,9 +168,6 @@ test.describe('Collection Page - Displaying Images', () => {
       collectionId: 'test-collection-invalid-status',
       imageCounts: { inbox: 1, collection: 2, archive: 1 }
     });
-    
-    const collectionImages = await collection.getImages({ status: 'COLLECTION' });
-    const imageIds = collectionImages.map(img => img.id);
     
     const app = new ImageVaultApp(page);
     

@@ -13,11 +13,10 @@ import {
   parseImageQueryParams,
   convertToApiResponse
 } from './collection-utils';
-import { HomePageModel } from '../ui/pages/home/model';
-import { HomePageView } from '../ui/pages/home/view';
-import { CollectionPageModel } from '../ui/pages/collection/model';
-import { CollectionPageView } from '../ui/pages/collection/view';
-import { renderPage } from '../ui/mvc';
+import HomePageModel from '../ui/pages/home/model';
+import HomePageView from '../ui/pages/home/view';
+import CollectionPageModel , { CollectionPageData } from '../ui/pages/collection/model';
+import CollectionPageView from '../ui/pages/collection/view';
 
 
 const app = express();
@@ -58,11 +57,9 @@ const sendError = (res: express.Response, statusCode: number, error: string, mes
 app.get('/', async (req, res) => {
   try {
     const collections = await listCollectionDirectories(basePath);
-    const model = new HomePageModel(collections);
+    const model = new HomePageModel({collections});
     const view = new HomePageView(model);
-    // throw new Error('renderPage function is missing'); // This line is just to avoid TS error in this snippet
-    const html = renderPage(view, model, 'home');
-    res.send(html);
+    res.send(view.render());
   } catch (error: unknown) {
     console.error('Error rendering home page:', error);
     res.status(500).send('Internal Server Error');
@@ -78,10 +75,18 @@ app.get('/collection/:id', async (req, res) => {
     // Check if collection exists
     if (!await collectionDirectoryExists(basePath, id)) {
       // 404 page for non-existent collection
-      const model = new CollectionPageModel(id, [], 'COLLECTION', false, 'Collection not found');
+      const pageData: CollectionPageData = {
+        collectionId: id,
+        statusFilter: 'COLLECTION',
+        images: [],
+        loading: false,
+        error: 'Collection not found'
+      };
+
+      const model = new CollectionPageModel(pageData);
       const view = new CollectionPageView(model);
-      const html = renderPage(view, model, 'collection');
-      return res.status(404).send(html);
+
+      return res.status(404).send(view.render());
     }
     
     // Validate and normalize status parameter
@@ -93,12 +98,26 @@ app.get('/collection/:id', async (req, res) => {
     const collection = await Collection.load(collectionPath);
     const images = await collection.getImages({ status: normalizedStatus as 'INBOX' | 'COLLECTION' | 'ARCHIVE' });
     await collection.close();
+
+    const data: CollectionPageData = {
+      collectionId: id,
+      statusFilter: normalizedStatus as 'INBOX' | 'COLLECTION' | 'ARCHIVE',
+      images: images.map(img => ({
+        id: img.id,
+        thumbnailUrl: `/api/images/${id}/${img.id}/thumbnail`,
+        originalName: img.originalName,
+        status: img.status,
+        dimensions: img.dimensions,
+        aspectRatio: img.aspectRatio
+      })),
+      loading: false
+    };
     
     // Create model and view
-    const model = new CollectionPageModel(id, images, normalizedStatus as 'INBOX' | 'COLLECTION' | 'ARCHIVE');
+    const model = new CollectionPageModel(data);
     const view = new CollectionPageView(model);
-    const html = renderPage(view, model, 'collection');
-    return res.send(html);
+    // const html = renderPage(model, view, 'collection');
+    return res.send(view.render());
   } catch (error: unknown) {
     console.error('Error rendering collection page:', error);
     return res.status(500).send('Internal Server Error');

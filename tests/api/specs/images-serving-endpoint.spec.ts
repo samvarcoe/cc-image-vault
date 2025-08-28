@@ -9,8 +9,8 @@ import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
   let api: CollectionsAPI;
 
-  test.beforeAll(() => {
-    CollectionFixtures.clearDirectory();
+  test.beforeAll(async () => {
+    await CollectionFixtures.clearDirectory();
     api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
   });
 

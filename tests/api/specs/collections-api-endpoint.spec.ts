@@ -9,8 +9,8 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
   let api: CollectionsAPI;
 
   // Setup API client using shared test configuration
-  test.beforeAll(() => {
-    CollectionFixtures.clearDirectory();
+  test.beforeAll(async () => {
+    await CollectionFixtures.clearDirectory();
     api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
 
   });

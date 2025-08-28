@@ -1,94 +1,107 @@
-export function escapeHtml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-export function escapeJsonForScript(obj: unknown): string {
-  return JSON.stringify(obj)
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/&/g, '\\u0026')
-    .replace(/'/g, '\\u0027')
-    .replace(/"/g, '\\u0022');
-}
-
 export abstract class Model<T> {
-  protected data: T;
-  
-  constructor(initialData?: T) {
-    this.data = initialData || {} as T;
-  }
-  
-  serialize(): string {
-    return JSON.stringify(this.data);
-  }
-  
-  hydrate(data: string): void {
-    this.data = JSON.parse(data);
-  }
-}
+    protected data: T;
 
-export abstract class View<T> {
-  constructor(protected model: Model<T>) {}
-
-  abstract getTitle(): string;
-  abstract render(): string;
-}
-
-export abstract class Controller<T> {
-  constructor(
-    protected model: Model<T>,
-    protected view: View<T>
-  ) {}
-  
-  protected attachEventListeners(): void {}
-  
-  init(): void {
-    this.model.hydrate((window as unknown as { __MODEL_DATA__: string }).__MODEL_DATA__);
-    this.attachEventListeners();
-  }
-  
-  protected updateView(): void {
-    const app = document.getElementById('app');
-
-    if (app) {
-      app.innerHTML = this.view.render();
+    constructor(initialData: T) {
+        this.data = initialData;
     }
-  }
+
+    serialize(): string {
+        return JSON.stringify(this.data);
+    }
 }
 
-export function renderPage<T>(view: View<T>, model: Model<T>, pageSlug: string): string {
-  const modelDataString = model.serialize();
-  // Escape the JSON string for safe inclusion in HTML
-  const escapedModelData = modelDataString
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/\r/g, '\\r')
-    .replace(/\n/g, '\\n');
-  
-  return /*html*/`
-    <!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${escapeHtml(view.getTitle())}</title>
-        <link rel="stylesheet" href="/css/${pageSlug}.css">
-      </head>
-      <body>
-        <div id="app">${view.render()}</div>
+export abstract class View<M extends Model<unknown>> {
+    constructor(protected model: M, protected slug: string) { }
+
+    private focusState: FocusState = { id: null, start: null, end: null };
+
+    abstract title(): string;
+
+    private captureFocus(): void {
+        this.focusState = { id: null, start: null, end: null };
+
+        const element = document.activeElement;
         
-        <script>
-          window.__MODEL_DATA__ = '${escapedModelData}';
-        </script>
-        <script type="module" src="/js/pages/${pageSlug}/model.js"></script>
-        <script type="module" src="/js/pages/${pageSlug}/view.js"></script>
-        <script type="module" src="/js/pages/${pageSlug}/controller.js"></script>
-      </body>
-    </html>
-  `;
+        if (element instanceof HTMLElement && element.dataset.id) {
+            this.focusState.id = element.dataset.id;
+
+            if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
+                this.focusState.start = element.selectionStart;
+                this.focusState.end = element.selectionEnd;
+            }
+        }
+    }
+
+    private restoreFocus(): void {
+        if (this.focusState.id) {
+            requestAnimationFrame(() => {
+                const element = document.querySelector<HTMLElement>(`[data-id="${this.focusState.id}"]`);
+                if (element) {
+                    element.focus();
+                    
+                    if ((element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) &&
+                        this.focusState.start !== null && this.focusState.end !== null) {
+                        element.setSelectionRange(this.focusState.start, this.focusState.end);
+                    }
+                }
+            });
+        }
+    }
+
+    update(): void {
+        this.captureFocus();
+        document.getElementById('content')!.innerHTML = this.renderContent();
+        this.restoreFocus();
+    }
+
+    abstract renderContent(): string;
+
+    render(): string {
+        return /*html*/`
+            <!DOCTYPE html>
+            <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title> ${this.title()}</title>
+                    <link rel="preload" href="/css/${this.slug}.css" as="style">
+                    <link rel="stylesheet" href="/css/${this.slug}.css">
+                </head>
+                <body>
+                    <div id="content"> ${this.renderContent()} </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', async () => {
+                            try {
+                                const [modelModule, viewModule, controllerModule] = await Promise.all([
+                                    import('/js/pages/${this.slug}/model.js'),
+                                    import('/js/pages/${this.slug}/view.js'), 
+                                    import('/js/pages/${this.slug}/controller.js')
+                                ]);
+                                
+                                const Model = modelModule.default;
+                                const View = viewModule.default;
+                                const Controller = controllerModule.default;
+                                
+                                const initialData = JSON.parse('${this.model.serialize()}');
+                                const model = new Model(initialData);
+                                const view = new View(model, '${this.slug}');
+                                const controller = new Controller(model, view);
+                                
+                            } catch (error) {
+                                console.error('Failed to bootstrap page:', error);
+                            }
+                        });
+                    </script>
+                </body>
+            </html>
+        `;
+    }
 }
+
+export abstract class Controller<M extends Model<unknown>, V extends View<M>> {
+    constructor(protected model: M, protected view: V) {}
+}
+
+
+

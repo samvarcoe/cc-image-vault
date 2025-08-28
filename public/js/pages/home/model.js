@@ -1,27 +1,12 @@
 import { Model } from '../../mvc.js';
-export class HomePageModel extends Model {
-    constructor(collections = []) {
+export default class HomePageModel extends Model {
+    constructor(initialData) {
+        const { collections = [], formState = { collectionId: '', isValid: false, isSubmitting: false }, errorState = { validation: null, duplicate: false, server: null }, loadingState = { creatingCollection: false, deletingCollection: null }, } = initialData || {};
         super({
             collections,
-            formState: {
-                collectionId: '',
-                isValid: false,
-                isSubmitting: false
-            },
-            errorState: {
-                validation: null,
-                duplicate: false,
-                server: null
-            },
-            loadingState: {
-                creatingCollection: false,
-                deletingCollection: null
-            },
-            focusState: {
-                activeElementId: null,
-                selectionStart: null,
-                selectionEnd: null
-            }
+            formState,
+            errorState,
+            loadingState,
         });
     }
     getCollections() {
@@ -41,23 +26,6 @@ export class HomePageModel extends Model {
     }
     getLoadingState() {
         return this.data.loadingState;
-    }
-    getFocusState() {
-        return this.data.focusState;
-    }
-    captureFocusState(elementId, selectionStart = null, selectionEnd = null) {
-        this.data.focusState = {
-            activeElementId: elementId,
-            selectionStart,
-            selectionEnd
-        };
-    }
-    clearFocusState() {
-        this.data.focusState = {
-            activeElementId: null,
-            selectionStart: null,
-            selectionEnd: null
-        };
     }
     updateFormState(collectionId) {
         this.data.formState = Object.assign(Object.assign({}, this.data.formState), { collectionId, isValid: this.isValidCollectionId(collectionId) });

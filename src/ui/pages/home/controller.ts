@@ -1,10 +1,11 @@
 import { Controller } from '../../mvc.js';
-import { HomePageModel, HomePageData } from './model.js';
-import { HomePageView } from './view.js';
+import HomePageModel from './model.js';
+import HomePageView from './view.js';
 
-export class HomePageController extends Controller<HomePageData> {
+export default class HomePageController extends Controller<HomePageModel, HomePageView> {
   constructor(model: HomePageModel, view: HomePageView) {
     super(model, view);
+    this.attachEventListeners();
   }
 
   protected attachEventListeners(): void {
@@ -53,71 +54,36 @@ export class HomePageController extends Controller<HomePageData> {
 
   private handleCollectionIdInput(input: HTMLInputElement): void {
     const value = input.value.trim();
-    const model = this.model as HomePageModel;
     
-    // Capture current focus state before any updates
-    const elementId = input.getAttribute('data-testid') || input.id;
-    model.captureFocusState(elementId, input.selectionStart, input.selectionEnd);
-    
-    model.updateFormState(value);
+    this.model.updateFormState(value);
     
     // Update validation errors
-    if (value && !model.getFormState().isValid) {
-      model.setFormError('validation', 'Collection ID can only contain letters, numbers, and hyphens');
+    if (value && !this.model.getFormState().isValid) {
+      this.model.setFormError('validation', 'Collection ID can only contain letters, numbers, and hyphens');
     } else {
-      model.clearFormErrors();
+      this.model.clearFormErrors();
     }
-    
-    // Clean MVC approach - full re-render with focus restoration
-    this.updateView();
-  }
 
-  protected updateView(): void {
-    // Call parent's updateView to do the DOM re-render
-    super.updateView();
-    
-    // Restore focus state after re-render
-    this.restoreFocusState();
-  }
-
-  private restoreFocusState(): void {
-    const model = this.model as HomePageModel;
-    const focusState = model.getFocusState();
-    
-    if (focusState.activeElementId) {
-      const element = document.querySelector(`[data-testid="${focusState.activeElementId}"], #${focusState.activeElementId}`) as HTMLInputElement;
-      
-      if (element && element.focus) {
-        element.focus();
-        
-        // Restore cursor position for text inputs
-        if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-          if (focusState.selectionStart !== null && focusState.selectionEnd !== null) {
-            element.setSelectionRange(focusState.selectionStart, focusState.selectionEnd);
-          }
-        }
-      }
-    }
+    this.view.update();
   }
 
   private async handleCreateCollection(event: Event): Promise<void> {
     event.preventDefault();
-    
-    const model = this.model as HomePageModel;
-    const formState = model.getFormState();
+
+    const formState = this.model.getFormState();
     
     if (!formState.isValid) {
       return;
     }
 
     // Set loading state and update view optimistically
-    model.setCreatingCollection(true);
+    this.model.setCreatingCollection(true);
     // Only add optimistically if collection doesn't already exist
-    const existingCollection = model.getCollections().find(c => c.id === formState.collectionId);
+    const existingCollection = this.model.getCollections().find(c => c.id === formState.collectionId);
     if (!existingCollection) {
-      model.addCollectionOptimistically(formState.collectionId);
+      this.model.addCollectionOptimistically(formState.collectionId);
     }
-    this.updateView();
+    this.view.update();
 
     try {
       const response = await fetch('/api/collections', {
@@ -131,11 +97,11 @@ export class HomePageController extends Controller<HomePageData> {
       if (response.status === 409) {
         // Revert optimistic update only if we added one
         if (!existingCollection) {
-          model.removeCollectionOptimistically(formState.collectionId);
+          this.model.removeCollectionOptimistically(formState.collectionId);
         }
-        model.setFormError('duplicate');
-        model.setCreatingCollection(false);
-        this.updateView();
+        this.model.setFormError('duplicate');
+        this.model.setCreatingCollection(false);
+        this.view.update();
         return;
       }
 
@@ -144,18 +110,18 @@ export class HomePageController extends Controller<HomePageData> {
       }
 
       // Success - reset form
-      model.resetForm();
-      model.setCreatingCollection(false);
-      this.updateView();
+      this.model.resetForm();
+      this.model.setCreatingCollection(false);
+      this.view.update();
     } catch (error) {
       console.error('Error creating collection:', error);
       // Revert optimistic update only if we added one
       if (!existingCollection) {
-        model.removeCollectionOptimistically(formState.collectionId);
+        this.model.removeCollectionOptimistically(formState.collectionId);
       }
-      model.setFormError('server', 'Failed to create collection. Please try again.');
-      model.setCreatingCollection(false);
-      this.updateView();
+      this.model.setFormError('server', 'Failed to create collection. Please try again.');
+      this.model.setCreatingCollection(false);
+      this.view.update();
     }
   }
 
@@ -163,24 +129,23 @@ export class HomePageController extends Controller<HomePageData> {
     const collectionId = element.dataset.collectionId;
     if (!collectionId) return;
 
-    (this.model as HomePageModel).setDeletingCollection(collectionId);
-    this.updateView();
+    this.model.setDeletingCollection(collectionId);
+    this.view.update();
   }
 
   private handleCancelDeletion(): void {
-    (this.model as HomePageModel).setDeletingCollection(null);
-    this.updateView();
+    this.model.setDeletingCollection(null);
+    this.view.update();
   }
 
   private async handleConfirmDeletion(): Promise<void> {
-    const model = this.model as HomePageModel;
-    const collectionId = model.getLoadingState().deletingCollection;
+    const collectionId = this.model.getLoadingState().deletingCollection;
     
     if (!collectionId) return;
 
     // Optimistically remove from UI
-    model.removeCollectionOptimistically(collectionId);
-    this.updateView();
+    this.model.removeCollectionOptimistically(collectionId);
+    this.view.update();
 
     try {
       const response = await fetch(`/api/collections/${collectionId}`, {
@@ -192,27 +157,15 @@ export class HomePageController extends Controller<HomePageData> {
       }
 
       // Success - reset deletion state
-      model.setDeletingCollection(null);
-      this.updateView();
+      this.model.setDeletingCollection(null);
+      this.view.update();
     } catch (error) {
       console.error('Error deleting collection:', error);
       // Revert optimistic update
-      model.addCollectionOptimistically(collectionId);
-      model.setDeletingCollection(null);
+      this.model.addCollectionOptimistically(collectionId);
+      this.model.setDeletingCollection(null);
       // Could add error state here for deletion failures
-      this.updateView();
+      this.view.update();
     }
   }
 }
-
-// Initialize the controller when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-  // Get collections from server-rendered data
-  const serverData = (window as unknown as { __MODEL_DATA__: string }).__MODEL_DATA__;
-  const parsedData = JSON.parse(serverData);
-  
-  const model = new HomePageModel(parsedData.collections || []);
-  const view = new HomePageView(model);
-  const controller = new HomePageController(model, view);
-  controller.init();
-});

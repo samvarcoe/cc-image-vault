@@ -21,43 +21,27 @@ export interface LoadingState {
   deletingCollection: string | null;
 }
 
-export interface FocusState {
-  activeElementId: string | null;
-  selectionStart: number | null;
-  selectionEnd: number | null;
-}
-
 export interface HomePageData {
   collections: CollectionListItem[];
   formState: FormState;
   errorState: ErrorState;
   loadingState: LoadingState;
-  focusState: FocusState;
 }
 
-export class HomePageModel extends Model<HomePageData> {
-  constructor(collections: CollectionListItem[] = []) {
+export default class HomePageModel extends Model<HomePageData> {
+  constructor(initialData?: Partial<HomePageData>) {
+    const {
+      collections = [],
+      formState = { collectionId: '', isValid: false, isSubmitting: false },
+      errorState = { validation: null, duplicate: false, server: null },
+      loadingState = { creatingCollection: false, deletingCollection: null },
+    } = initialData || {};
+  
     super({ 
       collections,
-      formState: {
-        collectionId: '',
-        isValid: false,
-        isSubmitting: false
-      },
-      errorState: {
-        validation: null,
-        duplicate: false,
-        server: null
-      },
-      loadingState: {
-        creatingCollection: false,
-        deletingCollection: null
-      },
-      focusState: {
-        activeElementId: null,
-        selectionStart: null,
-        selectionEnd: null
-      }
+      formState,
+      errorState,
+      loadingState,
     });
   }
 
@@ -83,26 +67,6 @@ export class HomePageModel extends Model<HomePageData> {
 
   getLoadingState(): LoadingState {
     return this.data.loadingState;
-  }
-
-  getFocusState(): FocusState {
-    return this.data.focusState;
-  }
-
-  captureFocusState(elementId: string, selectionStart: number | null = null, selectionEnd: number | null = null): void {
-    this.data.focusState = {
-      activeElementId: elementId,
-      selectionStart,
-      selectionEnd
-    };
-  }
-
-  clearFocusState(): void {
-    this.data.focusState = {
-      activeElementId: null,
-      selectionStart: null,
-      selectionEnd: null
-    };
   }
 
   updateFormState(collectionId: string): void {

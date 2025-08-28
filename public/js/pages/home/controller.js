@@ -1,9 +1,8 @@
 import { Controller } from '../../mvc.js';
-import { HomePageModel } from './model.js';
-import { HomePageView } from './view.js';
-export class HomePageController extends Controller {
+export default class HomePageController extends Controller {
     constructor(model, view) {
         super(model, view);
+        this.attachEventListeners();
     }
     attachEventListeners() {
         document.addEventListener('click', (e) => {
@@ -43,50 +42,27 @@ export class HomePageController extends Controller {
     }
     handleCollectionIdInput(input) {
         const value = input.value.trim();
-        const model = this.model;
-        const elementId = input.getAttribute('data-testid') || input.id;
-        model.captureFocusState(elementId, input.selectionStart, input.selectionEnd);
-        model.updateFormState(value);
-        if (value && !model.getFormState().isValid) {
-            model.setFormError('validation', 'Collection ID can only contain letters, numbers, and hyphens');
+        this.model.updateFormState(value);
+        if (value && !this.model.getFormState().isValid) {
+            this.model.setFormError('validation', 'Collection ID can only contain letters, numbers, and hyphens');
         }
         else {
-            model.clearFormErrors();
+            this.model.clearFormErrors();
         }
-        this.updateView();
-    }
-    updateView() {
-        super.updateView();
-        this.restoreFocusState();
-    }
-    restoreFocusState() {
-        const model = this.model;
-        const focusState = model.getFocusState();
-        if (focusState.activeElementId) {
-            const element = document.querySelector(`[data-testid="${focusState.activeElementId}"], #${focusState.activeElementId}`);
-            if (element && element.focus) {
-                element.focus();
-                if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
-                    if (focusState.selectionStart !== null && focusState.selectionEnd !== null) {
-                        element.setSelectionRange(focusState.selectionStart, focusState.selectionEnd);
-                    }
-                }
-            }
-        }
+        this.view.update();
     }
     async handleCreateCollection(event) {
         event.preventDefault();
-        const model = this.model;
-        const formState = model.getFormState();
+        const formState = this.model.getFormState();
         if (!formState.isValid) {
             return;
         }
-        model.setCreatingCollection(true);
-        const existingCollection = model.getCollections().find(c => c.id === formState.collectionId);
+        this.model.setCreatingCollection(true);
+        const existingCollection = this.model.getCollections().find(c => c.id === formState.collectionId);
         if (!existingCollection) {
-            model.addCollectionOptimistically(formState.collectionId);
+            this.model.addCollectionOptimistically(formState.collectionId);
         }
-        this.updateView();
+        this.view.update();
         try {
             const response = await fetch('/api/collections', {
                 method: 'POST',
@@ -97,28 +73,28 @@ export class HomePageController extends Controller {
             });
             if (response.status === 409) {
                 if (!existingCollection) {
-                    model.removeCollectionOptimistically(formState.collectionId);
+                    this.model.removeCollectionOptimistically(formState.collectionId);
                 }
-                model.setFormError('duplicate');
-                model.setCreatingCollection(false);
-                this.updateView();
+                this.model.setFormError('duplicate');
+                this.model.setCreatingCollection(false);
+                this.view.update();
                 return;
             }
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            model.resetForm();
-            model.setCreatingCollection(false);
-            this.updateView();
+            this.model.resetForm();
+            this.model.setCreatingCollection(false);
+            this.view.update();
         }
         catch (error) {
             console.error('Error creating collection:', error);
             if (!existingCollection) {
-                model.removeCollectionOptimistically(formState.collectionId);
+                this.model.removeCollectionOptimistically(formState.collectionId);
             }
-            model.setFormError('server', 'Failed to create collection. Please try again.');
-            model.setCreatingCollection(false);
-            this.updateView();
+            this.model.setFormError('server', 'Failed to create collection. Please try again.');
+            this.model.setCreatingCollection(false);
+            this.view.update();
         }
     }
     handleDeleteCollection(element) {
@@ -126,19 +102,18 @@ export class HomePageController extends Controller {
         if (!collectionId)
             return;
         this.model.setDeletingCollection(collectionId);
-        this.updateView();
+        this.view.update();
     }
     handleCancelDeletion() {
         this.model.setDeletingCollection(null);
-        this.updateView();
+        this.view.update();
     }
     async handleConfirmDeletion() {
-        const model = this.model;
-        const collectionId = model.getLoadingState().deletingCollection;
+        const collectionId = this.model.getLoadingState().deletingCollection;
         if (!collectionId)
             return;
-        model.removeCollectionOptimistically(collectionId);
-        this.updateView();
+        this.model.removeCollectionOptimistically(collectionId);
+        this.view.update();
         try {
             const response = await fetch(`/api/collections/${collectionId}`, {
                 method: 'DELETE'
@@ -146,22 +121,14 @@ export class HomePageController extends Controller {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            model.setDeletingCollection(null);
-            this.updateView();
+            this.model.setDeletingCollection(null);
+            this.view.update();
         }
         catch (error) {
             console.error('Error deleting collection:', error);
-            model.addCollectionOptimistically(collectionId);
-            model.setDeletingCollection(null);
-            this.updateView();
+            this.model.addCollectionOptimistically(collectionId);
+            this.model.setDeletingCollection(null);
+            this.view.update();
         }
     }
 }
-document.addEventListener('DOMContentLoaded', () => {
-    const serverData = window.__MODEL_DATA__;
-    const parsedData = JSON.parse(serverData);
-    const model = new HomePageModel(parsedData.collections || []);
-    const view = new HomePageView(model);
-    const controller = new HomePageController(model, view);
-    controller.init();
-});

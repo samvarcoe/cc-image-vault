@@ -4,8 +4,6 @@ import { HomePageFixtures } from '../utils/home-page-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
 import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 
-
-
 test.describe('Home Page', { tag: '@sequential' }, () => {
   test.beforeEach(async () => {
     await CollectionFixtures.clearDirectory();

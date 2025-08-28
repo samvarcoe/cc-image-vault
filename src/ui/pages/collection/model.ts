@@ -39,32 +39,11 @@ export interface CollectionPageData {
   error?: string;
 }
 
-export class CollectionPageModel extends Model<CollectionPageData> {
-  constructor(
-    collectionId: string, 
-    images: ImageMetadata[] = [], 
-    statusFilter: ImageStatus = 'COLLECTION',
-    loading: boolean = false,
-    error?: string
-  ) {
-    // Convert ImageMetadata to ImageDisplayData
-    const imageDisplayData: ImageDisplayData[] = images.map(img => ({
-      id: img.id,
-      thumbnailUrl: `/api/images/${collectionId}/${img.id}/thumbnail`,
-      originalName: img.originalName,
-      status: img.status,
-      dimensions: img.dimensions,
-      aspectRatio: img.aspectRatio
-    }));
+export default class CollectionPageModel extends Model<CollectionPageData> {
 
-    super({
-      collectionId,
-      statusFilter,
-      images: imageDisplayData,
-      loading,
-      error
-    });
-  }
+  // constructor(data: CollectionPageData) {
+  //   super(data);
+  // }
 
   getCollectionId(): string {
     return this.data.collectionId;
@@ -100,29 +79,5 @@ export class CollectionPageModel extends Model<CollectionPageData> {
 
   getEmptyStateMessage(): string {
     return `This collection has no images with status: "${this.data.statusFilter}"`;
-  }
-
-  getPageTitle(): string {
-    if (this.isNotFoundError()) {
-      return 'Collection Not Found - Image Vault';
-    }
-    return `Collection ${this.data.collectionId} - Image Vault`;
-  }
-
-  // Methods for client-side state management (if needed for future features)
-  setLoading(loading: boolean): void {
-    this.data.loading = loading;
-  }
-
-  setError(error?: string): void {
-    this.data.error = error;
-  }
-
-  updateImages(images: ImageDisplayData[]): void {
-    this.data.images = images;
-  }
-
-  updateStatusFilter(status: ImageStatus): void {
-    this.data.statusFilter = status;
   }
 }

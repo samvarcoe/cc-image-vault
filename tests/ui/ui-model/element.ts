@@ -166,7 +166,7 @@ export class Element {
     console.log(`${this.name} is confirmed as not selected (aria-pressed="false")`);
   };
 
-  shouldHaveWidth = async (expectedWidth: number, timeout = 10000) => {
+  shouldHaveWidth = async (expectedWidth: number) => {
     console.log(`Verifying ${this.name} has width of ${expectedWidth}px`);
     
     const width = await this.locator.getAttribute('width');
@@ -174,53 +174,18 @@ export class Element {
     console.log(`${this.name} is confirmed as having width of ${expectedWidth}px`);
   };
 
-  shouldHaveAspectRatio = async (expectedAspectRatio: number, timeout = 10000) => {
+  shouldHaveAspectRatio = async (expectedAspectRatio: number) => {
     console.log(`Verifying ${this.name} has aspect ratio of ${expectedAspectRatio}`);
     const aspect = Number(await this.locator.getAttribute('aspect-ratio'));
     expect(aspect, `${this.name} does not have an aspect ratio of ${expectedAspectRatio}`).toBeCloseTo(expectedAspectRatio, 3);
     console.log(`${this.name} is confirmed as having aspect ratio of ${expectedAspectRatio}`);
   };
 
-  shouldHaveHeight = async (expectedHeight: number, timeout = 10000) => {
+  shouldHaveHeight = async (expectedHeight: number) => {
     console.log(`Verifying ${this.name} has height of ${expectedHeight}px`);
     
     const height = await this.locator.getAttribute('height');
     expect(height, `${this.name} does not have a height of ${expectedHeight}px using selector: ${this.selector}`).toEqual(expectedHeight.toString());
     console.log(`${this.name} is confirmed as having height of ${expectedHeight}px`);
   };
-
-  shouldBeCompletelyVisible = async (timeout = 10000) => {
-    console.log(`Verifying ${this.name} is completely visible`);
-    
-    const startTime = Date.now();
-    
-    while (Date.now() - startTime < timeout) {
-      const isFullyVisible = await this.locator.evaluate((element) => {
-        return new Promise((resolve) => {
-          const observer = new IntersectionObserver((entries) => {
-            const entry = entries[0];
-            // intersectionRatio of 1.0 means 100% of element is visible
-            resolve(entry.intersectionRatio === 1.0 && entry.isIntersecting);
-            observer.disconnect();
-          }, {
-            threshold: 1.0 // Only trigger when 100% visible
-          });
-          
-          observer.observe(element);
-        });
-      });
-      
-      if (isFullyVisible) {
-        console.log(`${this.name} is confirmed as completely visible`);
-        return; // Early exit - function resolves immediately when visible
-      }
-      
-      // Only wait if not visible yet
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    // Timeout error
-    throw new Error(`${this.name} is not completely visible using selector: ${this.selector}. Timed out after ${timeout}ms`);
-  };
-
 }

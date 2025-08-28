@@ -1,16 +1,16 @@
-import { View, escapeHtml } from '../../mvc.js';
-import { HomePageModel, CollectionListItem, HomePageData, ErrorState } from './model.js';
+import { View } from '../../mvc.js';
+import HomePageModel, { CollectionListItem, ErrorState } from './model.js';
 
-export class HomePageView extends View<HomePageData> {
+export default class HomePageView extends View<HomePageModel> {
   constructor(protected model: HomePageModel) {
-    super(model);
+    super(model, 'home');
   }
 
-  getTitle(): string {
+  title(): string {
     return 'Image Vault - Home';
   }
 
-  render(): string {
+  renderContent(): string {
     const collections = this.model.getSortedCollections();
     const hasCollections = this.model.hasCollections();
 
@@ -43,19 +43,18 @@ export class HomePageView extends View<HomePageData> {
   }
 
   private renderCollectionItem(collection: CollectionListItem): string {
-    const escapedId = escapeHtml(collection.id);
     const loadingState = this.model.getLoadingState();
     const isDeleting = loadingState.deletingCollection === collection.id;
     
     return /*html*/`
-      <div data-testid="collection-item-${escapedId}" class="collection-item">
-        <a data-testid="collection-link-${escapedId}" href="/collection/${escapedId}" class="collection-link">
-          <h3>${escapedId}</h3>
+      <div data-testid="collection-item-${collection.id}" class="collection-item">
+        <a data-testid="collection-link-${collection.id}" href="/collection/${collection.id}" class="collection-link">
+          <h3>${collection.id}</h3>
         </a>
         <button 
-          data-testid="delete-button-${escapedId}" 
+          data-testid="delete-button-${collection.id}" 
           data-id="delete-collection" 
-          data-collection-id="${escapedId}"
+          data-collection-id="${collection.id}"
           class="delete-button ${isDeleting ? 'loading' : ''}"
           ${isDeleting ? 'disabled' : ''}
         >
@@ -91,7 +90,7 @@ export class HomePageView extends View<HomePageData> {
               type="text" 
               id="collection-id" 
               name="collectionId"
-              value="${escapeHtml(formState.collectionId)}"
+              value="${formState.collectionId}"
               placeholder="Enter collection name (letters, numbers, and hyphens only)"
               pattern="[a-zA-Z0-9\\-]+"
               ${formState.isSubmitting || loadingState.creatingCollection ? 'disabled' : ''}
@@ -124,7 +123,7 @@ export class HomePageView extends View<HomePageData> {
         <div class="dialog-content">
           <h3 data-testid="dialog-title">Confirm Deletion</h3>
           <p data-testid="warning-message">
-            Are you sure you want to delete the collection "<span data-testid="collection-id-display" class="collection-id">${escapeHtml(collectionToDelete || '')}</span>"?
+            Are you sure you want to delete the collection "<span data-testid="collection-id-display" class="collection-id">${collectionToDelete || ''}</span>"?
             This action cannot be undone and will permanently remove all images in this collection.
           </p>
           <div class="dialog-buttons">
@@ -152,7 +151,7 @@ export class HomePageView extends View<HomePageData> {
     let errors = '';
     
     if (errorState.validation) {
-      errors += /*html*/`<div data-testid="validation-error" class="validation-error">${escapeHtml(errorState.validation)}</div>`;
+      errors += /*html*/`<div data-testid="validation-error" class="validation-error">${errorState.validation}</div>`;
     }
     
     if (errorState.duplicate) {
@@ -166,7 +165,7 @@ export class HomePageView extends View<HomePageData> {
     if (errorState.server) {
       errors += /*html*/`
         <div data-testid="server-error" class="server-error">
-          ${escapeHtml(errorState.server)}
+          ${errorState.server}
         </div>
       `;
     }

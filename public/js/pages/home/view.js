@@ -1,13 +1,13 @@
-import { View, escapeHtml } from '../../mvc.js';
-export class HomePageView extends View {
+import { View } from '../../mvc.js';
+export default class HomePageView extends View {
     constructor(model) {
-        super(model);
+        super(model, 'home');
         this.model = model;
     }
-    getTitle() {
+    title() {
         return 'Image Vault - Home';
     }
-    render() {
+    renderContent() {
         const collections = this.model.getSortedCollections();
         const hasCollections = this.model.hasCollections();
         return `
@@ -37,18 +37,17 @@ export class HomePageView extends View {
     `;
     }
     renderCollectionItem(collection) {
-        const escapedId = escapeHtml(collection.id);
         const loadingState = this.model.getLoadingState();
         const isDeleting = loadingState.deletingCollection === collection.id;
         return `
-      <div data-testid="collection-item-${escapedId}" class="collection-item">
-        <a data-testid="collection-link-${escapedId}" href="/collection/${escapedId}" class="collection-link">
-          <h3>${escapedId}</h3>
+      <div data-testid="collection-item-${collection.id}" class="collection-item">
+        <a data-testid="collection-link-${collection.id}" href="/collection/${collection.id}" class="collection-link">
+          <h3>${collection.id}</h3>
         </a>
         <button 
-          data-testid="delete-button-${escapedId}" 
+          data-testid="delete-button-${collection.id}" 
           data-id="delete-collection" 
-          data-collection-id="${escapedId}"
+          data-collection-id="${collection.id}"
           class="delete-button ${isDeleting ? 'loading' : ''}"
           ${isDeleting ? 'disabled' : ''}
         >
@@ -81,7 +80,7 @@ export class HomePageView extends View {
               type="text" 
               id="collection-id" 
               name="collectionId"
-              value="${escapeHtml(formState.collectionId)}"
+              value="${formState.collectionId}"
               placeholder="Enter collection name (letters, numbers, and hyphens only)"
               pattern="[a-zA-Z0-9\\-]+"
               ${formState.isSubmitting || loadingState.creatingCollection ? 'disabled' : ''}
@@ -112,7 +111,7 @@ export class HomePageView extends View {
         <div class="dialog-content">
           <h3 data-testid="dialog-title">Confirm Deletion</h3>
           <p data-testid="warning-message">
-            Are you sure you want to delete the collection "<span data-testid="collection-id-display" class="collection-id">${escapeHtml(collectionToDelete || '')}</span>"?
+            Are you sure you want to delete the collection "<span data-testid="collection-id-display" class="collection-id">${collectionToDelete || ''}</span>"?
             This action cannot be undone and will permanently remove all images in this collection.
           </p>
           <div class="dialog-buttons">
@@ -138,7 +137,7 @@ export class HomePageView extends View {
     renderFormErrors(errorState) {
         let errors = '';
         if (errorState.validation) {
-            errors += `<div data-testid="validation-error" class="validation-error">${escapeHtml(errorState.validation)}</div>`;
+            errors += `<div data-testid="validation-error" class="validation-error">${errorState.validation}</div>`;
         }
         if (errorState.duplicate) {
             errors += `
@@ -150,7 +149,7 @@ export class HomePageView extends View {
         if (errorState.server) {
             errors += `
         <div data-testid="server-error" class="server-error">
-          ${escapeHtml(errorState.server)}
+          ${errorState.server}
         </div>
       `;
         }
