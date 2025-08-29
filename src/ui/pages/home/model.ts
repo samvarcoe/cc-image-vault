@@ -29,19 +29,14 @@ export interface HomePageData {
 }
 
 export default class HomePageModel extends Model<HomePageData> {
-  constructor(initialData?: Partial<HomePageData>) {
-    const {
-      collections = [],
-      formState = { collectionId: '', isValid: false, isSubmitting: false },
-      errorState = { validation: null, duplicate: false, server: null },
-      loadingState = { creatingCollection: false, deletingCollection: null },
-    } = initialData || {};
-  
-    super({ 
-      collections,
-      formState,
-      errorState,
-      loadingState,
+
+  constructor(initialData: Partial<HomePageData> = {}) {
+    super({
+      collections: [],
+      formState: { collectionId: '', isValid: false, isSubmitting: false },
+      errorState: { validation: null, duplicate: false, server: null },
+      loadingState: { creatingCollection: false, deletingCollection: null },
+      ...initialData,
     });
   }
 

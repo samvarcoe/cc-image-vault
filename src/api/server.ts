@@ -71,21 +71,13 @@ app.get('/collection/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const status = req.query.status as string;
-    
+
+    const collectionPath = path.join(basePath, id);
+
     // Check if collection exists
-    if (!await collectionDirectoryExists(basePath, id)) {
-      // 404 page for non-existent collection
-      const pageData: CollectionPageData = {
-        collectionId: id,
-        statusFilter: 'COLLECTION',
-        images: [],
-        loading: false,
-        error: 'Collection not found'
-      };
-
-      const model = new CollectionPageModel(pageData);
+    if (!await collectionDirectoryExists(collectionPath)) {
+      const model = new CollectionPageModel({ error: 'Collection not found' });
       const view = new CollectionPageView(model);
-
       return res.status(404).send(view.render());
     }
     
@@ -94,27 +86,18 @@ app.get('/collection/:id', async (req, res) => {
     const normalizedStatus = validStatuses.includes(status) ? status : 'COLLECTION';
     
     // Load collection and get images
-    const collectionPath = path.join(basePath, id);
-    const collection = await Collection.load(collectionPath);
-    const images = await collection.getImages({ status: normalizedStatus as 'INBOX' | 'COLLECTION' | 'ARCHIVE' });
-    await collection.close();
 
-    const data: CollectionPageData = {
-      collectionId: id,
-      statusFilter: normalizedStatus as 'INBOX' | 'COLLECTION' | 'ARCHIVE',
-      images: images.map(img => ({
-        id: img.id,
-        thumbnailUrl: `/api/images/${id}/${img.id}/thumbnail`,
-        originalName: img.originalName,
-        status: img.status,
-        dimensions: img.dimensions,
-        aspectRatio: img.aspectRatio
-      })),
-      loading: false
-    };
+    const collection = await Collection.load(collectionPath);
+    const images = await collection.getImages({ status: normalizedStatus as ImageStatus });
+    await collection.close();
     
     // Create model and view
-    const model = new CollectionPageModel(data);
+    const model = new CollectionPageModel({
+      collectionId: id,
+      statusFilter: normalizedStatus as 'INBOX' | 'COLLECTION' | 'ARCHIVE',
+      images,
+    });
+
     const view = new CollectionPageView(model);
     // const html = renderPage(model, view, 'collection');
     return res.send(view.render());
@@ -220,13 +203,15 @@ app.get('/api/collections/:id/images', async (req, res) => {
     
     // Parse and validate query parameters first
     const validatedOptions = parseImageQueryParams(req.query as ImageQueryParams);
+
+    const collectionPath = path.join(basePath, id);
     
     // Check if collection directory exists to distinguish between "not found" and "access issues"
-    if (!await collectionDirectoryExists(basePath, id)) {
+    if (!await collectionDirectoryExists(collectionPath)) {
       return sendError(res, 404, 'not_found_error', 'Collection not found');
     }
     
-    const collectionPath = path.join(basePath, id);
+    
     
     // Load collection and get images
     const collection = await Collection.load(collectionPath);
@@ -253,13 +238,15 @@ app.get('/api/collections/:id/images', async (req, res) => {
 app.get('/api/images/:collectionId/:imageId', async (req, res) => {
   try {
     const { collectionId, imageId } = req.params;
+
+    const collectionPath = path.join(basePath, collectionId);
     
     // Check if collection directory exists first
-    if (!await collectionDirectoryExists(basePath, collectionId)) {
+    if (!await collectionDirectoryExists(collectionPath)) {
       return sendError(res, 404, 'not_found_error', 'Collection not found');
     }
 
-    const collectionPath = path.join(basePath, collectionId);
+    
     
     // Load collection and get image metadata and file path
     const collection = await Collection.load(collectionPath);
@@ -305,13 +292,13 @@ app.get('/api/images/:collectionId/:imageId', async (req, res) => {
 app.get('/api/images/:collectionId/:imageId/thumbnail', async (req, res) => {
   try {
     const { collectionId, imageId } = req.params;
-    
-    // Check if collection directory exists first
-    if (!await collectionDirectoryExists(basePath, collectionId)) {
-      return sendError(res, 404, 'not_found_error', 'Collection not found');
-    }
 
     const collectionPath = path.join(basePath, collectionId);
+    
+    // Check if collection directory exists first
+    if (!await collectionDirectoryExists(collectionPath)) {
+      return sendError(res, 404, 'not_found_error', 'Collection not found');
+    }
     
     // Load collection and get image metadata and thumbnail file path
     const collection = await Collection.load(collectionPath);

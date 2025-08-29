@@ -39,7 +39,7 @@ export class ImageServingFixtures extends Fixtures<ImageServingState> {
 
     const {
       collectionId = `test-collection-${Date.now()}`,
-      baseDir = '/workspace/image-vault',
+      baseDir = '/workspace/projects/image-vault',
       imageCount = 3,
       includeAllThumbnails = true,
       missingThumbnailImageIds = [],

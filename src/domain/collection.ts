@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import sqlite3 from 'sqlite3';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
-import { ImageMetadata, ImageStatus, QueryOptions } from './types';
+import { ImageStatus, QueryOptions } from './types';
 
 export class Collection {
   public readonly id: string;

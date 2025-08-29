@@ -57,41 +57,43 @@ export abstract class View<M extends Model<unknown>> {
     abstract renderContent(): string;
 
     render(): string {
+        const slug = this.slug;
+        const title = this.title();
+        const content = this.renderContent();
+        const modelData = this.model.serialize();
+
         return /*html*/`
             <!DOCTYPE html>
             <html lang="en">
                 <head>
                     <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title> ${this.title()}</title>
-                    <link rel="preload" href="/css/${this.slug}.css" as="style">
-                    <link rel="stylesheet" href="/css/${this.slug}.css">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+                    <title> ${title} </title>
+                    <link rel="preload" href="/css/${slug}.css" as="style">
+                    <link rel="stylesheet" href="/css/${slug}.css">
                 </head>
                 <body>
-                    <div id="content"> ${this.renderContent()} </div>
+                    <div id="content"> ${content} </div>
 
-                    <script>
-                        document.addEventListener('DOMContentLoaded', async () => {
-                            try {
-                                const [modelModule, viewModule, controllerModule] = await Promise.all([
-                                    import('/js/pages/${this.slug}/model.js'),
-                                    import('/js/pages/${this.slug}/view.js'), 
-                                    import('/js/pages/${this.slug}/controller.js')
-                                ]);
-                                
-                                const Model = modelModule.default;
-                                const View = viewModule.default;
-                                const Controller = controllerModule.default;
-                                
-                                const initialData = JSON.parse('${this.model.serialize()}');
-                                const model = new Model(initialData);
-                                const view = new View(model, '${this.slug}');
-                                const controller = new Controller(model, view);
-                                
-                            } catch (error) {
-                                console.error('Failed to bootstrap page:', error);
-                            }
-                        });
+                    <script type='module' src='/js/mvc.js'></script>
+                    <script type='module' src='/js/pages/${slug}/model.js'></script>
+                    <script type='module' src='/js/pages/${slug}/view.js'></script>
+                    <script type='module' src='/js/pages/${slug}/controller.js'></script>
+
+                    <script type="module">
+                        import Model from '/js/pages/${slug}/model.js';
+                        import View from '/js/pages/${slug}/view.js';
+                        import Controller from '/js/pages/${slug}/controller.js';
+
+                        try {
+                            const initialData = JSON.parse('${modelData}');
+                            const model = new Model(initialData);
+                            const view = new View(model, '${slug}');
+                            const controller = new Controller(model, view);
+                            
+                        } catch (error) {
+                            console.error('Failed to bootstrap page:', error);
+                        }
                     </script>
                 </body>
             </html>

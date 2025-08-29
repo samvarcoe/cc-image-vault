@@ -4,8 +4,7 @@
   "description": "Image curation app",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/api/server.ts",
-    "ui:watch": "tsc --project tsconfig.ui.json --watch",
+    "dev": "tsx watch src/api/server.ts & tsc --project tsconfig.ui.json --watch",
     "lint": "npx eslint",
     "domain:tests": "npx playwright test --config tests/domain/playwright.config.ts",
     "api:tests": "npx playwright test --config tests/api/playwright.config.ts",

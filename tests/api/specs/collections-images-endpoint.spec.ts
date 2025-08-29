@@ -17,7 +17,7 @@ test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
 
   // Setup private directory before each test
   test.beforeEach(async () => {
-    await fs.mkdir('/workspace/image-vault/private', { recursive: true });
+    await fs.mkdir(TEST_CONFIG.COLLECTIONS_DIRECTORY, { recursive: true });
   });
 
   // Cleanup fixtures after each test
@@ -189,7 +189,7 @@ test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
     // Given a collection exists with images created at different times using fake timers
     const collection = await CollectionFixtures.createWithVariedImageCreationTimes({
       collectionId: 'ordering-test-collection',
-      basePath: '/workspace/image-vault/private',
+      basePath: TEST_CONFIG.COLLECTIONS_DIRECTORY,
       imageCount: 8,
       statusDistribution: [
         { status: 'INBOX', count: 3 },

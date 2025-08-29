@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 import crypto from 'crypto';
-import { ImageMetadata, ImageStatus } from '../../src/domain/types';
+import { ImageStatus } from '../../src/domain/types';
 
 /**
  * Test utilities for domain layer tests

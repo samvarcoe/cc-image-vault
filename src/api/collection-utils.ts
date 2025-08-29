@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { ImageMetadata, ImageStatus, QueryOptions } from '../domain/types';
+import { ImageStatus, QueryOptions } from '../domain/types';
 
 export interface CollectionInfo {
   id: string;
@@ -118,9 +118,8 @@ export async function collectionExists(basePath: string, id: string): Promise<bo
 /**
  * Checks if a collection directory exists
  */
-export async function collectionDirectoryExists(basePath: string, id: string): Promise<boolean> {
+export async function collectionDirectoryExists(collectionPath: string): Promise<boolean> {
   try {
-    const collectionPath = path.join(basePath, id);
     const stat = await fs.stat(collectionPath);
     return stat.isDirectory();
   } catch {

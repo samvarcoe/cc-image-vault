@@ -2,48 +2,33 @@ import { Model } from '../../mvc.js';
 
 export type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE';
 
-export interface ImageMetadata {
-  id: string;
-  originalName: string;
-  fileHash: string;
-  status: ImageStatus;
-  size: number;
-  dimensions: {
-    width: number;
-    height: number;
-  };
-  aspectRatio: number;
-  extension: string;
-  mimeType: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ImageDisplayData {
-  id: string;
-  thumbnailUrl: string;
-  originalName: string;
-  status: ImageStatus;
-  dimensions: {
-    width: number;
-    height: number;
-  };
-  aspectRatio: number;
-}
-
 export interface CollectionPageData {
   collectionId: string;
   statusFilter: ImageStatus;
-  images: ImageDisplayData[];
+  images: ImageMetadata[];
   loading: boolean;
   error?: string;
 }
 
 export default class CollectionPageModel extends Model<CollectionPageData> {
 
-  // constructor(data: CollectionPageData) {
-  //   super(data);
-  // }
+  constructor(data: Partial<CollectionPageData> = {}) {
+    const {
+      collectionId = '',
+      statusFilter = 'COLLECTION',
+      images= [],
+      loading = false,
+      error = undefined,
+    } = data
+
+    super({
+      collectionId,
+      statusFilter,
+      images,
+      loading,
+      error,
+    });
+  }
 
   getCollectionId(): string {
     return this.data.collectionId;
@@ -53,7 +38,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     return this.data.statusFilter;
   }
 
-  getImages(): ImageDisplayData[] {
+  getImages(): ImageMetadata[] {
     return this.data.images || [];
   }
 

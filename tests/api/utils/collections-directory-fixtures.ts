@@ -20,7 +20,7 @@ export class CollectionsDirectoryFixtures extends Fixtures<DirectoryState> {
   } = {}): Promise<DirectoryState> {
 
     const {
-      baseDir = '/workspace/image-vault',
+      baseDir = '/workspace/projects/image-vault',
       existingCollections = [],
       simulatePermissionIssues = false
     } = options;

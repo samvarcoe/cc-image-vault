@@ -1,5 +1,15 @@
 import { Model } from '../../mvc.js';
 export default class CollectionPageModel extends Model {
+    constructor(data = {}) {
+        const { collectionId = '', statusFilter = 'COLLECTION', images = [], loading = false, error = undefined, } = data;
+        super({
+            collectionId,
+            statusFilter,
+            images,
+            loading,
+            error,
+        });
+    }
     getCollectionId() {
         return this.data.collectionId;
     }

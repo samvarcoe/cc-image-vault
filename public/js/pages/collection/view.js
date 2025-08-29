@@ -37,6 +37,7 @@ export default class CollectionPageView extends View {
     }
     renderImageGrid() {
         const model = this.model;
+        const collectionId = model.getCollectionId();
         if (!model.hasImages()) {
             return this.renderEmptyState();
         }
@@ -49,7 +50,7 @@ export default class CollectionPageView extends View {
       <div data-testid="image-grid" class="image-grid">
         ${columns.map((columnImages) => `
           <div class="image-column">
-            ${columnImages.map(image => this.renderImageItem(image)).join('')}
+            ${columnImages.map(image => this.renderImageItem(collectionId, image)).join('')}
           </div>
         `).join('')}
       </div>
@@ -63,7 +64,7 @@ export default class CollectionPageView extends View {
       </div>
     `;
     }
-    renderImageItem(image) {
+    renderImageItem(collectionId, image) {
         return `
       <div
         data-testid="image-item-${image.id}"
@@ -73,7 +74,7 @@ export default class CollectionPageView extends View {
       >
         <img 
           data-testid="image-thumbnail-${image.id}"
-          src="${image.thumbnailUrl}"
+          src="/api/images/${collectionId}/${image.id}/thumbnail"
           alt="${image.originalName}"
           loading="lazy"
           class="image-thumbnail"

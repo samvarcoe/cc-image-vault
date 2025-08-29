@@ -1,13 +1,7 @@
 import { Model } from '../../mvc.js';
 export default class HomePageModel extends Model {
-    constructor(initialData) {
-        const { collections = [], formState = { collectionId: '', isValid: false, isSubmitting: false }, errorState = { validation: null, duplicate: false, server: null }, loadingState = { creatingCollection: false, deletingCollection: null }, } = initialData || {};
-        super({
-            collections,
-            formState,
-            errorState,
-            loadingState,
-        });
+    constructor(initialData = {}) {
+        super(Object.assign({ collections: [], formState: { collectionId: '', isValid: false, isSubmitting: false }, errorState: { validation: null, duplicate: false, server: null }, loadingState: { creatingCollection: false, deletingCollection: null } }, initialData));
     }
     getCollections() {
         return this.data.collections || [];

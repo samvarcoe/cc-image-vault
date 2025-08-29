@@ -7,7 +7,7 @@ import { Fixtures } from './base-fixtures';
 import { ImageFixtures } from './image-fixtures';
 import FakeTimers from '@sinonjs/fake-timers';
 
-const COLLECTIONS_DIRECTORY = '/workspace/image-vault/private';
+const COLLECTIONS_DIRECTORY = '/workspace/projects/image-vault/private';
 
 /**
  * Collection fixtures for creating collections with pre-populated images

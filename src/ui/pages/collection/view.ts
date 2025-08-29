@@ -1,5 +1,5 @@
 import { View } from '../../mvc.js';
-import CollectionPageModel, { ImageDisplayData } from './model.js';
+import CollectionPageModel from './model.js';
 
 export default class CollectionPageView extends View<CollectionPageModel> {
   constructor(model: CollectionPageModel) {
@@ -47,6 +47,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
 
   private renderImageGrid(): string {
     const model = this.model as CollectionPageModel;
+    const collectionId = model.getCollectionId();
 
     if (!model.hasImages()) {
       return this.renderEmptyState();
@@ -55,7 +56,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
     const images = model.getImages();
     
     // Distribute images across 3 columns
-    const columns: ImageDisplayData[][] = [[], [], []];
+    const columns: ImageMetadata[][] = [[], [], []];
     images.forEach((image, index) => {
       columns[index % 3]!.push(image);
     });
@@ -64,7 +65,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
       <div data-testid="image-grid" class="image-grid">
         ${columns.map((columnImages) => /*html*/`
           <div class="image-column">
-            ${columnImages.map(image => this.renderImageItem(image)).join('')}
+            ${columnImages.map(image => this.renderImageItem(collectionId, image)).join('')}
           </div>
         `).join('')}
       </div>
@@ -81,7 +82,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
     `;
   }
 
-  private renderImageItem(image: ImageDisplayData): string {
+  private renderImageItem(collectionId: string, image: ImageMetadata): string {
     return /*html*/`
       <div
         data-testid="image-item-${image.id}"
@@ -91,7 +92,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
       >
         <img 
           data-testid="image-thumbnail-${image.id}"
-          src="${image.thumbnailUrl}"
+          src="/api/images/${collectionId}/${image.id}/thumbnail"
           alt="${image.originalName}"
           loading="lazy"
           class="image-thumbnail"
