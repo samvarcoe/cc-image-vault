@@ -16,6 +16,7 @@ export default defineConfig({
     // trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     headless: true,
+    viewport: { width: 1920, height: 1080 },
     connectOptions: {
       wsEndpoint: 'ws://playwright-server:8080',  // Connect to the remote playwright server
     },
