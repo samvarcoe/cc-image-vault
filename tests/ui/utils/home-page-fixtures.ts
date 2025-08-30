@@ -1,7 +1,7 @@
 import { CollectionsAPI } from '../../api/utils/collections-api-model';
 import { CollectionsDirectoryFixtures } from '../../api/utils/collections-directory-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
-import { TEST_CONFIG } from '../../utils/test-config';
+import { CONFIG } from '../../../config';
 
 interface CollectionListItem {
   id: string;
@@ -12,7 +12,7 @@ interface CollectionListItem {
  * Uses the existing API testing infrastructure to set up collections
  */
 export class HomePageFixtures extends Fixtures<CollectionListItem[]> {
-  private static collectionsAPI = new CollectionsAPI(TEST_CONFIG.UI_BASE_URL);
+  private static collectionsAPI = new CollectionsAPI(CONFIG.UI_BASE_URL);
 
   /**
    * Creates an empty collections state for testing empty state UI
