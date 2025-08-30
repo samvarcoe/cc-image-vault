@@ -2,7 +2,7 @@ import { expect } from 'playwright/test';
 import { PageObject } from '../page';
 import { Element } from '../element';
 import { ConfirmationDialogComponent } from '../components/confirmation-dialog-component';
-import { TEST_CONFIG } from '../../../utils/test-config';
+import { CONFIG } from '../../../../config';
 
 export class HomePage extends PageObject {
   protected url = '/';
@@ -98,7 +98,7 @@ export class HomePage extends PageObject {
     const currentUrl = this.page.url();
     expect(currentUrl, { 
       message: `Current URL is "${currentUrl}" instead of home page after navigation` 
-    }).toBe(`${TEST_CONFIG.UI_BASE_URL}${this.url}`);
+    }).toBe(`${CONFIG.UI_BASE_URL}${this.url}`);
     console.log('✓ User is on home page');
   }
 

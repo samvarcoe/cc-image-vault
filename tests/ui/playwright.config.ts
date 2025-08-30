@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-import { TEST_CONFIG } from '../utils/test-config';
+import { CONFIG } from '../../config';
 
 export default defineConfig({
   testDir: './specs',
@@ -12,7 +12,7 @@ export default defineConfig({
     ['list']
   ],
   use: {
-    baseURL: TEST_CONFIG.UI_BASE_URL,
+    baseURL: CONFIG.UI_BASE_URL,
     // trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     headless: true,

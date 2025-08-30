@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { CollectionsAPI, ErrorResponse } from '../utils/collections-api-model';
 import { CollectionsDirectoryFixtures } from '../utils/collections-directory-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
-import { TEST_CONFIG } from '../../utils/test-config';
+import { CONFIG } from '../../../config';
 import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 
 test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
@@ -11,7 +11,7 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
   // Setup API client using shared test configuration
   test.beforeAll(async () => {
     await CollectionFixtures.clearDirectory();
-    api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
+    api = new CollectionsAPI(CONFIG.API_BASE_URL);
 
   });
 

@@ -3,7 +3,7 @@ import { CollectionsAPI, ErrorResponse } from '../utils/collections-api-model';
 import { ImageServingFixtures } from '../utils/image-serving-fixtures';
 import { BinaryResponseUtils } from '../utils/binary-response-utils';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
-import { TEST_CONFIG } from '../../utils/test-config';
+import { CONFIG } from '../../../config';
 import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 
 test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
@@ -11,7 +11,7 @@ test.describe('Image Serving API Endpoints', { tag: '@sequential' }, () => {
 
   test.beforeAll(async () => {
     await CollectionFixtures.clearDirectory();
-    api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
+    api = new CollectionsAPI(CONFIG.API_BASE_URL);
   });
 
   test.afterEach(async () => {

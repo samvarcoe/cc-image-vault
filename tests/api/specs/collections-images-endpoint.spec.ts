@@ -4,7 +4,7 @@ import { CollectionsAPI } from '../utils/collections-api-model';
 import { CollectionsImagesAPIUtils } from '../utils/collections-images-api-utils';
 import { CollectionFixtures } from '../../utils/fixtures/collection-fixtures';
 import { Fixtures } from '../../utils/fixtures/base-fixtures';
-import { TEST_CONFIG } from '../../utils/test-config';
+import { CONFIG } from '../../../config';
 
 test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
   let api: CollectionsAPI;
@@ -12,12 +12,12 @@ test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
   // Setup API client using shared test configuration
   test.beforeAll(async () => {
     await CollectionFixtures.clearDirectory();
-    api = new CollectionsAPI(TEST_CONFIG.API_BASE_URL);
+    api = new CollectionsAPI(CONFIG.API_BASE_URL);
   });
 
   // Setup private directory before each test
   test.beforeEach(async () => {
-    await fs.mkdir(TEST_CONFIG.COLLECTIONS_DIRECTORY, { recursive: true });
+    await fs.mkdir(CONFIG.COLLECTIONS_DIRECTORY, { recursive: true });
   });
 
   // Cleanup fixtures after each test
@@ -189,7 +189,7 @@ test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
     // Given a collection exists with images created at different times using fake timers
     const collection = await CollectionFixtures.createWithVariedImageCreationTimes({
       collectionId: 'ordering-test-collection',
-      basePath: TEST_CONFIG.COLLECTIONS_DIRECTORY,
+      basePath: CONFIG.COLLECTIONS_DIRECTORY,
       imageCount: 8,
       statusDistribution: [
         { status: 'INBOX', count: 3 },

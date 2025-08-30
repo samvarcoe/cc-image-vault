@@ -19,7 +19,8 @@
     "resolveJsonModule": true
   },
   "include": [
-    "src/ui/**/*"
+    "src/ui/**/*",
+    "./**/*.d.ts"
   ],
   "exclude": [
     "node_modules",
