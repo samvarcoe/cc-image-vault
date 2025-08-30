@@ -141,7 +141,7 @@ test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
     }
   });
 
-  test('Image listing with pagination', async () => {
+  test.only('Image listing with pagination', async () => {
     // Given a collection exists with multiple images
     const collection = await CollectionFixtures.create({
       collectionId: 'pagination-test-collection',

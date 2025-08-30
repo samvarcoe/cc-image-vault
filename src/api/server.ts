@@ -8,14 +8,11 @@ import {
   ImageQueryParams,
   validateCollectionId,
   listCollectionDirectories,
-  collectionExists,
-  collectionDirectoryExists,
   parseImageQueryParams,
-  convertToApiResponse
 } from './collection-utils';
 import HomePageModel from '../ui/pages/home/model';
 import HomePageView from '../ui/pages/home/view';
-import CollectionPageModel , { CollectionPageData } from '../ui/pages/collection/model';
+import CollectionPageModel from '../ui/pages/collection/model';
 import CollectionPageView from '../ui/pages/collection/view';
 
 
@@ -53,7 +50,6 @@ const sendError = (res: express.Response, statusCode: number, error: string, mes
   res.status(statusCode).json({ error, message });
 };
 
-// Home page route
 app.get('/', async (req, res) => {
   try {
     const collections = await listCollectionDirectories(basePath);
@@ -66,40 +62,36 @@ app.get('/', async (req, res) => {
   }
 });
 
-// Collection page route
-app.get('/collection/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const status = req.query.status as string;
+const validateStatus = (status: string): status is 'INBOX' | 'COLLECTION' | 'ARCHIVE' => {
+  return ['INBOX', 'COLLECTION', 'ARCHIVE'].includes(status);
+}
 
+app.get('/collection/:id', async (req, res) => {
+  const { id } = req.params;
+  const status = req.query.status as string;
+  const statusFilter: ImageStatus = validateStatus(status) ? status : 'COLLECTION';
+
+  try {
     const collectionPath = path.join(basePath, id);
 
-    // Check if collection exists
-    if (!await collectionDirectoryExists(collectionPath)) {
-      const model = new CollectionPageModel({ error: 'Collection not found' });
+    if (!await Collection.exists(collectionPath)) {
+      const model = new CollectionPageModel();
       const view = new CollectionPageView(model);
       return res.status(404).send(view.render());
     }
     
-    // Validate and normalize status parameter
-    const validStatuses = ['INBOX', 'COLLECTION', 'ARCHIVE'];
-    const normalizedStatus = validStatuses.includes(status) ? status : 'COLLECTION';
-    
-    // Load collection and get images
-
     const collection = await Collection.load(collectionPath);
-    const images = await collection.getImages({ status: normalizedStatus as ImageStatus });
+    const images = await collection.getImages({ status: statusFilter });
     await collection.close();
     
-    // Create model and view
     const model = new CollectionPageModel({
       collectionId: id,
-      statusFilter: normalizedStatus as 'INBOX' | 'COLLECTION' | 'ARCHIVE',
+      statusFilter,
       images,
     });
 
     const view = new CollectionPageView(model);
-    // const html = renderPage(model, view, 'collection');
+
     return res.send(view.render());
   } catch (error: unknown) {
     console.error('Error rendering collection page:', error);
@@ -138,7 +130,7 @@ app.post('/api/collections', async (req, res) => {
     }
 
     // Check if collection already exists
-    if (await collectionExists(basePath, id)) {
+    if (await Collection.exists(path.join(basePath, id))) {
       return sendError(res, 409, 'conflict_error', 'Duplicate collection ID');
     }
 
@@ -164,7 +156,7 @@ app.get('/api/collections/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    if (!await collectionExists(basePath, id)) {
+    if (!await Collection.exists(path.join(basePath, id))) {
       return sendError(res, 404, 'not_found_error', 'Collection not found');
     }
     
@@ -179,7 +171,7 @@ app.delete('/api/collections/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    if (!await collectionExists(basePath, id)) {
+    if (!await Collection.exists(path.join(basePath, id))) {
       return sendError(res, 404, 'not_found_error', 'Collection not found');
     }
 
@@ -198,29 +190,22 @@ app.delete('/api/collections/:id', async (req, res) => {
 
 // GET /api/collections/:id/images - List images in collection
 app.get('/api/collections/:id/images', async (req, res) => {
+
+
   try {
     const { id } = req.params;
-    
-    // Parse and validate query parameters first
     const validatedOptions = parseImageQueryParams(req.query as ImageQueryParams);
-
     const collectionPath = path.join(basePath, id);
-    
-    // Check if collection directory exists to distinguish between "not found" and "access issues"
-    if (!await collectionDirectoryExists(collectionPath)) {
+
+    if (!await Collection.exists(collectionPath)) {
       return sendError(res, 404, 'not_found_error', 'Collection not found');
     }
-    
-    
-    
-    // Load collection and get images
+
     const collection = await Collection.load(collectionPath);
     const images = await collection.getImages(validatedOptions);
     await collection.close();
-    
-    // Convert to API response format with pagination
-    const response = convertToApiResponse(images, validatedOptions);
-    res.json(response);
+
+    res.json(images);
   } catch (error: unknown) {
     if ((error as Error).message.includes('Invalid')) {
       sendError(res, 400, 'validation_error', (error as Error).message);
@@ -241,13 +226,10 @@ app.get('/api/images/:collectionId/:imageId', async (req, res) => {
 
     const collectionPath = path.join(basePath, collectionId);
     
-    // Check if collection directory exists first
-    if (!await collectionDirectoryExists(collectionPath)) {
+    if (!await Collection.exists(collectionPath)) {
       return sendError(res, 404, 'not_found_error', 'Collection not found');
     }
 
-    
-    
     // Load collection and get image metadata and file path
     const collection = await Collection.load(collectionPath);
     
@@ -296,7 +278,7 @@ app.get('/api/images/:collectionId/:imageId/thumbnail', async (req, res) => {
     const collectionPath = path.join(basePath, collectionId);
     
     // Check if collection directory exists first
-    if (!await collectionDirectoryExists(collectionPath)) {
+    if (!await Collection.exists(collectionPath)) {
       return sendError(res, 404, 'not_found_error', 'Collection not found');
     }
     

@@ -1,40 +1,27 @@
 import { Model } from '../../mvc.js';
 export default class CollectionPageModel extends Model {
     constructor(data = {}) {
-        const { collectionId = '', statusFilter = 'COLLECTION', images = [], loading = false, error = undefined, } = data;
-        super({
-            collectionId,
-            statusFilter,
-            images,
-            loading,
-            error,
-        });
+        super(Object.assign({ collectionId: undefined, statusFilter: 'COLLECTION', images: [], popoverImageId: null }, data));
     }
     getCollectionId() {
         return this.data.collectionId;
     }
-    getStatusFilter() {
-        return this.data.statusFilter;
-    }
     getImages() {
         return this.data.images || [];
     }
-    hasImages() {
-        return this.getImages().length > 0;
+    getStatusFilter() {
+        return this.data.statusFilter;
     }
-    isLoading() {
-        return this.data.loading;
+    isPopoverOpen() {
+        return this.data.popoverImageId !== null && this.data.popoverImageId !== undefined;
     }
-    getError() {
-        return this.data.error;
+    getPopoverImageId() {
+        return this.data.popoverImageId || null;
     }
-    hasError() {
-        return !!this.data.error;
+    openPopover(imageId) {
+        this.data.popoverImageId = imageId;
     }
-    isNotFoundError() {
-        return this.data.error === 'Collection not found';
-    }
-    getEmptyStateMessage() {
-        return `This collection has no images with status: "${this.data.statusFilter}"`;
+    closePopover() {
+        this.data.popoverImageId = null;
     }
 }

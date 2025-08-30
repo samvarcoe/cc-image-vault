@@ -14,9 +14,8 @@ export default class CollectionPageView extends View<CollectionPageModel> {
   }
 
   renderContent(): string {
-    const model = this.model;
 
-    if (model.isNotFoundError()) {
+    if (!this.model.getCollectionId()) {
       return this.renderNotFoundPage();
     }
 
@@ -36,24 +35,23 @@ export default class CollectionPageView extends View<CollectionPageModel> {
 
   private renderCollectionPage(): string {
     return /*html*/`
-      <div data-testid="main-content">
+      <div data-testid="main-content" ${this.model.isPopoverOpen() ? 'class="popover-blur"' : ''}>
         <main class="collection-content">
           ${this.renderImageGrid()}
         </main>
       </div>
+      ${this.model.isPopoverOpen() ? this.renderPopover() : ''}
     `;
   }
 
 
   private renderImageGrid(): string {
-    const model = this.model as CollectionPageModel;
-    const collectionId = model.getCollectionId();
+    const collectionId = this.model.getCollectionId();
+    const images = this.model.getImages();
 
-    if (!model.hasImages()) {
+    if (images.length === 0) {
       return this.renderEmptyState();
     }
-
-    const images = model.getImages();
     
     // Distribute images across 3 columns
     const columns: ImageMetadata[][] = [[], [], []];
@@ -65,7 +63,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
       <div data-testid="image-grid" class="image-grid">
         ${columns.map((columnImages) => /*html*/`
           <div class="image-column">
-            ${columnImages.map(image => this.renderImageItem(collectionId, image)).join('')}
+            ${columnImages.map(image => this.renderImageItem(collectionId!, image)).join('')}
           </div>
         `).join('')}
       </div>
@@ -73,16 +71,17 @@ export default class CollectionPageView extends View<CollectionPageModel> {
   }
 
   private renderEmptyState(): string {
-    const model = this.model as CollectionPageModel;
+    // const model = this.model as CollectionPageModel;
     
     return /*html*/`
       <div class="empty-state">
-        <div data-testid="empty-state-message">${model.getEmptyStateMessage()}</div>
+        <div data-testid="empty-state-message">This collection has no images with status: "${this.model.getStatusFilter()}"</div>
       </div>
     `;
   }
 
   private renderImageItem(collectionId: string, image: ImageMetadata): string {
+    const isPopoverOpen = this.model.isPopoverOpen();
     return /*html*/`
       <div
         data-testid="image-item-${image.id}"
@@ -98,8 +97,50 @@ export default class CollectionPageView extends View<CollectionPageModel> {
           class="image-thumbnail"
           width="480"
           height="${Math.round(480 / image.aspectRatio)}"
+          style="${isPopoverOpen ? 'pointer-events: none;' : ''}"
+          data-image-id="${image.id}"
+          data-collection-id="${collectionId}"
+          data-action="open-popover"
         />
       </div>
+    `;
+  }
+
+  private renderPopover(): string {
+    const popoverImageId = this.model.getPopoverImageId();
+    const collectionId = this.model.getCollectionId();
+    
+    if (!popoverImageId) {
+      return '';
+    }
+
+    // Find the image metadata for the popover image
+    const image = this.model.getImages().find(img => img.id === popoverImageId);
+    if (!image) {
+      return '';
+    }
+
+    return /*html*/`
+      ${this.renderPopoverBackdrop()}
+      <div data-testid="image-popover" class="image-popover">
+        <img 
+          src="/api/images/${collectionId}/${popoverImageId}"
+          alt="${image.originalName}"
+          class="popover-image"
+          data-natural-width="${image.dimensions.width}"
+          data-natural-height="${image.dimensions.height}"
+        />
+      </div>
+    `;
+  }
+
+  private renderPopoverBackdrop(): string {
+    return /*html*/`
+      <div 
+        data-testid="popover-backdrop" 
+        class="popover-backdrop"
+        data-action="close-popover"
+      ></div>
     `;
   }
 }

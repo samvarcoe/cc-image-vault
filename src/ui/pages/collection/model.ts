@@ -3,66 +3,49 @@ import { Model } from '../../mvc.js';
 export type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE';
 
 export interface CollectionPageData {
-  collectionId: string;
+  collectionId: string | undefined;
   statusFilter: ImageStatus;
   images: ImageMetadata[];
-  loading: boolean;
-  error?: string;
+  popoverImageId?: string | null;
 }
 
 export default class CollectionPageModel extends Model<CollectionPageData> {
 
   constructor(data: Partial<CollectionPageData> = {}) {
-    const {
-      collectionId = '',
-      statusFilter = 'COLLECTION',
-      images= [],
-      loading = false,
-      error = undefined,
-    } = data
-
     super({
-      collectionId,
-      statusFilter,
-      images,
-      loading,
-      error,
+      collectionId: undefined,
+      statusFilter: 'COLLECTION',
+      images: [],
+      popoverImageId: null,
+      ...data,
     });
   }
 
-  getCollectionId(): string {
+  getCollectionId(): string | undefined {
     return this.data.collectionId;
-  }
-
-  getStatusFilter(): ImageStatus {
-    return this.data.statusFilter;
   }
 
   getImages(): ImageMetadata[] {
     return this.data.images || [];
   }
 
-  hasImages(): boolean {
-    return this.getImages().length > 0;
+  getStatusFilter(): ImageStatus {
+    return this.data.statusFilter;
   }
 
-  isLoading(): boolean {
-    return this.data.loading;
+  isPopoverOpen(): boolean {
+    return this.data.popoverImageId !== null && this.data.popoverImageId !== undefined;
   }
 
-  getError(): string | undefined {
-    return this.data.error;
+  getPopoverImageId(): string | null {
+    return this.data.popoverImageId || null;
   }
 
-  hasError(): boolean {
-    return !!this.data.error;
+  openPopover(imageId: string): void {
+    this.data.popoverImageId = imageId;
   }
 
-  isNotFoundError(): boolean {
-    return this.data.error === 'Collection not found';
-  }
-
-  getEmptyStateMessage(): string {
-    return `This collection has no images with status: "${this.data.statusFilter}"`;
+  closePopover(): void {
+    this.data.popoverImageId = null;
   }
 }

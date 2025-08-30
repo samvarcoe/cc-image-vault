@@ -7,7 +7,7 @@ export class ImagePopoverComponent extends Element {
   }
 
   get backdrop(): Element {
-    return this.child(Element, 'Popover Backdrop', '[data-testid="popover-backdrop"]');
+    return new Element('Popover Backdrop', '[data-testid="popover-backdrop"]', this.page);
   }
 
   async shouldDisplayFullSizeImage(imageId: string): Promise<void> {
@@ -210,7 +210,7 @@ export class ImagePopoverComponent extends Element {
   async closeByClickingOutside(): Promise<void> {
     await this.shouldBeDisplayed();
     
-    // Click on the backdrop area (outside the image)
+    // Click on the backdrop area (outside the image)  
     await this.backdrop.click();
     
     console.log('✓ Clicked outside popover image to close');

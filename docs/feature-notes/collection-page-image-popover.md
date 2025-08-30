@@ -75,6 +75,51 @@ interface CollectionPageController {
   handleThumbnailClick(imageId: string): void;
   handlePopoverClose(): void;
   handleEscKeyPress(event: KeyboardEvent): void;
-  handleBackdropClick(event: MouseEvent): void;
+  handleBackdropClick(): void;
 }
 ```
+
+## Implementation Summary
+
+Collection page image popover feature successfully implemented enabling users to click thumbnails to view full-size images in centered popovers with proper scaling, blur effects, and keyboard/click interactions for closing.
+
+## Technical Notes
+
+### Architecture
+- **MVC Pattern**: Clean separation with model state management, view rendering, and controller event handling
+- **Event Delegation**: Uses data-action attributes for clean event handling without direct DOM manipulation
+- **CSS-First Approach**: Leverages CSS transforms, flexbox, and viewport units for proper centering and scaling
+- **Test Integration**: Updated test structure to support backdrop as sibling element for better positioning control
+
+### Key Implementation Details
+- **Viewport Scaling**: Images scale within 90vw/90vh (5% margin) while preserving aspect ratio
+- **Z-Index Layering**: Backdrop (999) → Popover (1000) for proper click handling
+- **Pointer Events**: Strategic use of `pointer-events: none` on both popover container and image to allow backdrop clicks through
+- **Click-Through Architecture**: Popover container allows events to pass through while maintaining visual layering
+- **State Synchronization**: View re-renders triggered by controller actions for consistent UI state
+- **Keyboard Accessibility**: ESC key handler with proper event prevention
+
+### Performance Considerations
+- **Lazy Loading**: Thumbnails use native lazy loading for optimal performance
+- **Event Efficiency**: Single document-level event listeners with delegation vs multiple per-thumbnail handlers
+- **CSS Animations**: Hardware-accelerated transforms for smooth popover transitions
+- **No Memory Leaks**: Clean event listener management and proper cleanup on model state changes
+
+### Browser Compatibility
+- Uses modern CSS (flexbox, viewport units, transforms) supported in all target browsers
+- Leverages native lazy loading with progressive enhancement
+- Proper fallback handling for keyboard events across browsers
+
+## Issue Resolution
+
+### Backdrop Click Issue (Fixed)
+**Problem**: Tests were hanging when attempting to close popover by clicking outside the image. The popover container was intercepting click events before they could reach the backdrop element.
+
+**Root Cause**: The `.image-popover` container had a higher z-index (1000) than the backdrop (999) and was positioned over it, blocking click events from reaching the backdrop that had the `data-action="close-popover"` attribute.
+
+**Solution**: Added `pointer-events: none` to the `.image-popover` container CSS rule. This allows click events to pass through the popover container to the backdrop underneath while maintaining proper visual layering.
+
+**Files Changed**: 
+- `public/css/collection.css` - Added `pointer-events: none` to `.image-popover` selector
+
+**Test Results**: All 5 popover scenarios now pass, including both click-outside and ESC key closing functionality.
