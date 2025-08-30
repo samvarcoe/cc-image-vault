@@ -171,4 +171,14 @@ export abstract class App {
         
         console.log('✓ No unexpected console errors');
     }
+
+    async shouldHaveNoFailedRequests(): Promise<void> {
+        const failedRequests = await this.getFailedRequests();
+
+        expect(failedRequests.length, { 
+        message: `Found ${failedRequests.length} failed network requests instead of 0` 
+        }).toBe(0);
+        
+        console.log('✓ No failed network requests');
+    }
 }

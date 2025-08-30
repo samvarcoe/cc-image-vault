@@ -20,7 +20,7 @@
   },
   "include": [
     "src/ui/**/*",
-    "./**/*.d.ts"
+    "./**/*.d.ts" 
   ],
   "exclude": [
     "node_modules",

@@ -1,6 +1,7 @@
 import { expect } from 'playwright/test';
 import { PageObject } from '../page';
 import { Element } from '../element';
+import { ImagePopoverComponent } from '../components/image-popover-component';
 
 interface LayoutShift extends PerformanceEntry {
   value: number;
@@ -27,6 +28,10 @@ export class CollectionPage extends PageObject {
 
   get notFoundMessage(): Element {
     return this.element('Not Found Message', '[data-testid="not-found-message"]');
+  }
+
+  get imagePopover(): ImagePopoverComponent {
+    return this.component(ImagePopoverComponent, 'Image Popover', '[data-testid="image-popover"]');
   }
 
   // Dynamic elements for images
@@ -291,5 +296,23 @@ export class CollectionPage extends PageObject {
     }).toBe(true);
     
     console.log('✓ Invalid status parameter handled by defaulting to "COLLECTION" status filter');
+  }
+
+  // Popover interaction methods
+  async clickImageThumbnail(imageId: string): Promise<void> {
+    const thumbnail = this.imageThumbnail(imageId);
+    await thumbnail.shouldBeDisplayed();
+    await thumbnail.click();
+    console.log(`✓ Clicked thumbnail for image ${imageId}`);
+  }
+
+  async shouldHavePopoverOpen(): Promise<void> {
+    await this.imagePopover.shouldBeDisplayed();
+    console.log('✓ Image popover is open');
+  }
+
+  async shouldHavePopoverClosed(): Promise<void> {
+    await this.imagePopover.shouldBeClosed();
+    console.log('✓ Image popover is closed');
   }
 }

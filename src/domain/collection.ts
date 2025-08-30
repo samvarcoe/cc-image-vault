@@ -60,7 +60,7 @@ export class Collection {
       // Clean up any created directories on failure
       try {
         // Remove the entire collection directory if it was created
-        const collectionExists = await Collection.directoryExists(collectionPath);
+        const collectionExists = await Collection.exists(collectionPath);
         if (collectionExists) {
           await fs.rm(collectionPath, { recursive: true, force: true });
         }
@@ -172,7 +172,7 @@ export class Collection {
     });
   }
 
-  private static async directoryExists(dirPath: string): Promise<boolean> {
+  static async exists(dirPath: string): Promise<boolean> {
     try {
       const stat = await fs.stat(dirPath);
       return stat.isDirectory();
@@ -411,16 +411,27 @@ export class Collection {
     try {
       let sql = 'SELECT * FROM images';
       const params: (string | number)[] = [];
+      const orderBy = options?.orderBy || 'updated_at';
+      const orderDirection = options?.orderDirection || 'DESC';
 
       if (options?.status) {
         sql += ' WHERE status = ?';
         params.push(options.status);
       }
 
-      const orderBy = options?.orderBy || 'updated_at';
-      const orderDirection = options?.orderDirection || 'DESC';
       sql += ` ORDER BY ${orderBy} ${orderDirection}`;
 
+      if (options?.limit) {
+        sql += ' LIMIT ?';
+        params.push(options.limit);
+      }
+
+      if (options?.offset && options.offset > 0) {
+        sql += ' OFFSET ?';
+        params.push(options.offset);
+      }
+
+      console.log('Executing SQL:', sql, 'with params:', params);
       return new Promise((resolve, reject) => {
         // Check if database connection is still valid
         if (!this.db || this.db === null) {

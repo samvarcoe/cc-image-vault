@@ -97,37 +97,6 @@ export async function listCollectionDirectories(basePath: string): Promise<Colle
 }
 
 /**
- * Checks if a collection exists (directory + accessible database)
- */
-export async function collectionExists(basePath: string, id: string): Promise<boolean> {
-  try {
-    const collectionPath = path.join(basePath, id);
-    const dbPath = path.join(collectionPath, 'collection.db');
-    
-    const [stat] = await Promise.all([
-      fs.stat(collectionPath),
-      fs.access(dbPath)
-    ]);
-    
-    return stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Checks if a collection directory exists
- */
-export async function collectionDirectoryExists(collectionPath: string): Promise<boolean> {
-  try {
-    const stat = await fs.stat(collectionPath);
-    return stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-/**
  * Parses and validates query parameters for image listing
  */
 export function parseImageQueryParams(queryParams: ImageQueryParams): QueryOptions & { limit?: number; offset?: number } {
@@ -179,41 +148,4 @@ export function parseImageQueryParams(queryParams: ImageQueryParams): QueryOptio
   }
 
   return options;
-}
-
-/**
- * Converts ImageMetadata to API response format with pagination
- */
-export function convertToApiResponse(
-  images: ImageMetadata[], 
-  options: { limit?: number; offset?: number }
-): ImageMetadataResponse[] {
-  // Apply pagination if specified
-  let result = images;
-  
-  if (options.offset !== undefined) {
-    result = result.slice(options.offset);
-  }
-  
-  if (options.limit !== undefined) {
-    result = result.slice(0, options.limit);
-  }
-
-  // Convert Date objects to ISO strings
-  return result.map(image => ({
-    id: image.id,
-    originalName: image.originalName,
-    fileHash: image.fileHash,
-    status: image.status,
-    size: image.size,
-    dimensions: {
-      width: image.dimensions.width,
-      height: image.dimensions.height
-    },
-    aspectRatio: image.aspectRatio,
-    extension: image.extension,
-    mimeType: image.mimeType,
-    createdAt: image.createdAt.toISOString(),
-    updatedAt: image.updatedAt.toISOString()
-  }));
 }
