@@ -21,30 +21,18 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
   });
 
   test('Collection listing with existing collections', async () => {
-    // Given multiple collections exist in the private directory
-    await CollectionsDirectoryFixtures.createWithExistingCollections({
-      collectionIds: ['collection-1', 'collection-2', 'collection-3']
-    });
+    const collectionIds = ['collection-1', 'collection-2', 'collection-3'];
 
-    // When the client requests GET /api/collections
+    for (const id of collectionIds) {
+      await CollectionFixtures.create({ collectionId: id });
+    }
+
     const response = await api['/api/collections'].get({});
 
     // Then the API returns 200 status code
-    response.shouldHaveStatus(200);
-
-    // And the API returns array of collection objects with id property
-    expect(response.body).toBeDefined();
-    expect(Array.isArray(response.body)).toBe(true);
-    expect(response.body).toHaveLength(3);
-    
-    const collectionIds = response.body!.map(collection => collection.id).sort();
-    expect(collectionIds).toEqual(['collection-1', 'collection-2', 'collection-3']);
-    
-    // Verify each collection has required id property
-    response.body!.forEach(collection => {
-      expect(collection).toHaveProperty('id');
-      expect(typeof collection.id).toBe('string');
-    });
+    response
+      .shouldHaveStatus(200)
+      .shouldHaveBody(collectionIds.map(id => ({ id })));
   });
 
   test('Collection listing with no collections', async () => {

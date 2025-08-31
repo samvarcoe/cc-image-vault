@@ -1,10 +1,4 @@
-import { promises as fs } from 'fs';
-import path from 'path';
 import { ImageStatus, QueryOptions } from '../domain/types';
-
-export interface CollectionInfo {
-  id: string;
-}
 
 export interface ImageQueryParams {
   status?: string;
@@ -61,40 +55,6 @@ export function validateCollectionId(id: string): void {
   }
 }
 
-/**
- * Lists all collections by scanning the base directory
- */
-export async function listCollectionDirectories(basePath: string): Promise<CollectionInfo[]> {
-  try {
-    // Ensure base path exists
-    await fs.mkdir(basePath, { recursive: true });
-    
-    // Read directory contents
-    const entries = await fs.readdir(basePath, { withFileTypes: true });
-    
-    // Filter for directories and return collection info
-    const collections: CollectionInfo[] = [];
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        // Verify it's a valid collection by checking for collection.db
-        const dbPath = path.join(basePath, entry.name, 'collection.db');
-        try {
-          await fs.access(dbPath);
-          collections.push({ id: entry.name });
-        } catch {
-          // Skip directories without collection.db
-        }
-      }
-    }
-    
-    return collections.sort((a, b) => a.id.localeCompare(b.id));
-  } catch (error: unknown) {
-    if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM') {
-      throw new Error('Server error: insufficient permissions to access collections directory');
-    }
-    throw new Error('Server error: failed to list collections');
-  }
-}
 
 /**
  * Parses and validates query parameters for image listing

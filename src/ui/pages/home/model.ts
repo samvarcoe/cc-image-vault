@@ -1,9 +1,5 @@
 import { Model } from '../../mvc.js';
 
-export interface CollectionListItem {
-  id: string;
-}
-
 export interface FormState {
   collectionId: string;
   isValid: boolean;
@@ -22,7 +18,7 @@ export interface LoadingState {
 }
 
 export interface HomePageData {
-  collections: CollectionListItem[];
+  collections: string[];
   formState: FormState;
   errorState: ErrorState;
   loadingState: LoadingState;
@@ -40,12 +36,12 @@ export default class HomePageModel extends Model<HomePageData> {
     });
   }
 
-  getCollections(): CollectionListItem[] {
+  getCollections(): string[] {
     return this.data.collections || [];
   }
 
-  getSortedCollections(): CollectionListItem[] {
-    return [...this.getCollections()].sort((a, b) => a.id.localeCompare(b.id));
+  getSortedCollections(): string[] {
+    return [...this.getCollections()].sort();
   }
 
   hasCollections(): boolean {
@@ -106,11 +102,11 @@ export default class HomePageModel extends Model<HomePageData> {
   }
 
   addCollectionOptimistically(collectionId: string): void {
-    this.data.collections = [...this.data.collections, { id: collectionId }];
+    this.data.collections = [...this.data.collections, collectionId];
   }
 
   removeCollectionOptimistically(collectionId: string): void {
-    this.data.collections = this.data.collections.filter(c => c.id !== collectionId);
+    this.data.collections = this.data.collections.filter(id => id !== collectionId);
   }
 
   resetForm(): void {

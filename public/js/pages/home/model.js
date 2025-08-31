@@ -7,7 +7,7 @@ export default class HomePageModel extends Model {
         return this.data.collections || [];
     }
     getSortedCollections() {
-        return [...this.getCollections()].sort((a, b) => a.id.localeCompare(b.id));
+        return [...this.getCollections()].sort();
     }
     hasCollections() {
         return this.getCollections().length > 0;
@@ -52,10 +52,10 @@ export default class HomePageModel extends Model {
         this.data.loadingState.deletingCollection = collectionId;
     }
     addCollectionOptimistically(collectionId) {
-        this.data.collections = [...this.data.collections, { id: collectionId }];
+        this.data.collections = [...this.data.collections, collectionId];
     }
     removeCollectionOptimistically(collectionId) {
-        this.data.collections = this.data.collections.filter(c => c.id !== collectionId);
+        this.data.collections = this.data.collections.filter(id => id !== collectionId);
     }
     resetForm() {
         this.data.formState = {

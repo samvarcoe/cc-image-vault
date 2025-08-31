@@ -5,19 +5,18 @@ import { Collection } from '../../../src/domain/collection';
 import { ImageStatus } from '../../../src/domain/types';
 import { Fixtures } from './base-fixtures';
 import { ImageFixtures } from './image-fixtures';
+import { CONFIG } from '../../../config';
 import FakeTimers from '@sinonjs/fake-timers';
-
-const COLLECTIONS_DIRECTORY = '/workspace/projects/image-vault/private';
 
 /**
  * Collection fixtures for creating collections with pre-populated images
  */
 export class CollectionFixtures extends Fixtures<Collection> {
   static async clearDirectory(): Promise<void> {
-    const contents = await fs.readdir(COLLECTIONS_DIRECTORY).catch(() => []);
+    const contents = await fs.readdir(CONFIG.COLLECTIONS_DIRECTORY).catch(() => []);
 
     for (const item of contents) {
-      const itemPath = path.join(COLLECTIONS_DIRECTORY, item);
+      const itemPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, item);
       await fs.rm(itemPath, { recursive: true, force: true }).catch(() => {});
     }
   };
@@ -40,13 +39,13 @@ export class CollectionFixtures extends Fixtures<Collection> {
       imageFormats = ['jpeg', 'png', 'webp']
     } = options;
 
-    const basePath = useTmpDir ? await fs.mkdtemp(path.join(tmpdir(), 'collection-fixture-')) : COLLECTIONS_DIRECTORY;
+    const basePath = useTmpDir ? await fs.mkdtemp(path.join(tmpdir(), 'collection-fixture-')) : CONFIG.COLLECTIONS_DIRECTORY;
     
     const collectionPath = path.join(basePath, collectionId);
 
     console.log(`Creating collection fixture: ${collectionId} at ${collectionPath}`);
 
-    const collection = await Collection.create(collectionId, basePath);
+    const collection = useTmpDir ? await Collection.create(collectionId, basePath) : await Collection.create(collectionId);
 
     // sizes and aspect ratios should vary for testing
     // vary between a max amd min width/height transitioning from landscape to portrait
@@ -140,7 +139,7 @@ export class CollectionFixtures extends Fixtures<Collection> {
     let collection: Collection;
 
     try {
-      collection = await Collection.create(collectionId, basePath);
+      collection = customBasePath ? await Collection.create(collectionId, basePath) : await Collection.create(collectionId);
 
       // Calculate time increment for even distribution
       const timeIncrement = (timeSpreadMinutes * 60 * 1000) / imageCount;

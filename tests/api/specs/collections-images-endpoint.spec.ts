@@ -141,7 +141,7 @@ test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
     }
   });
 
-  test.only('Image listing with pagination', async () => {
+  test('Image listing with pagination', async () => {
     // Given a collection exists with multiple images
     const collection = await CollectionFixtures.create({
       collectionId: 'pagination-test-collection',
@@ -189,7 +189,6 @@ test.describe('Collections Images API Endpoint', { tag: '@sequential' }, () => {
     // Given a collection exists with images created at different times using fake timers
     const collection = await CollectionFixtures.createWithVariedImageCreationTimes({
       collectionId: 'ordering-test-collection',
-      basePath: CONFIG.COLLECTIONS_DIRECTORY,
       imageCount: 8,
       statusDistribution: [
         { status: 'INBOX', count: 3 },

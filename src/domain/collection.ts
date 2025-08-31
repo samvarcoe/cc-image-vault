@@ -5,6 +5,7 @@ import sqlite3 from 'sqlite3';
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
 import { ImageStatus, QueryOptions } from './types';
+import { CONFIG } from '../../config';
 
 export class Collection {
   public readonly id: string;
@@ -17,7 +18,7 @@ export class Collection {
     this.db = db;
   }
 
-  static async create(id: string, basePath: string): Promise<Collection> {
+  static async create(id: string, basePath: string = CONFIG.COLLECTIONS_DIRECTORY): Promise<Collection> {
     // Validate input parameters
     if (!id || !basePath) {
       throw new Error('Collection ID and base path are required');
@@ -172,12 +173,56 @@ export class Collection {
     });
   }
 
-  static async exists(dirPath: string): Promise<boolean> {
+  static async exists(idOrPath: string, basedir?: string): Promise<boolean> {
     try {
+      let dirPath: string;
+      if (basedir !== undefined) {
+        // Called with collection ID and basedir
+        dirPath = path.join(basedir, idOrPath);
+      } else if (path.isAbsolute(idOrPath)) {
+        // Called with full path (legacy support)
+        dirPath = idOrPath;
+      } else {
+        // Called with collection ID, use default basedir
+        dirPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, idOrPath);
+      }
+      
       const stat = await fs.stat(dirPath);
       return stat.isDirectory();
     } catch {
       return false;
+    }
+  }
+
+  static async list(basePath: string = CONFIG.COLLECTIONS_DIRECTORY): Promise<string[]> {
+    try {
+      // Ensure base path exists
+      await fs.mkdir(basePath, { recursive: true });
+      
+      // Read directory contents
+      const entries = await fs.readdir(basePath, { withFileTypes: true });
+      
+      // Filter for directories and return collection IDs
+      const collectionIds: string[] = [];
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          // Verify it's a valid collection by checking for collection.db
+          const dbPath = path.join(basePath, entry.name, 'collection.db');
+          try {
+            await fs.access(dbPath);
+            collectionIds.push(entry.name);
+          } catch {
+            // Skip directories without collection.db
+          }
+        }
+      }
+      
+      return collectionIds.sort();
+    } catch (error: unknown) {
+      if ((error as NodeJS.ErrnoException).code === 'EACCES' || (error as NodeJS.ErrnoException).code === 'EPERM') {
+        throw new Error('Server error: insufficient permissions to access collections directory');
+      }
+      throw new Error('Server error: failed to list collections');
     }
   }
 
@@ -431,7 +476,6 @@ export class Collection {
         params.push(options.offset);
       }
 
-      console.log('Executing SQL:', sql, 'with params:', params);
       return new Promise((resolve, reject) => {
         // Check if database connection is still valid
         if (!this.db || this.db === null) {

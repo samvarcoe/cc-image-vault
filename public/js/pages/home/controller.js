@@ -58,7 +58,7 @@ export default class HomePageController extends Controller {
             return;
         }
         this.model.setCreatingCollection(true);
-        const existingCollection = this.model.getCollections().find(c => c.id === formState.collectionId);
+        const existingCollection = this.model.getCollections().find(id => id === formState.collectionId);
         if (!existingCollection) {
             this.model.addCollectionOptimistically(formState.collectionId);
         }

@@ -79,7 +79,7 @@ export default class HomePageController extends Controller<HomePageModel, HomePa
     // Set loading state and update view optimistically
     this.model.setCreatingCollection(true);
     // Only add optimistically if collection doesn't already exist
-    const existingCollection = this.model.getCollections().find(c => c.id === formState.collectionId);
+    const existingCollection = this.model.getCollections().find(id => id === formState.collectionId);
     if (!existingCollection) {
       this.model.addCollectionOptimistically(formState.collectionId);
     }

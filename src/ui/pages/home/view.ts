@@ -1,5 +1,5 @@
 import { View } from '../../mvc.js';
-import HomePageModel, { CollectionListItem, ErrorState } from './model.js';
+import HomePageModel, { ErrorState } from './model.js';
 
 export default class HomePageView extends View<HomePageModel> {
   constructor(protected model: HomePageModel) {
@@ -31,30 +31,30 @@ export default class HomePageView extends View<HomePageModel> {
     `;
   }
 
-  private renderCollectionsList(collections: CollectionListItem[]): string {
+  private renderCollectionsList(collections: string[]): string {
     return /*html*/`
       <section class="collections-section">
         <h2>Your Collections</h2>
         <div data-testid="collections-list" class="collections-list">
-          ${collections.map(collection => this.renderCollectionItem(collection)).join('')}
+          ${collections.map(collectionId => this.renderCollectionItem(collectionId)).join('')}
         </div>
       </section>
     `;
   }
 
-  private renderCollectionItem(collection: CollectionListItem): string {
+  private renderCollectionItem(collectionId: string): string {
     const loadingState = this.model.getLoadingState();
-    const isDeleting = loadingState.deletingCollection === collection.id;
+    const isDeleting = loadingState.deletingCollection === collectionId;
     
     return /*html*/`
-      <div data-testid="collection-item-${collection.id}" class="collection-item">
-        <a data-testid="collection-link-${collection.id}" href="/collection/${collection.id}" class="collection-link">
-          <h3>${collection.id}</h3>
+      <div data-testid="collection-item-${collectionId}" class="collection-item">
+        <a data-testid="collection-link-${collectionId}" href="/collection/${collectionId}" class="collection-link">
+          <h3>${collectionId}</h3>
         </a>
         <button 
-          data-testid="delete-button-${collection.id}" 
+          data-testid="delete-button-${collectionId}" 
           data-id="delete-collection" 
-          data-collection-id="${collection.id}"
+          data-collection-id="${collectionId}"
           class="delete-button ${isDeleting ? 'loading' : ''}"
           ${isDeleting ? 'disabled' : ''}
         >
