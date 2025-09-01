@@ -3,6 +3,7 @@ import { tmpdir } from 'os';
 import path from 'path';
 import crypto from 'crypto';
 import { ImageStatus } from '../types';
+import { DirectoryFixtures } from '@/utils';
 
 /**
  * Test utilities for domain layer tests
@@ -12,10 +13,8 @@ export class TestUtils {
    * Creates a directory with read-only permissions to simulate access issues
    */
   static async createReadOnlyDirectory(basePath: string): Promise<string> {
-    const readOnlyDir = path.join(basePath, 'readonly');
-    await fs.mkdir(readOnlyDir, { recursive: true });
-    await fs.chmod(readOnlyDir, 0o444); // Read-only permissions
-    return readOnlyDir;
+    const state = await DirectoryFixtures.createReadOnly({ basePath, dirName: 'readonly' });
+    return state.path;
   }
 
   /**
@@ -31,9 +30,12 @@ export class TestUtils {
   static async createNoWritePermissionPath(): Promise<string> {
     // Create a path that points to a file instead of a directory
     // This will cause fs.access to succeed but mkdir to fail
-    const tempFile = await fs.mkdtemp(path.join(tmpdir(), 'no-write-'));
-    const filePath = path.join(tempFile, 'not-a-directory');
-    await fs.writeFile(filePath, 'blocking file');
+    const tempDir = await DirectoryFixtures.createTemporary({ prefix: 'no-write-' });
+    const filePath = path.join(tempDir.path, 'not-a-directory');
+    await DirectoryFixtures.createBlockingFile({ 
+      targetPath: filePath, 
+      blockingContent: 'blocking file' 
+    });
     return filePath;
   }
 
@@ -49,12 +51,7 @@ export class TestUtils {
    * Checks if a directory exists
    */
   static async directoryExists(dirPath: string): Promise<boolean> {
-    try {
-      const stat = await fs.stat(dirPath);
-      return stat.isDirectory();
-    } catch {
-      return false;
-    }
+    return await DirectoryFixtures.exists(dirPath);
   }
 
   /**
@@ -73,24 +70,7 @@ export class TestUtils {
    * Recursively lists all files and directories in a path
    */
   static async listContents(dirPath: string): Promise<string[]> {
-    try {
-      const items: string[] = [];
-      const entries = await fs.readdir(dirPath, { withFileTypes: true });
-      
-      for (const entry of entries) {
-        const fullPath = path.join(dirPath, entry.name);
-        items.push(fullPath);
-        
-        if (entry.isDirectory()) {
-          const subItems = await this.listContents(fullPath);
-          items.push(...subItems);
-        }
-      }
-      
-      return items;
-    } catch {
-      return [];
-    }
+    return await DirectoryFixtures.listContentsRecursive(dirPath);
   }
 
   /**
@@ -266,7 +246,7 @@ export class TestUtils {
    * Verifies that filesystem state remains unchanged after failed operations
    */
   static async captureFilesystemState(dirPath: string): Promise<string[]> {
-    return this.listContents(dirPath);
+    return await DirectoryFixtures.captureState(dirPath);
   }
 
   /**
@@ -509,14 +489,7 @@ export class TestUtils {
    * Compares filesystem states to determine if they are identical
    */
   static compareFilesystemStates(stateBefore: string[], stateAfter: string[]): boolean {
-    if (stateBefore.length !== stateAfter.length) {
-      return false;
-    }
-
-    const sortedBefore = [...stateBefore].sort();
-    const sortedAfter = [...stateAfter].sort();
-
-    return sortedBefore.every((path, index) => path === sortedAfter[index]);
+    return DirectoryFixtures.compareStates(stateBefore, stateAfter);
   }
 
   /**

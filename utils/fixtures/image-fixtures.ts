@@ -3,6 +3,7 @@ import { tmpdir } from 'os';
 import path from 'path';
 import sharp from 'sharp';
 import { Fixtures } from './base-fixtures';
+import { DirectoryFixtures } from './directory-fixtures';
 
 export interface ImageFile {
   filePath: string;
@@ -12,6 +13,20 @@ export interface ImageFile {
   mimeType: string;
   extension: string;
 }
+
+export interface ImageFixture {
+  filePath: string;
+  name: string;
+  size: number;
+  width: number; 
+  height: number;
+  mimeType: string;
+  extension: string;
+}
+
+// const createImage = (options: ImageFile): Buffer => {
+  
+// }
 
 /**
  * Image fixtures for creating realistic test images with actual visual content
@@ -28,8 +43,8 @@ export class ImageFixtures extends Fixtures<ImageFile> {
   } = {}): Promise<ImageFile> {
 
     const {
-      width = 200,
-      height = 600,
+      width = 600,
+      height = 800,
       quality = 80,
       originalName = `test-photo-${Date.now()}`,
       extension = 'jpeg',
@@ -40,7 +55,8 @@ export class ImageFixtures extends Fixtures<ImageFile> {
     // Temporarily suppress unused variable warning for future implementation
     void includeVisualContent;
 
-    const tempDir = await fs.mkdtemp(path.join(tmpdir(), 'image-fixture-'));
+    const tempDirState = await DirectoryFixtures.createTemporary({ prefix: 'image-fixture-' });
+    const tempDir = tempDirState.path;
     const filePath = path.join(tempDir, `${originalName}.${extension}`);
 
     let imageBuffer: Buffer;
@@ -73,11 +89,7 @@ export class ImageFixtures extends Fixtures<ImageFile> {
       extension
     };
 
-    const cleanup = async () => {
-      await fs.rm(tempDir, { recursive: true, force: true });
-    };
-
-    this.addCleanup(cleanup);
+    // Note: cleanup is handled by DirectoryFixtures.createTemporary()
 
     return imageFile;
   }
@@ -157,8 +169,8 @@ export class ImageFixtures extends Fixtures<ImageFile> {
         : originalImage.originalName;
 
       // Copy the original file to create exact duplicate
-      const tempDir = await fs.mkdtemp(path.join(tmpdir(), 'duplicate-fixture-'));
-      const duplicatePath = path.join(tempDir, duplicateName);
+      const tempDirState = await DirectoryFixtures.createTemporary({ prefix: 'duplicate-fixture-' });
+      const duplicatePath = path.join(tempDirState.path, duplicateName);
       
       await fs.copyFile(originalImage.filePath, duplicatePath);
 
@@ -173,11 +185,7 @@ export class ImageFixtures extends Fixtures<ImageFile> {
         extension: originalImage.extension
       };
 
-      const cleanup = async () => {
-        await fs.rm(tempDir, { recursive: true, force: true });
-      };
-
-      this.addCleanup(cleanup);
+      // Note: cleanup is handled by DirectoryFixtures.createTemporary()
       duplicates.push(duplicate);
     }
 

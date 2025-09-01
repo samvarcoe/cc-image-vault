@@ -1,183 +1,57 @@
 import { promises as fs } from 'fs';
 import path from 'path';
-import { Fixtures } from '@/utils';
-
-export interface DirectoryState {
-  privateDir: string;
-  collectionDirs: string[];
-}
+import { Fixtures, DirectoryFixtures } from '@/utils';
+import { Collection } from '@/domain';
 
 /**
- * Fixtures for managing the ./private directory and collection state
- * Used  where we need to control filesystem state
+ * Simplified fixtures for managing collection directory state in API tests
+ * Uses domain Collection class for proper collection creation
  */
-export class CollectionsDirectoryFixtures extends Fixtures<DirectoryState> {
-  
-  static async create(options: {
-    baseDir?: string;
-    existingCollections?: string[];
-    simulatePermissionIssues?: boolean;
-  } = {}): Promise<DirectoryState> {
-
-    const {
-      baseDir = '/workspace/projects/image-vault',
-      existingCollections = [],
-      simulatePermissionIssues = false
-    } = options;
-
-    const privateDir = path.join(baseDir, 'private');
-
-    // Ensure private directory exists
-    try {
-      await fs.mkdir(privateDir, { recursive: true });
-    } catch {
-      // Directory might already exist, that's okay
-    }
-
-    // Create any requested existing collections
-    const collectionDirs: string[] = [];
-    for (const collectionId of existingCollections) {
-      const collectionPath = path.join(privateDir, collectionId);
-      await fs.mkdir(collectionPath, { recursive: true });
-      
-      // Create a minimal collection.db file to make it look like a real collection
-      const dbPath = path.join(collectionPath, 'collection.db');
-      await fs.writeFile(dbPath, ''); // Empty SQLite file
-      
-      collectionDirs.push(collectionPath);
-    }
-
-    if (simulatePermissionIssues) {
-      // Remove write permissions from the private directory
-      await fs.chmod(privateDir, 0o444);
-      
-      // Verify that permission restrictions actually work
-      try {
-        const testPath = path.join(privateDir, 'permission-test-' + Date.now());
-        await fs.mkdir(testPath);
-        // If we get here, permissions aren't being enforced
-        console.warn('Warning: Filesystem permissions not enforced in this environment, skipping permission test');
-        await fs.chmod(privateDir, 0o755); // Restore permissions
-        throw new Error('SKIP_PERMISSION_TEST: Filesystem permissions not enforced');
-      } catch (error) {
-        if ((error as Error).message.startsWith('SKIP_PERMISSION_TEST')) {
-          throw error;
-        }
-        // Permission restriction is working as expected
-      }
-    }
-
-    const cleanup = async () => {
-      try {
-        // Restore permissions if they were changed
-        if (simulatePermissionIssues) {
-          await fs.chmod(privateDir, 0o755);
-        }
-
-        // Clean up any collections that were created during testing
-        const entries = await fs.readdir(privateDir, { withFileTypes: true });
-        for (const entry of entries) {
-          if (entry.isDirectory()) {
-            await fs.rm(path.join(privateDir, entry.name), { recursive: true, force: true });
-          }
-        }
-      } catch (error) {
-        // Cleanup errors are logged but not fatal
-        console.warn(`Collections directory cleanup warning: ${error}`);
-      }
-    };
-
-    this.addCleanup(cleanup);
-
-    return {
-      privateDir,
-      collectionDirs
-    };
-  }
+export class CollectionsDirectoryFixtures extends Fixtures<Collection[]> {
 
   /**
-   * Creates state with multiple existing collections for listing tests
+   * Creates multiple collections using the Collection domain class
    */
   static async createWithExistingCollections(options: {
     collectionIds?: string[];
-    baseDir?: string;
-  } = {}): Promise<DirectoryState> {
-
+  } = {}): Promise<Collection[]> {
     const {
-      collectionIds = ['collection-1', 'collection-2', 'collection-3'],
-      baseDir
+      collectionIds = ['collection-1', 'collection-2', 'collection-3']
     } = options;
 
-    return this.create({
-      baseDir,
-      existingCollections: collectionIds
-    });
+    const collections: Collection[] = [];
+    for (const collectionId of collectionIds) {
+      const collection = await Collection.create(collectionId);
+      collections.push(collection);
+    }
+
+    return collections;
   }
 
   /**
-   * Creates empty private directory for testing empty state
+   * Ensures a clean private directory for testing empty state
    */
-  static async createEmpty(options: {
-    baseDir?: string;
-  } = {}): Promise<DirectoryState> {
-
-    return this.create({
-      baseDir: options.baseDir,
-      existingCollections: []
-    });
+  static async createEmpty(): Promise<Collection[]> {
+    const privateDir = path.join('/workspace/projects/image-vault', 'private');
+    await DirectoryFixtures.ensureExists(privateDir);
+    await DirectoryFixtures.clearContents(privateDir);
+    return [];
   }
 
+  // Utility methods for filesystem checks (these should eventually be moved to domain tests)
+  
   /**
-   * Creates state with permission issues for error testing
-   */
-  static async createWithPermissionIssues(options: {
-    baseDir?: string;
-  } = {}): Promise<DirectoryState> {
-
-    return this.create({
-      baseDir: options.baseDir,
-      existingCollections: [],
-      simulatePermissionIssues: true
-    });
-  }
-
-  /**
-   * Utility to check if a collection directory exists
+   * @deprecated Use Collection domain methods instead of direct filesystem checks
    */
   static async collectionExists(privateDir: string, collectionId: string): Promise<boolean> {
-    try {
-      const collectionPath = path.join(privateDir, collectionId);
-      const stat = await fs.stat(collectionPath);
-      return stat.isDirectory();
-    } catch {
-      return false;
-    }
+    const collectionPath = path.join(privateDir, collectionId);
+    return await DirectoryFixtures.exists(collectionPath);
   }
 
   /**
-   * Utility to count collections in the private directory
+   * @deprecated Use Collection domain methods instead of direct filesystem checks
    */
   static async countCollections(privateDir: string): Promise<number> {
-    try {
-      const entries = await fs.readdir(privateDir, { withFileTypes: true });
-      return entries.filter(entry => entry.isDirectory()).length;
-    } catch {
-      return 0;
-    }
-  }
-
-  /**
-   * Utility to list all collection IDs in the private directory
-   */
-  static async listCollectionIds(privateDir: string): Promise<string[]> {
-    try {
-      const entries = await fs.readdir(privateDir, { withFileTypes: true });
-      return entries
-        .filter(entry => entry.isDirectory())
-        .map(entry => entry.name)
-        .sort();
-    } catch {
-      return [];
-    }
+    return await DirectoryFixtures.countDirectories(privateDir);
   }
 }

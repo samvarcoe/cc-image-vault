@@ -1,7 +1,6 @@
 import { test } from '@playwright/test';
 import { ImageVaultApp } from '../../ui-model/image-vault-app';
-import { PopoverFixtures } from '../../utils/popover-fixtures';
-import { Fixtures } from '@/utils';
+import { Fixtures, CollectionFixtures, ImageFixtures } from '@/utils';
 
 test.describe('Collection Page - Full Size Image Popover', () => {
   test.afterEach(async () => {
@@ -10,7 +9,11 @@ test.describe('Collection Page - Full Size Image Popover', () => {
 
   test('User opens popover by clicking thumbnail', async ({ page }) => {
     // Given a collection page displays images in the grid
-    const { collection, imageId } = await PopoverFixtures.createCollectionWithSingleImage();
+    const collection = await CollectionFixtures.create({
+      imageCounts: { inbox: 0, collection: 1, archive: 0 }
+    });
+    const images = await collection.getImages();
+    const imageId = images[0]!.id;
     const app = new ImageVaultApp(page);
     const collectionPage = app.collectionPage;
     
@@ -37,15 +40,20 @@ test.describe('Collection Page - Full Size Image Popover', () => {
   });
 
   test('Popover displays full-size image when it fits viewport', async ({ page }) => {
-    // Given a collection contains an image smaller than viewport with 5% margin
-    const { collection, imageIds } = await PopoverFixtures.createCollectionWithVariedImageSizes();
+    // Given a collection contains images of various sizes
+    const collection = await CollectionFixtures.create({
+      imageCounts: { inbox: 0, collection: 4, archive: 0 },
+      imageFormats: ['jpeg', 'png', 'webp', 'jpeg']
+    });
+    const images = await collection.getImages();
+    const smallImageId = images[0]!.id; // First image will be smallest due to CollectionFixtures size variation
     const app = new ImageVaultApp(page);
     const collectionPage = app.collectionPage;
     
     await collectionPage.visitCollection(collection.id);
 
     // When the user clicks on the image thumbnail
-    await collectionPage.clickImageThumbnail(imageIds.smallLandscape);
+    await collectionPage.clickImageThumbnail(smallImageId);
 
     // Then the system displays the image at its native size in the popover
     await collectionPage.imagePopover.shouldDisplayImageAtNativeSize();
@@ -59,15 +67,30 @@ test.describe('Collection Page - Full Size Image Popover', () => {
   });
 
   test('Popover scales down large image to fit viewport', async ({ page }) => {
-    // Given a collection contains an image larger than viewport with 5% margin
-    const { collection, imageIds } = await PopoverFixtures.createCollectionWithVariedImageSizes();
+    // Given a collection contains a truly large image (larger than viewport)
+    const collection = await CollectionFixtures.create({
+      imageCounts: { inbox: 0, collection: 0, archive: 0 }
+    });
+    
+    // Create a large image that will exceed viewport size
+    const largeImageFile = await ImageFixtures.create({
+      width: 2400, // Much larger than typical viewport
+      height: 1600,
+      originalName: 'large-test-image',
+      extension: 'jpeg'
+    });
+    
+    // Add the large image to the collection
+    const imageMetadata = await collection.addImage(largeImageFile.filePath);
+    await collection.updateImageStatus(imageMetadata.id, 'COLLECTION');
+    
     const app = new ImageVaultApp(page);
     const collectionPage = app.collectionPage;
     
     await collectionPage.visitCollection(collection.id);
 
     // When the user clicks on the image thumbnail
-    await collectionPage.clickImageThumbnail(imageIds.largeLandscape);
+    await collectionPage.clickImageThumbnail(imageMetadata.id);
 
     // Then the system displays the image scaled to fit within viewport with 5% margin
     await collectionPage.imagePopover.shouldDisplayImageScaledToFitViewport();
@@ -85,7 +108,11 @@ test.describe('Collection Page - Full Size Image Popover', () => {
 
   test('User closes popover by clicking outside image', async ({ page }) => {
     // Given a popover displays a full-size image
-    const { collection, imageId } = await PopoverFixtures.createCollectionWithSingleImage();
+    const collection = await CollectionFixtures.create({
+      imageCounts: { inbox: 0, collection: 1, archive: 0 }
+    });
+    const images = await collection.getImages();
+    const imageId = images[0]!.id;
     const app = new ImageVaultApp(page);
     const collectionPage = app.collectionPage;
     
@@ -110,7 +137,11 @@ test.describe('Collection Page - Full Size Image Popover', () => {
 
   test('User closes popover with ESC key', async ({ page }) => {
     // Given a popover displays a full-size image
-    const { collection, imageId } = await PopoverFixtures.createCollectionWithSingleImage();
+    const collection = await CollectionFixtures.create({
+      imageCounts: { inbox: 0, collection: 1, archive: 0 }
+    });
+    const images = await collection.getImages();
+    const imageId = images[0]!.id;
     const app = new ImageVaultApp(page);
     const collectionPage = app.collectionPage;
     

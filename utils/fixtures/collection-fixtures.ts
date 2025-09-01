@@ -5,6 +5,7 @@ import { Collection } from '@/domain';
 import { ImageStatus } from '../../domain/types';
 import { Fixtures } from './base-fixtures';
 import { ImageFixtures } from './image-fixtures';
+import { DirectoryFixtures } from './directory-fixtures';
 import { CONFIG } from '../../config';
 import FakeTimers from '@sinonjs/fake-timers';
 
@@ -13,12 +14,7 @@ import FakeTimers from '@sinonjs/fake-timers';
  */
 export class CollectionFixtures extends Fixtures<Collection> {
   static async clearDirectory(): Promise<void> {
-    const contents = await fs.readdir(CONFIG.COLLECTIONS_DIRECTORY).catch(() => []);
-
-    for (const item of contents) {
-      const itemPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, item);
-      await fs.rm(itemPath, { recursive: true, force: true }).catch(() => {});
-    }
+    await DirectoryFixtures.clearContents(CONFIG.COLLECTIONS_DIRECTORY);
   };
   
   static async create(options: {
@@ -39,7 +35,9 @@ export class CollectionFixtures extends Fixtures<Collection> {
       imageFormats = ['jpeg', 'png', 'webp']
     } = options;
 
-    const basePath = useTmpDir ? await fs.mkdtemp(path.join(tmpdir(), 'collection-fixture-')) : CONFIG.COLLECTIONS_DIRECTORY;
+    const basePath = useTmpDir ? 
+      (await DirectoryFixtures.createTemporary({ prefix: 'collection-fixture-' })).path : 
+      CONFIG.COLLECTIONS_DIRECTORY;
     
     const collectionPath = path.join(basePath, collectionId);
 
@@ -135,7 +133,8 @@ export class CollectionFixtures extends Fixtures<Collection> {
       toFake: ['Date'] // Only fake Date-related methods
     });
 
-    const basePath = customBasePath || await fs.mkdtemp(path.join(tmpdir(), 'time-collection-fixture-'));
+    const basePath = customBasePath || 
+      (await DirectoryFixtures.createTemporary({ prefix: 'time-collection-fixture-' })).path;
     let collection: Collection;
 
     try {

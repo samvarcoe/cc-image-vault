@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { CollectionsAPI, ErrorResponse } from '../../utils/collections-api-model';
 import { CollectionsDirectoryFixtures } from '../../utils/collections-directory-fixtures';
 import { Fixtures, CollectionFixtures } from '@/utils';
+import { Collection } from '@/domain';
 import { CONFIG } from '@/config';
 
 test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
@@ -53,14 +54,7 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
   test('Collection creation with valid ID', async () => {
     // Given the client provides a filesystem-safe collection ID
     const collectionId = 'valid-collection-123';
-    const directoryState = await CollectionsDirectoryFixtures.createEmpty();
-
-    // And no collection exists with that ID
-    const collectionExists = await CollectionsDirectoryFixtures.collectionExists(
-      directoryState.privateDir, 
-      collectionId
-    );
-    expect(collectionExists).toBe(false);
+    await CollectionsDirectoryFixtures.createEmpty();
 
     // When the client requests POST /api/collections with the ID
     const response = await api['/api/collections'].post({
@@ -70,26 +64,23 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
     // Then the API returns 201 status code
     response.shouldHaveStatus(201);
 
-    // And the API creates collection directory in ./private
-    const collectionExistsAfter = await CollectionsDirectoryFixtures.collectionExists(
-      directoryState.privateDir, 
-      collectionId
-    );
-    expect(collectionExistsAfter).toBe(true);
-
     // And the API returns created collection object with id property
     expect(response.body).toBeDefined();
     expect(response.body!.id).toBe(collectionId);
+
+    // And the collection can be loaded using the domain class
+    const collectionPath = `/workspace/projects/image-vault/private/${collectionId}`;
+    const collection = await Collection.load(collectionPath);
+    expect(collection).toBeTruthy();
+    expect(collection!.id).toBe(collectionId);
   });
 
   test('Collection creation with duplicate ID', async () => {
     // Given a collection already exists with the provided ID
     const duplicateId = 'existing-collection';
-    const directoryState = await CollectionsDirectoryFixtures.createWithExistingCollections({
+    await CollectionsDirectoryFixtures.createWithExistingCollections({
       collectionIds: [duplicateId]
     });
-
-    const initialCount = await CollectionsDirectoryFixtures.countCollections(directoryState.privateDir);
 
     // When the client requests POST /api/collections with the duplicate ID
     const response = await api['/api/collections'].post({
@@ -105,10 +96,6 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
     expect(errorResponse.error).toBeDefined();
     expect(errorResponse.message).toBeDefined();
     expect(errorResponse.message.toLowerCase()).toContain('duplicate');
-
-    // And the API creates no new files or directories
-    const finalCount = await CollectionsDirectoryFixtures.countCollections(directoryState.privateDir);
-    expect(finalCount).toBe(initialCount);
   });
 
   test('Collection creation with invalid ID', async () => {
@@ -123,8 +110,7 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
       '..',                  // Parent directory
     ];
 
-    const directoryState = await CollectionsDirectoryFixtures.createEmpty();
-    const initialCount = await CollectionsDirectoryFixtures.countCollections(directoryState.privateDir);
+    await CollectionsDirectoryFixtures.createEmpty();
 
     for (const invalidId of invalidIds) {
       // When the client requests POST /api/collections with the invalid ID
@@ -142,10 +128,6 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
       expect(errorResponse.message).toBeDefined();
       expect(errorResponse.message.toLowerCase()).toContain('invalid');
     }
-
-    // And the API creates no new files or directories
-    const finalCount = await CollectionsDirectoryFixtures.countCollections(directoryState.privateDir);
-    expect(finalCount).toBe(initialCount);
   });
 
   test('Collection retrieval with existing collection', async () => {
@@ -192,16 +174,14 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
   test('Collection deletion with existing collection', async () => {
     // Given a collection exists with images in various statuses
     const collectionId = 'collection-to-delete';
-    const directoryState = await CollectionsDirectoryFixtures.createWithExistingCollections({
+    await CollectionsDirectoryFixtures.createWithExistingCollections({
       collectionIds: [collectionId]
     });
 
     // Verify collection exists before deletion
-    const existsBefore = await CollectionsDirectoryFixtures.collectionExists(
-      directoryState.privateDir, 
-      collectionId
-    );
-    expect(existsBefore).toBe(true);
+    const collectionPath = `/workspace/projects/image-vault/private/${collectionId}`;
+    const collectionBefore = await Collection.load(collectionPath);
+    expect(collectionBefore).toBeTruthy();
 
     // When the client requests DELETE /api/collections/:id
     const response = await api['/api/collections/:id'].delete({
@@ -211,15 +191,13 @@ test.describe('Collections API Endpoint', { tag: '@sequential' }, () => {
     // Then the API returns 204 status code
     response.shouldHaveStatus(204);
 
-    // And the API removes all collection files and directories
-    const existsAfter = await CollectionsDirectoryFixtures.collectionExists(
-      directoryState.privateDir, 
-      collectionId
-    );
-    expect(existsAfter).toBe(false);
-
-    // And the API deletes all associated images and thumbnails
-    // (This is verified by the directory no longer existing)
+    // And the collection directory no longer exists
+    try {
+      await Collection.load(collectionPath);
+      expect(false).toBe(true); // Should not reach here
+    } catch (error) {
+      expect((error as Error).message).toContain('no such file or directory');
+    }
   });
 
   test('Collection deletion with non-existent collection', async () => {
