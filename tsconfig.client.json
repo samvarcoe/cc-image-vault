@@ -2,13 +2,9 @@
   "compilerOptions": {
     "target": "ES2017",
     "module": "ES2015",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./*"]
-    },
     "lib": ["ES2017", "DOM"],
     "outDir": "./public/js",
-    "rootDir": ".",
+    "rootDir": "client/src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -22,8 +18,13 @@
     "moduleResolution": "node",
     "resolveJsonModule": true
   },
+  "include": [
+    "client/src/**/*",
+    "**/*.d.ts"
+  ],
   "exclude": [
     "node_modules",
-    "public"
+    "public",
+    "client/src/routes.ts"
   ]
 }

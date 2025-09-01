@@ -4,14 +4,12 @@
   "description": "Image curation app",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch server.ts & tsc --project tsconfig.ui.json --watch",
+    "dev": "tsc --project tsconfig.client.json --watch & tsx watch server.ts",
     "lint": "npx eslint",
-    "domain:tests": "npx playwright test --config tests/domain/playwright.config.ts",
-    "api:tests": "npx playwright test --config tests/api/playwright.config.ts",
-    "ui:tests": "npx playwright test --config tests/ui/playwright.config.ts",
-    "tests:all:sequential": "npx playwright test --config tests/playwright.all.config.ts --grep @sequential --workers 1",
-    "tests:all:parallel": "npx playwright test --config tests/playwright.all.config.ts --grep-invert @sequential",
-    "tests:all": "npm run tests:all:sequential && npm run tests:all:parallel"
+    "domain:tests": "npx playwright test --config domain/tests/acceptance/playwright.config.ts",
+    "api:tests": "npx playwright test --config api/tests/acceptance/playwright.config.ts",
+    "ui:tests": "npx playwright test --config client/tests/acceptance/playwright.config.ts",
+    "tests:all": "npm run domain:tests && npm run api:tests && npm run ui:tests"
   },
   "repository": {
     "type": "git",

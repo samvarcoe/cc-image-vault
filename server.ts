@@ -2,8 +2,8 @@ import express from 'express';
 import compression from 'compression';
 
 import { CONFIG } from './config';
-import { routes as apiRoutes } from './src/api/routes';
-import { routes as pageRoutes } from './src/ui/routes';
+import { routes as apiRoutes } from './api/src/routes';
+import { routes as pageRoutes } from './client/src/routes';
 
 express()
     .use(express.static('public'))
