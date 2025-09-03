@@ -1,10 +1,48 @@
-export type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE';
+export type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE'
 
-// Query options for image retrieval
+export type ImageUpdate = {
+  status: ImageStatus
+}
+
 export interface QueryOptions {
   status?: ImageStatus;
-  limit?: number;
-  offset?: number;
-  orderBy?: 'created_at' | 'updated_at';
-  orderDirection?: 'ASC' | 'DESC';
+}
+
+export type ImageMetadata = {
+  id: string;
+  collection: string;
+  name: string;
+  extension: string;
+  mime: string;
+  size: number;
+  hash: string;
+  width: number;
+  height: number;
+  aspect: number;
+  status: ImageStatus;
+  created: Date;
+  updated: Date;
+}
+
+// Static methods interface
+// enforce with const _: CollectionStatic = Collection;
+interface CollectionStatic {
+    create(id: string): Collection;
+    load(id: string): Collection;
+    delete(id: string): Collection;
+    list(): string[];
+    clear(): void;
+}
+
+interface CollectionInstance {
+    readonly id: string;
+    
+    addImage(filePath: string): Promise<ImageMetadata>;
+    getImage(imageId: string): Promise<ImageMetadata>;
+    updateImage(imageId: string, status: ImageUpdate): Promise<ImageMetadata>;
+    deleteImage(imageId: string): Promise<void>;
+
+    getImages(options?: QueryOptions): Promise<ImageMetadata[]>;
+    updateImages(updates: Record<string, Partial<ImageUpdate>>): Promise<ImageMetadata>;
+    deleteImages(imageIds: string[]): Promise<void>;
 }

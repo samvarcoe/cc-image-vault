@@ -8,3 +8,4 @@ private
 .playwright-mcp
 .certs
 test-results
+utils/fixtures/images/

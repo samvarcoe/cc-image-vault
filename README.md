@@ -6,100 +6,6 @@ Users have accumulated large collections of images across multiple directories t
 ## Solution Overview
 A simple application that lets users upload their images and sort them into "collections". Bulk editing functionality is provided to quickly classify images and archive/restore/delete them as desired. Functionality for viewing and exploring the collections is also provided to allow users to use and enjoy them.
 
-## Architecture Overview
-
-### File Structure
-```bash
-collections/
-├── collection-id-1/
-│   ├── collection.db
-│   └── images/
-│       ├── original/     # UUID-named files with original extensions
-│       └── thumbnails/   # UUID-named, 400px web-optimized
-└── collection-id-2/
-    ├── collection.db
-    └── images/
-        ├── original/
-        └── thumbnails/
-```
-
-### Collection Isolation
-- Each collection is completely self-contained within its directory
-- Uses separate SQLite database per collection for clean isolation and testability
-- No cross-collection operations except potential future image transfer functionality
-- Collections can be easily backed up, restored, or used as test fixtures
-
-### Collection Registry
-Collections are discovered by scanning the collections directory on request, eliminating the need for a global registry database while maintaining flexibility.
-
-## Image Management
-
-### Image Status Workflow
-Images follow a clear status progression:
-- **Upload → INBOX** (always)
-- **INBOX → COLLECTION** (user approval)
-- **INBOX → ARCHIVE** (user rejection)
-- **COLLECTION → ARCHIVE** (user changes mind)
-- **ARCHIVE → COLLECTION** (user restores)
-- **ARCHIVE → DELETE** (permanent removal)
-
-### Image Processing
-- **Thumbnail Generation**: Created on upload, 400px web-optimized, preserving aspect ratio
-- **Duplicate Detection**: Full SHA256 hash calculated on upload prevents duplicates within collection
-- **File Naming**: UUID-based filenames with original names preserved in metadata
-- **Upload Processing**: Asynchronous processing with file-based queue for persistence
-
-## Interfaces
-
-```ts
-type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE';
-
-// Image metadata interface
-interface ImageMetadata {
-  id: string;
-  originalName: string;
-  fileHash: string;
-  status: ImageStatus;
-  size: number,
-  dimensions: {
-    width: number,
-    height: number
-  },
-  aspectRatio: number,
-  extension: number,
-  mimeType: string,
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Query options for image retrieval
-export interface QueryOptions {
-  status?: ImageStatus;
-  orderBy?: 'created_at' | 'updated_at';
-  orderDirection?: 'ASC' | 'DESC';
-}
-
-// Main Collection interface
-export interface ICollection {
-  // Collection lifecycle methods
-  static create(id: string, path: string): Promise<Collection>;
-  static load(path: string): Promise<Collection>;
-  
-  // Image management methods
-  addImage(filePath: string): Promise<ImageMetadata>;
-  updateImageStatus(imageId: string, newStatus: ImageStatus): Promise<ImageMetadata>;
-  deleteImage(imageId: string): Promise<boolean>;
-  
-  // Image retrieval methods
-  getImages(options?: QueryOptions): Promise<ImageMetadata[]>;
-  getImage(imageId: string): Promise<ImageMetadata>;
-  
-  // Collection properties
-  readonly id: string;
-  readonly basePath: string;
-}
-```
-
 ## Pages
 
 ### Navigation Structure
@@ -161,35 +67,6 @@ DELETE /api/collections/:id/images/bulk   // Bulk delete operations
   "imageIds": ["uuid1", "uuid2", "uuid3"],
   "updates": { "status": "COLLECTION" }
 }
-```
-
-## Database Schema (Per Collection)
-
-```sql
-CREATE TABLE images (
-  id TEXT PRIMARY KEY,                                                                  -- UUID for filename
-  original_name TEXT NOT NULL,                                                          -- preserved original filename
-  file_hash TEXT UNIQUE NOT NULL,                                                       -- SHA256 for duplicate detection within collection
-  status TEXT CHECK(status IN ('INBOX', 'COLLECTION', 'ARCHIVE')) DEFAULT 'INBOX',
-  size INTEGER NOT NULL,                                                                -- file size in bytes
-  width INTEGER NOT NULL,
-  height INTEGER NOT NULL,
-  aspect_ratio REAL NOT NULL,
-  extension TEXT NOT NULL,                                                               -- original file extension
-  mime_type TEXT NOT NULL,                                                               -- for proper content serving
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_status ON images(status);
-CREATE INDEX idx_updated_at ON images(updated_at);
-
--- Future extensibility tables
-CREATE TABLE image_tags (
-  image_id TEXT,
-  tag TEXT,
-  FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
-);
 ```
 
 ## Technical Implementation
