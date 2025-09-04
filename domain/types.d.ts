@@ -29,13 +29,13 @@ export type ImageMetadata = {
 interface CollectionStatic {
     create(id: string): Collection;
     load(id: string): Collection;
-    delete(id: string): Collection;
+    delete(id: string): void;
     list(): string[];
     clear(): void;
 }
 
 interface CollectionInstance {
-    readonly id: string;
+    readonly name: string;
     
     addImage(filePath: string): Promise<ImageMetadata>;
     getImage(imageId: string): Promise<ImageMetadata>;
@@ -43,6 +43,6 @@ interface CollectionInstance {
     deleteImage(imageId: string): Promise<void>;
 
     getImages(options?: QueryOptions): Promise<ImageMetadata[]>;
-    updateImages(updates: Record<string, Partial<ImageUpdate>>): Promise<ImageMetadata>;
+    updateImages(updates: Record<string, Partial<ImageUpdate>>): Promise<ImageMetadata[]>;
     deleteImages(imageIds: string[]): Promise<void>;
 }

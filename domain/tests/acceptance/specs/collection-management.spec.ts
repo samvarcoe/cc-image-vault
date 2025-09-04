@@ -1,480 +1,205 @@
-import { suite, test } from 'node:test';
-import assert from 'assert';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { suite, test } from 'mocha';
+import { expect } from 'chai';
 import sinon from 'sinon';
-import { Collection } from '@/domain';
+import { fsOps } from '../../../src/fs-operations';
+
+import { CONFIG } from '@/config';
+import { Collection } from '../../../src/collection';
 import { DirectoryFixtures } from '@/utils/fixtures/directory-fixtures';
-import { CONFIG } from '../../../../config';
+import { CollectionUtils } from '../../utils/collection-utils';
+import { validateError } from '../../utils';
+import {
+    CollectionClearError,
+    CollectionCreateError,
+    CollectionDeleteError,
+    CollectionListError,
+    CollectionLoadError,
+    CollectionNotFoundError
+} from '../../../errors';
+
+const valid_name = 'test-collection';
+const invalid_name = 'invalid@name!';
+const existing_collection = 'existing-collection';
+const non_existent_collection = 'non-existent';
+const collection1 = 'collection-1';
+const collection2 = 'collection-2';
+const collection3 = 'collection-3';
 
 suite('Collection Management', () => {
-  let collectionsDir: string;
+    beforeEach(async () => {
+        const tmpDir = await DirectoryFixtures.createTemporary({ prefix: 'collections-test-' });
+        sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(tmpDir.path);
+    })
 
-  const setupCollectionsDirectory = async (): Promise<void> => {
-    const tempDir = await DirectoryFixtures.createTemporary({ prefix: 'collections-test-' });
-    collectionsDir = tempDir.path;
-  };
+    afterEach(async () => {
+        sinon.restore();
+        await DirectoryFixtures.cleanup();
+    })
 
-  const createExistingCollection = async (name: string): Promise<string> => {
-    const collectionPath = path.join(collectionsDir, name);
-    await DirectoryFixtures.create({ path: collectionPath });
-    
-    const dbPath = path.join(collectionPath, 'collection.db');
-    await fs.writeFile(dbPath, 'test-sqlite-content');
-    
-    const imagesDir = path.join(collectionPath, 'images');
-    await DirectoryFixtures.create({ path: imagesDir });
-    await DirectoryFixtures.create({ path: path.join(imagesDir, 'original') });
-    await DirectoryFixtures.create({ path: path.join(imagesDir, 'thumbnails') });
-    
-    return collectionPath;
-  };
+    test('User creates Collection with valid name', async () => {
+        Collection.create(valid_name);
 
-  const assertCollectionDirectoryExists = async (name: string): Promise<void> => {
-    const collectionPath = path.join(collectionsDir, name);
-    const exists = await DirectoryFixtures.exists(collectionPath);
-    assert.ok(exists, `Collection directory "${name}" not created in Collections directory`);
-    console.log(`✓ Collection directory "${name}" exists`);
-  };
+        await CollectionUtils.assertCollectionDirectoryExists(valid_name);
+        await CollectionUtils.assertSqliteFileExists(valid_name);
+        await CollectionUtils.assertFileStructureExists(valid_name);
+    });
 
-  const assertSqliteFileExists = async (name: string): Promise<void> => {
-    const dbPath = path.join(collectionsDir, name, 'collection.db');
-    try {
-      const stats = await fs.stat(dbPath);
-      assert.ok(stats.isFile(), `SQLite database file not created for Collection "${name}"`);
-      console.log(`✓ SQLite database file exists for Collection "${name}"`);
-    } catch {
-      assert.fail(`SQLite database file "collection.db" not found for Collection "${name}"`);
-    }
-  };
+    test('User attempts to create a Collection with duplicate name', async () => {
+        await CollectionUtils.createExistingCollection(existing_collection);
 
-  const assertFileStructureExists = async (name: string): Promise<void> => {
-    const collectionPath = path.join(collectionsDir, name);
-    const imagesPath = path.join(collectionPath, 'images');
-    const originalPath = path.join(imagesPath, 'original');
-    const thumbnailsPath = path.join(imagesPath, 'thumbnails');
+        console.log('Validating that the correct Error is thrown when attempting to create a Collection with a duplicate name');
+        validateError(() => Collection.create(existing_collection))
+            .shouldHaveType(CollectionCreateError)
+            .shouldHaveMessage(`Unable to create Collection: "${existing_collection}"`)
+            .shouldHaveCause(Error)
+            .shouldHaveCauseMessage(`There is already a Collection with name: "${existing_collection}"`);
 
-    assert.ok(await DirectoryFixtures.exists(imagesPath), `Images directory not created for Collection "${name}"`);
-    assert.ok(await DirectoryFixtures.exists(originalPath), `Original images directory not created for Collection "${name}"`);
-    assert.ok(await DirectoryFixtures.exists(thumbnailsPath), `Thumbnails directory not created for Collection "${name}"`);
-    
-    console.log(`✓ File structure created for Collection "${name}"`);
-  };
+        const collections = await DirectoryFixtures.listDirectoryNames(CONFIG.COLLECTIONS_DIRECTORY);
 
-  const assertCollectionDirectoryDoesNotExist = async (name: string): Promise<void> => {
-    const collectionPath = path.join(collectionsDir, name);
-    const exists = await DirectoryFixtures.exists(collectionPath);
-    assert.ok(!exists, `Collection directory "${name}" should not have been created`);
-    console.log(`✓ Collection directory "${name}" was not created`);
-  };
+        expect(collections, `The existing Collection list has changed`).deep.equals([existing_collection])
+        console.log(`✓ Duplicate Collection creation prevented for "${existing_collection}"`);
+    });
 
-  const assertDirectoryIsClean = async (name: string): Promise<void> => {
-    const collectionPath = path.join(collectionsDir, name);
-    const exists = await DirectoryFixtures.exists(collectionPath);
-    assert.ok(!exists, `Partial Collection artifacts remain for "${name}" after error`);
-    console.log(`✓ No partial artifacts remain for Collection "${name}"`);
-  };
+    test('User attempts to create a Collection with invalid name', async () => {
+        console.log('Validating that the correct Error is thrown when attempting to create a Collection with an invalid name');
+        validateError(() => Collection.create(invalid_name))
+            .shouldHaveType(CollectionCreateError)
+            .shouldHaveMessage(`Unable to create Collection: "${invalid_name}"`)
+            .shouldHaveCause(Error)
+            .shouldHaveCauseMessage(`"${invalid_name}" is not a valid Collection name`);
 
-  const assertCollectionDoesNotExist = async (name: string): Promise<void> => {
-    const collectionPath = path.join(collectionsDir, name);
-    const exists = await DirectoryFixtures.exists(collectionPath);
-    assert.ok(!exists, `Collection "${name}" should be removed from filesystem`);
-    console.log(`✓ Collection "${name}" removed from filesystem`);
-  };
+        await CollectionUtils.assertCollectionDirectoryDoesNotExist(invalid_name);
+    });
 
-  const assertCollectionRemains = async (name: string): Promise<void> => {
-    const collectionPath = path.join(collectionsDir, name);
-    const exists = await DirectoryFixtures.exists(collectionPath);
-    assert.ok(exists, `Collection "${name}" should remain unchanged after error`);
-    console.log(`✓ Collection "${name}" remains unchanged`);
-  };
+    test('An internal error occurs when creating a Collection', async () => {
+        sinon.stub(fsOps, 'mkdirSync').throws(new Error('Filesystem error'));
 
-  test('User creates Collection with valid name', async () => {
-    await setupCollectionsDirectory();
-    
-    // Mock CONFIG.COLLECTIONS_DIRECTORY to point to our test directory
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+        validateError(() => Collection.create(valid_name))
+            .shouldHaveType(CollectionCreateError)
+            .shouldHaveMessage(`Unable to create Collection: "${valid_name}"`)
 
-    try {
-      const collectionName = 'test-collection-123';
-      Collection.create(collectionName);
-      
-      await assertCollectionDirectoryExists(collectionName);
-      await assertSqliteFileExists(collectionName);
-      await assertFileStructureExists(collectionName);
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        await CollectionUtils.assertDirectoryIsClean(valid_name);
+    });
 
-  test('User attempts to create a Collection with duplicate name', async () => {
-    await setupCollectionsDirectory();
-    await createExistingCollection('existing-collection');
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+    test('User loads Collection from filesystem', async () => {
+        await CollectionUtils.createExistingCollection(valid_name);
 
-    try {
-      const existingName = 'existing-collection';
-      
-      assert.throws(
-        () => Collection.create(existingName),
-        (error: Error) => error.message === `There is already a Collection with name: "${existingName}"`,
-        `Collection creation with duplicate name "${existingName}" should throw specific error`
-      );
-      
-      const collections = await DirectoryFixtures.listDirectoryNames(collectionsDir);
-      assert.strictEqual(
-        collections.filter(name => name === existingName).length,
-        1,
-        `Duplicate Collection directory created for name "${existingName}"`
-      );
-      
-      console.log(`✓ Duplicate Collection creation prevented for "${existingName}"`);
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        expect(() => Collection.load(valid_name), `Collection.load("${valid_name}") should not throw`).not.to.throw();
+        expect(Collection.load(valid_name).name, `Collection instance id mismatch for loaded Collection "${valid_name}"`).equals(valid_name);
+        console.log(`✓ Collection "${valid_name}" loaded successfully`);
+    });
 
-  test('User attempts to create a Collection with invalid name', async () => {
-    await setupCollectionsDirectory();
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+    test('User attempts to load a non-existent Collection', async () => {
+        console.log('Validating that the correct Error is thrown when attempting to load a Collection that doesn\'t exist');
+        validateError(() => Collection.load(non_existent_collection))
+            .shouldHaveType(CollectionLoadError)
+            .shouldHaveMessage(`Unable to load Collection: "${non_existent_collection}"`)
+            .shouldHaveCause(CollectionNotFoundError)
+            .shouldHaveCauseMessage(`No Collection found with name: "${non_existent_collection}"`);
 
-    try {
-      const invalidName = 'invalid@name!';
-      
-      assert.throws(
-        () => Collection.create(invalidName),
-        (error: Error) => error.message === `"${invalidName}" is not a valid Collection name`,
-        `Collection creation with invalid name "${invalidName}" should throw specific error`
-      );
-      
-      await assertCollectionDirectoryDoesNotExist(invalidName);
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        console.log(`✓ Specific Error thrown for non-existent Collection`);
+    });
 
-  test('An internal error occurs when creating a Collection', async () => {
-    await setupCollectionsDirectory();
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
-    
-    // Mock filesystem error during directory creation
-    const fsStub = sinon.stub(fs, 'mkdir').rejects(new Error('Filesystem error'));
+    test('An internal error occurs when loading a Collection', async () => {
+        await CollectionUtils.createExistingCollection(valid_name);
 
-    try {
-      const collectionName = 'test-collection';
-      
-      assert.throws(
-        () => Collection.create(collectionName),
-        (error: Error) => error.message === `Unable to create Collection "${collectionName}"`,
-        `Internal error during Collection creation should throw generic error for "${collectionName}"`
-      );
-      
-      await assertDirectoryIsClean(collectionName);
-    } finally {
-      fsStub.restore();
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        sinon.stub(fsOps, 'existsSync').throws(new Error('Filesystem error'));
 
-  test('User loads Collection from filesystem', async () => {
-    await setupCollectionsDirectory();
-    const collectionName = 'existing-collection';
-    await createExistingCollection(collectionName);
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+        console.log('Validating that the correct Error is thrown when an internal error occurs when loading a Collection');
+        validateError(() => Collection.load(valid_name))
+            .shouldHaveType(CollectionLoadError)
+            .shouldHaveMessage(`Unable to load Collection: "${valid_name}"`);
+    });
 
-    try {
-      const collection = Collection.load(collectionName);
-      
-      assert.ok(collection, `Collection instance not returned for "${collectionName}"`);
-      assert.strictEqual(
-        collection.id,
-        collectionName,
-        `Collection instance id mismatch for loaded Collection "${collectionName}"`
-      );
-      
-      console.log(`✓ Collection "${collectionName}" loaded successfully`);
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+    test('User deletes a Collection', async () => {
+        await CollectionUtils.createExistingCollection(valid_name);
 
-  test('User attempts to load a non-existent Collection', async () => {
-    await setupCollectionsDirectory();
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+        Collection.delete(valid_name);
 
-    try {
-      const nonExistentName = 'non-existent';
-      
-      assert.throws(
-        () => Collection.load(nonExistentName),
-        (error: Error) => error.message === `No Collection exists with name: "${nonExistentName}"`,
-        `Loading non-existent Collection "${nonExistentName}" should throw specific error`
-      );
-      
-      console.log(`✓ Non-existent Collection load properly rejected for "${nonExistentName}"`);
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        await CollectionUtils.assertCollectionDoesNotExist(valid_name);
+    });
 
-  test('An internal error occurs when loading a Collection', async () => {
-    await setupCollectionsDirectory();
-    const collectionName = 'existing-collection';
-    await createExistingCollection(collectionName);
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
-    
-    // Mock filesystem error during loading
-    const fsStub = sinon.stub(fs, 'stat').rejects(new Error('Filesystem error'));
+    test('User attempts to delete a Collection that does not exist', async () => {
+        console.log('Validating that the correct Error is thrown when attempting to delete a Collection that doesn\'t exist');
+        validateError(() => Collection.delete(non_existent_collection))
+            .shouldHaveType(CollectionDeleteError)
+            .shouldHaveMessage(`Unable to delete Collection: "${non_existent_collection}"`)
+            .shouldHaveCause(CollectionNotFoundError)
+            .shouldHaveCauseMessage(`No Collection found with name: "${non_existent_collection}"`);
+    });
 
-    try {
-      assert.throws(
-        () => Collection.load(collectionName),
-        (error: Error) => error.message === `Unable to load Collection: "${collectionName}"`,
-        `Internal error during Collection load should throw generic error for "${collectionName}"`
-      );
-      
-      console.log(`✓ Internal load error properly handled for Collection "${collectionName}"`);
-    } finally {
-      fsStub.restore();
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+    test('An internal error occurs when deleting a Collection', async () => {
+        await CollectionUtils.createExistingCollection(valid_name);
 
-  test('User deletes a Collection', async () => {
-    await setupCollectionsDirectory();
-    const collectionName = 'collection-to-delete';
-    await createExistingCollection(collectionName);
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+        sinon.stub(fsOps, 'rmSync').throws(new Error('Filesystem error'));
 
-    try {
-      Collection.delete(collectionName);
-      
-      await assertCollectionDoesNotExist(collectionName);
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        console.log('Validating that the correct Error is thrown when an internal errors occurs when deleting a Collection');
+        validateError(() => Collection.delete(valid_name))
+            .shouldHaveType(CollectionDeleteError)
+            .shouldHaveMessage(`Unable to delete Collection: "${valid_name}"`)
 
-  test('User attempts to delete a Collection that does not exist', async () => {
-    await setupCollectionsDirectory();
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+        await CollectionUtils.assertCollectionRemains(valid_name);
+    });
 
-    try {
-      const nonExistentName = 'non-existent';
-      
-      assert.throws(
-        () => Collection.delete(nonExistentName),
-        (error: Error) => error.message === `No Collection with name: "${nonExistentName}"`,
-        `Deleting non-existent Collection "${nonExistentName}" should throw specific error`
-      );
-      
-      console.log(`✓ Non-existent Collection deletion properly rejected for "${nonExistentName}"`);
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+    test('User requests list of existing Collections and some Collections exist', async () => {
+        await CollectionUtils.createExistingCollection(collection1);
+        await CollectionUtils.createExistingCollection(collection2);
+        await CollectionUtils.createExistingCollection(collection3);
 
-  test('An internal error occurs when deleting a Collection', async () => {
-    await setupCollectionsDirectory();
-    const collectionName = 'collection-to-delete';
-    await createExistingCollection(collectionName);
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
-    
-    // Mock filesystem error during deletion
-    const fsStub = sinon.stub(fs, 'rm').rejects(new Error('Filesystem error'));
+        const collections = Collection.list();
 
-    try {
-      assert.throws(
-        () => Collection.delete(collectionName),
-        (error: Error) => error.message === `Unable to delete Collection: "${collectionName}"`,
-        `Internal error during Collection deletion should throw generic error for "${collectionName}"`
-      );
-      
-      await assertCollectionRemains(collectionName);
-    } finally {
-      fsStub.restore();
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        expect(collections, 'The Collection list does not contain the correct items').to.have.members([
+            collection1,
+            collection2,
+            collection3
+        ]);
+        console.log(`✓ Collection list returned the correct Collections`);
+    });
 
-  test('User requests list of existing Collections and some Collections exist', async () => {
-    await setupCollectionsDirectory();
-    await createExistingCollection('collection-1');
-    await createExistingCollection('collection-2');
-    await createExistingCollection('collection-3');
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+    test('User requests list of existing Collections and no Collections exist', async () => {
+        expect(Collection.list(), 'The Collection list is not an empty array').deep.equals([]);
+        console.log('✓ Collection list returned an empty array');
+    });
 
-    try {
-      const collections = Collection.list();
-      
-      assert.ok(Array.isArray(collections), 'Collection list should return an array');
-      assert.strictEqual(
-        collections.length,
-        3,
-        `Collection list count mismatch: expected 3 Collections in directory`
-      );
-      
-      assert.ok(
-        collections.includes('collection-1'),
-        'Collection list missing "collection-1"'
-      );
-      assert.ok(
-        collections.includes('collection-2'),
-        'Collection list missing "collection-2"'
-      );
-      assert.ok(
-        collections.includes('collection-3'),
-        'Collection list missing "collection-3"'
-      );
-      
-      console.log(`✓ Collection list correctly returned ${collections.length} Collections`);
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+    test('An internal error occurs when listing Collections', async () => {
+        sinon.stub(fsOps, 'readdirSync').throws(new Error('Filesystem error'));
 
-  test('User requests list of existing Collections and no Collections exist', async () => {
-    await setupCollectionsDirectory();
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+        console.log('Validating that the correct Error is thrown when an internal errors occurs when listing Collections');
+        validateError(() => Collection.list())
+            .shouldHaveType(CollectionListError)
+            .shouldHaveMessage('Unable to list Collections')
+    });
 
-    try {
-      const collections = Collection.list();
-      
-      assert.ok(Array.isArray(collections), 'Collection list should return an array');
-      assert.strictEqual(
-        collections.length,
-        0,
-        'Collection list should be empty when no Collections exist'
-      );
-      
-      console.log('✓ Empty Collection list correctly returned');
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+    test('User clears Collections', async () => {
+        await CollectionUtils.createExistingCollection(collection1);
+        await CollectionUtils.createExistingCollection(collection2);
 
-  test('An internal error occurs when listing Collections', async () => {
-    await setupCollectionsDirectory();
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
-    
-    // Mock filesystem error during listing
-    const fsStub = sinon.stub(fs, 'readdir').rejects(new Error('Filesystem error'));
+        expect(() => Collection.clear(), 'Collection.clear() should not have thrown an error').not.throws();
 
-    try {
-      assert.throws(
-        () => Collection.list(),
-        (error: Error) => error.message === 'Unable to list the Collections',
-        'Internal error during Collection listing should throw generic error'
-      );
-      
-      console.log('✓ Internal list error properly handled');
-    } finally {
-      fsStub.restore();
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        const remainingCollections = await DirectoryFixtures.listDirectoryNames(CONFIG.COLLECTIONS_DIRECTORY);
 
-  test('User clears Collections', async () => {
-    await setupCollectionsDirectory();
-    await createExistingCollection('collection-1');
-    await createExistingCollection('collection-2');
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+        expect(remainingCollections.length, 'There are still subdirectories present in the Collections directory').equals(0);
+        expect(Collection.list(), 'The Collection list is not an empty array').deep.equals([]);
+        console.log('✓ Collections successfully cleared');
+    });
 
-    try {
-      Collection.clear();
-      
-      const remainingCollections = await DirectoryFixtures.listDirectoryNames(collectionsDir);
-      assert.strictEqual(
-        remainingCollections.length,
-        0,
-        'Collections directory should be empty after clearing'
-      );
-      
-      const collections = Collection.list();
-      assert.strictEqual(
-        collections.length,
-        0,
-        'Collection list should return empty array after clearing'
-      );
-      
-      console.log('✓ Collections successfully cleared');
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+    test('User attempts to clear an empty Collections directory', async () => {
+        expect(() => Collection.clear(), 'Collection.clear() should not have thrown an error').not.throws()
+        expect(Collection.list(), 'The Collection list is not an empty array').deep.equals([]);
+        console.log('✓ Empty Collections directory cleared without error');
+    });
 
-  test('User attempts to clear an empty Collections directory', async () => {
-    await setupCollectionsDirectory();
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
+    test('An internal error occurs when the user attempts to clear the Collections directory', async () => {
+        await CollectionUtils.createExistingCollection(existing_collection);
 
-    try {
-      // Should not throw an error
-      Collection.clear();
-      
-      const collections = Collection.list();
-      assert.strictEqual(
-        collections.length,
-        0,
-        'Collection list should return empty array after clearing empty directory'
-      );
-      
-      console.log('✓ Empty Collections directory cleared without error');
-    } finally {
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        sinon.stub(fsOps, 'readdirSync').throws(new Error('Filesystem error'));
 
-  test('An internal error occurs when the user attempts to clear the Collections directory', async () => {
-    await setupCollectionsDirectory();
-    await createExistingCollection('collection-1');
-    
-    const configStub = sinon.stub(CONFIG, 'COLLECTIONS_DIRECTORY').value(collectionsDir);
-    
-    // Mock filesystem error during clearing
-    const fsStub = sinon.stub(fs, 'readdir').rejects(new Error('Filesystem error'));
+        console.log('Validating that the correct Error is thrown when an internal errors occurs when clearing Collections');
+        validateError(() => Collection.clear())
+            .shouldHaveType(CollectionClearError)
+            .shouldHaveMessage('Unable to clear Collections')
 
-    try {
-      assert.throws(
-        () => Collection.clear(),
-        (error: Error) => error.message === 'Unable to clear the Collections directory',
-        'Internal error during Collections clearing should throw generic error'
-      );
-      
-      await assertCollectionRemains('collection-1');
-      console.log('✓ Internal clear error properly handled with Collections preserved');
-    } finally {
-      fsStub.restore();
-      configStub.restore();
-      await DirectoryFixtures.cleanup();
-    }
-  });
+        await CollectionUtils.assertCollectionRemains(existing_collection);
+        console.log('✓ Internal clear error properly handled with Collections preserved');
+    });
 });

@@ -21,7 +21,8 @@ Feature: Collection Management
     Scenario: User attempts to create a Collection with duplicate name
         Given a Collection already exists
         When the user creates a Collection with same name
-        Then the system throws "Error: There is already a Collection with name: \"<name>\""
+        Then the system throws "CollectionCreateError: Unable to create Collection \"<name>\""
+        And the error cause is: "Error: There is already a Collection with name: \"<name>\""
         And the system creates no new Collection directory
 
     Scenario: User attempts to create a Collection with invalid name
@@ -34,7 +35,7 @@ Feature: Collection Management
         Given the Collections directory exists
         When the user creates a Collection with a valid name: <name>
         But there is an internal error
-        Then the system throws: "Error: Unable to create Collection \"<name>\""
+        Then the system throws "CollectionCreateError: Unable to create Collection \"<name>\""
         And the system leaves no partial Collection artifacts behind
 
     Scenario: User loads Collection from filesystem
@@ -45,13 +46,14 @@ Feature: Collection Management
     Scenario: User attempts to load a non-existent Collection
         Given the Collections directory exists
         When the user loads a Collection that does not exist
-        Then the system throws: "Error: No Collection exists with name: \"<name>\""
+        Then the system throws "CollectionLoadError: Unable to load Collection \"<name>\""
+        And the error cause is: "Error: No Collection exists with name: \"<name>\""
 
     Scenario: An internal error occurs when loading a Collection
         Given a Collection exists
         When the user loads the Collection
         But there is an internal error
-        Then the system throws: "Error: Unable to load Collection: \"<name>\""
+        Then the system throws: "CollectionLoadError: Unable to load Collection \"<name>\""
 
     Scenario: User deletes a Collection
         Given a Collection exists
@@ -61,13 +63,14 @@ Feature: Collection Management
     Scenario: User attempts to delete a Collection that does not exist
         Given there are no Collections with name: "<name>"
         When the user attempts to delete a Collection with name "<name>"
-        Then the system throws: "Error: No Collection with name: \"<name>\""
+        Then the system throws "CollectionDeleteError: Unable to delete Collection \"<name>\""
+        Then the error cause is: "Error: No Collection with name: \"<name>\""
 
     Scenario: An internal error occurs when deleting a Collection
         Given a Collection exists
         When the user attempts to delete the Collection
         But there is an internal error
-        Then the system throws: "Error: Unable to delete Collection: \"<name>\""
+        Then the system throws "CollectionDeleteError: Unable to delete Collection \"<name>\""
         And the Collection remain unchanged 
 
     Scenario: User requests list of existing Collections and some Collections exist
@@ -83,7 +86,7 @@ Feature: Collection Management
     Scenario: An internal error occurs when listing Collections
         Given the user has requested the list of Collections
         When there is an internal error
-        Then the system throws: "Error: Unable to list the Collections"
+        Then the system throws: "CollectionListError: Unable to list Collections"
 
     Scenario: User clears Collections
         Given Collections exist in the Collections directory
@@ -100,5 +103,5 @@ Feature: Collection Management
     Scenario: An internal error occurs when the user attempts to clear the Collections directory
         Given the user has attempted to clear the Collections directory
         When an internal error occurs
-        Then the system throws: "Error: Unable to clear the Collections directory"
+        Then the system throws: "CollectionClearError: Unable to clear the Collections"
         And existing Collections remain unchanged

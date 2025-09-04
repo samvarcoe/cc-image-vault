@@ -9,3 +9,4 @@ private
 .certs
 test-results
 utils/fixtures/images/
+test.ts

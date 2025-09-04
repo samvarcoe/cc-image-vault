@@ -1,0 +1,15 @@
+/**
+ * Filesystem operations wrapper to enable testing
+ * This module provides a mockable interface for filesystem operations
+ */
+
+import * as fs from 'fs';
+
+export const fsOps = {
+  mkdirSync: fs.mkdirSync.bind(fs),
+  existsSync: fs.existsSync.bind(fs),
+  statSync: fs.statSync.bind(fs),
+  rmSync: fs.rmSync.bind(fs),
+  readdirSync: fs.readdirSync.bind(fs),
+  writeFileSync: fs.writeFileSync.bind(fs)
+};
