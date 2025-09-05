@@ -39,3 +39,10 @@ export class CollectionClearError extends Error {
     this.name = 'CollectionClearError';
   }
 }
+
+export class PendingImplementationError extends Error {
+  constructor(public functionName: string) {
+    super(`"${functionName} is not implemented yet`);
+    this.name = 'PendingImplementationError';
+  }
+}

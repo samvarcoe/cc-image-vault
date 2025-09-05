@@ -10,7 +10,8 @@ import {
     CollectionDeleteError,
     CollectionListError,
     CollectionLoadError,
-    CollectionNotFoundError
+    CollectionNotFoundError,
+    PendingImplementationError
 } from '../errors';
 
 /**
@@ -53,10 +54,10 @@ export class Collection implements CollectionInstance {
                 try {
                     // Clean up partial artifacts on error
                     fsOps.rmSync(collectionPath, { recursive: true, force: true });
-                } finally {
-                    // Ignore cleanup errors
-                    throw error;
+                } catch (error: unknown) {
+                    console.error(`Error cleaning up partial creation artifacts: ${(error as Error).message} `)
                 }
+                throw error;
             }
         } catch (error: unknown) {
             throw new CollectionCreateError(name, error);
@@ -140,49 +141,56 @@ export class Collection implements CollectionInstance {
     /**
      * Add an image to this Collection
      */
-    async addImage(_filePath: string): Promise<ImageMetadata> {
-        throw new Error('Pending Implementation: Collection.addImage');
+    async addImage(filePath: string): Promise<ImageMetadata> {
+        console.log(`args: filepath: ${filePath}`);
+        throw new PendingImplementationError('Collection.addImage');
     }
 
     /**
      * Get image metadata by ID
      */
-    async getImage(_imageId: string): Promise<ImageMetadata> {
-        throw new Error('Pending Implementation: Collection.getImage');
+    async getImage(imageId: string): Promise<ImageMetadata> {
+        console.log(`args: imageId: ${imageId}`);
+        throw new PendingImplementationError('Collection.getImage');
     }
 
     /**
      * Update image status
      */
-    async updateImage(_imageId: string, _status: ImageUpdate): Promise<ImageMetadata> {
-        throw new Error('Pending Implementation: Collection.updateImage');
+    async updateImage(imageId: string, status: ImageUpdate): Promise<ImageMetadata> {
+        console.log(`args: imageId: ${imageId}, status: ${status}`);
+        throw new PendingImplementationError('Collection.updateImage');
     }
 
     /**
      * Delete an image from this Collection
      */
-    async deleteImage(_imageId: string): Promise<void> {
-        throw new Error('Pending Implementation: Collection.deleteImage');
+    async deleteImage(imageId: string): Promise<void> {
+        console.log(`args: imageId: ${imageId}`);
+        throw new PendingImplementationError('Collection.deleteImage');
     }
 
     /**
      * Get all images in this Collection with optional filtering
      */
-    async getImages(_options?: QueryOptions): Promise<ImageMetadata[]> {
-        throw new Error('Pending Implementation: Collection.getImages');
+    async getImages(options?: QueryOptions): Promise<ImageMetadata[]> {
+        console.log(`args: options: ${options}`);
+        throw new PendingImplementationError('Collection.getImages');
     }
 
     /**
      * Update multiple images at once
      */
-    async updateImages(_updates: Record<string, Partial<ImageUpdate>>): Promise<ImageMetadata[]> {
-        throw new Error('Pending Implementation: Collection.updateImages');
+    async updateImages(updates: Record<string, Partial<ImageUpdate>>): Promise<ImageMetadata[]> {
+        console.log(`args: updates: ${updates}`);
+        throw new PendingImplementationError('Collection.updateImages');
     }
 
     /**
      * Delete multiple images at once
      */
-    async deleteImages(_imageIds: string[]): Promise<void> {
-        throw new Error('Pending Implementation: Collection.deleteImages');
+    async deleteImages(imageIds: string[]): Promise<void> {
+        console.log(`args: imageIds: ${imageIds}`);
+        throw new PendingImplementationError('Collection.deleteImages');
     }
 }

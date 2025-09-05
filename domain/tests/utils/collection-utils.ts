@@ -8,28 +8,13 @@ import { fsOps } from "../../src/fs-operations";
 export class CollectionUtils {
     static getCollectionDirectory = (name: string) => path.join(CONFIG.COLLECTIONS_DIRECTORY, name);
 
-    static createExistingCollection = async (name: string): Promise<string> => {
-        const collectionPath = this.getCollectionDirectory(name);
-        await DirectoryFixtures.create({ path: collectionPath });
-        
-        const dbPath = path.join(collectionPath, 'collection.db');
-        fsOps.writeFileSync(dbPath, 'test-sqlite-content');
-        
-        const imagesDir = path.join(collectionPath, 'images');
-        await DirectoryFixtures.create({ path: imagesDir });
-        await DirectoryFixtures.create({ path: path.join(imagesDir, 'original') });
-        await DirectoryFixtures.create({ path: path.join(imagesDir, 'thumbnails') });
-        
-        return collectionPath;
-    };
-
     static assertCollectionDirectoryExists = async (name: string): Promise<void> => {
         const collectionPath = this.getCollectionDirectory(name);
         expect(await DirectoryFixtures.exists(collectionPath), `Collection directory "${name}" not created in Collections directory`).true;
         console.log(`✓ Collection directory "${name}" exists`);
-        };
+    };
 
-        static assertSqliteFileExists = async (name: string): Promise<void> => {
+    static assertSqliteFileExists = async (name: string): Promise<void> => {
         const dbPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, name, 'collection.db');
         expect(fsOps.statSync(dbPath).isFile(), `SQLite database file not created for Collection "${name}"`).true;
         console.log(`✓ SQLite database file exists for Collection "${name}"`)

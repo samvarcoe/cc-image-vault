@@ -2,6 +2,6 @@
   "ui": "bdd",
   "require": ["tsx", "domain/tests/acceptance/setup.ts"],
   "spec": ["domain/tests/acceptance/specs/*.spec.ts"],
-  "parallel": false,
+  "parallel": true,
   "reporter": "spec"
 }

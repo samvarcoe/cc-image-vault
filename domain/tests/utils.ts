@@ -1,9 +1,14 @@
 import { expect } from "chai";
 
+type ErrorConstructor<T extends Error = Error> = new (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ...args: any[]
+) => T;
+
 export class AssertableError {
   constructor(private error: unknown) {}
   
-  shouldHaveType<T extends Error>(errorType: new (...args: any[]) => T): AssertableError {
+  shouldHaveType<T extends Error>(errorType: ErrorConstructor<T>): AssertableError {
     expect(this.error).instanceOf(errorType);
     console.log('✓ The Error was thrown with the expected instance type');
     return this;
@@ -15,7 +20,7 @@ export class AssertableError {
     return this;
   }
   
-  shouldHaveCause<T extends Error>(causeType: new (...args: any[]) => T): AssertableError {
+  shouldHaveCause<T extends Error>(causeType: ErrorConstructor<T>): AssertableError {
     expect(this.error).has.property('cause').instanceOf(causeType);
     console.log('✓ The Error cause was thrown with the expected instance type')
     return this;
