@@ -296,7 +296,7 @@ export class Collection implements CollectionInstance {
         }
         
         // Only allow Alphanumeric and . _ - ( )
-        const pattern = /^[A-Za-z0-9\(\)._-]+$/;
+        const pattern = /^[A-Za-z0-9()._-]+$/;
         if (!pattern.test(filename)) {
             throw new Error('Unsafe or invalid filename');
         }

@@ -47,6 +47,20 @@ export class ImageAdditionError extends Error {
   }
 }
 
+export class ImageRetrievalError extends Error {
+  constructor(collectionName: string, public cause: unknown) {
+    super(`Unable to retrieve image from Collection "${collectionName}"`);
+    this.name = 'ImageRetrievalError';
+  }
+}
+
+export class ImageNotFoundError extends Error {
+  constructor(imageId: string) {
+    super(`Image not found with ID: "${imageId}"`);
+    this.name = 'ImageNotFoundError';
+  }
+}
+
 export class PendingImplementationError extends Error {
   constructor(public functionName: string) {
     super(`"${functionName} is not implemented yet`);
