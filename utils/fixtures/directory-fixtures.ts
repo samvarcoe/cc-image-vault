@@ -223,4 +223,19 @@ export class DirectoryFixtures extends Fixtures<DirectoryState> {
       return [];
     }
   }
+
+  /**
+   * Lists file names in a path
+   */
+  static async listFiles(dirPath: string): Promise<string[]> {
+    try {
+      const entries = await fs.readdir(dirPath, { withFileTypes: true });
+      return entries
+        .filter(entry => entry.isFile())
+        .map(entry => entry.name)
+        .sort();
+    } catch {
+      return [];
+    }
+  }
 }

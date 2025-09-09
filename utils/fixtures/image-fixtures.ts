@@ -104,3 +104,38 @@ export const getImageFixture = async (options: Partial<ImageFixtureOptions> = {}
         throw new Error(`Failed to create or access cached image at ${filePath}: ${(error as Error).message}`);
     }      
 }
+
+/**
+ * Create a corrupted image file for testing error handling
+ */
+export const getCorruptedImageFixture = async (extension: 'jpg' | 'jpeg' | 'png' | 'webp' = 'jpg'): Promise<string> => {
+    const corruptedFileName = `corrupted-image.${extension}`;
+    const filePath = path.join(CACHE_DIR, corruptedFileName);
+    
+    // Create corrupted image data (invalid header)
+    const corruptedData = Buffer.from('this is not a valid image file', 'utf-8');
+    
+    try {
+        await fs.writeFile(filePath, corruptedData);
+        return filePath;
+    } catch (error: unknown) {
+        throw new Error(`Failed to create corrupted image at ${filePath}: ${(error as Error).message}`);
+    }
+}
+
+/**
+ * Create a file with unsupported extension for testing
+ */
+export const getUnsupportedFileFixture = async (): Promise<string> => {
+    const unsupportedFileName = 'test-file.txt';
+    const filePath = path.join(CACHE_DIR, unsupportedFileName);
+    
+    const textData = Buffer.from('This is a text file, not an image', 'utf-8');
+    
+    try {
+        await fs.writeFile(filePath, textData);
+        return filePath;
+    } catch (error: unknown) {
+        throw new Error(`Failed to create unsupported file at ${filePath}: ${(error as Error).message}`);
+    }
+}

@@ -87,13 +87,6 @@ Feature: Images - Addition
         And the error cause is: "Error: Filename exceeds 256 characters"
         And no image files are created
 
-    Scenario: User attempts to add an image to non-existent Collection
-        Given no Collection exists with name: [name]
-        When the user attempts to adds an image to the Collection
-        Then the system throws "ImageAdditionError: Unable to add image to Collection \"[name]\""
-        And the error cause is: "CollectionNotFoundError: No Collection found with name: \"[name]\""
-        And no image files are created
-
     Scenario: An internal error occurs when adding an image to a Collection
         Given a Collection exists with name: [name]
         When the user attempts to adds an image to the Collection

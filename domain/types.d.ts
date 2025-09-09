@@ -8,12 +8,16 @@ export interface QueryOptions {
   status?: ImageStatus;
 }
 
+type Extension = 'jpg' | 'png' | 'webp'
+
+type Mime = 'image/jpeg' | 'image/png' | 'image/webp'
+
 export type ImageMetadata = {
   id: string;
   collection: string;
   name: string;
-  extension: string;
-  mime: string;
+  extension: Extension;
+  mime: Mime;
   size: number;
   hash: string;
   width: number;

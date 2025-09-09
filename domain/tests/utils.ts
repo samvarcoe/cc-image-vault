@@ -41,3 +41,13 @@ export const validateError = (fn: () => void): AssertableError => {
     return new AssertableError(error);
   }
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const validateAsyncError = async (fn: () => Promise<any>): Promise<AssertableError> => {
+  try {
+    await fn();
+    throw new Error('Expected async function to throw an error');
+  } catch (error: unknown) {
+    return new AssertableError(error);
+  }
+};

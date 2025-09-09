@@ -1,8 +1,10 @@
 import { CONFIG } from "@/config";
 import { Fixtures, DirectoryFixtures } from "@/utils";
-import { config as chaiConfig } from "chai";
+import { use as chaiUse, config as chaiConfig } from "chai";
 import sinon from "sinon";
+import chaiMatchPattern from 'chai-match-pattern';
 
+chaiUse(chaiMatchPattern);
 chaiConfig.includeStack = true;
 chaiConfig.truncateThreshold = 0;
 chaiConfig.showDiff = true;

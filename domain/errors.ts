@@ -40,6 +40,13 @@ export class CollectionClearError extends Error {
   }
 }
 
+export class ImageAdditionError extends Error {
+  constructor(collectionName: string, public cause: unknown) {
+    super(`Unable to add image to Collection "${collectionName}"`);
+    this.name = 'ImageAdditionError';
+  }
+}
+
 export class PendingImplementationError extends Error {
   constructor(public functionName: string) {
     super(`"${functionName} is not implemented yet`);
