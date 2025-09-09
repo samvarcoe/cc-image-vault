@@ -174,11 +174,10 @@ suite('Images - Addition', () => {
 
     test('User attempts to add an image with unsafe filename', async () => {
         const collection = Collection.create(testCollectionName);
-        // Create a valid image fixture but simulate an unsafe filename scenario
-        const imageFixture = await getImageFixture({ id: '<script>alert("xss")</script>', extension: 'jpg' });
+        const unsafeFilePath = './some/path/javascript:alert(1).jpg';
 
         console.log('Validating that the correct Error is thrown when attempting to add image with unsafe filename');
-        const error = await validateAsyncError(() => collection.addImage(imageFixture.filePath));
+        const error = await validateAsyncError(() => collection.addImage(unsafeFilePath));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -192,10 +191,10 @@ suite('Images - Addition', () => {
     test('User attempts to add an image with filename that exceeds 256 characters', async () => {
         const collection = Collection.create(testCollectionName);
         const longName = 'a'.repeat(260); // Exceeds 256 character limit
-        const imageFixture = await getImageFixture({ id: longName, extension: 'jpg' });
+        const longFilePath = `./some/path/${longName}.jpg`;
 
         console.log('Validating that the correct Error is thrown when attempting to add image with long filename');
-        const error = await validateAsyncError(() => collection.addImage(imageFixture.filePath));
+        const error = await validateAsyncError(() => collection.addImage(longFilePath));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -211,7 +210,7 @@ suite('Images - Addition', () => {
         const imageFixture = await getImageFixture({ id: 'internal-error-test', extension: 'jpg' });
 
         // Mock filesystem operation to simulate internal error
-        sinon.stub(fsOps, 'writeFileSync').throws(new Error('Filesystem unavailable'));
+        sinon.stub(fsOps, 'writeFile').throws(new Error('Filesystem unavailable'));
 
         console.log('Validating that the correct Error is thrown when internal error occurs during image addition');
         const error = await validateAsyncError(() => collection.addImage(imageFixture.filePath));

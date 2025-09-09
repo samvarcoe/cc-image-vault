@@ -79,23 +79,23 @@ DELETE /api/collections/:id/images/bulk   // Bulk delete operations
 - **Database**: SQLite per collection
 - **Language**: TypeScript
 
-### File Processing
-- **Supported Formats**: JPG, JPEG, WebP, PNG
+### File Processing ✅
+- **Supported Formats**: JPG, JPEG, WebP, PNG (jpeg normalized to jpg)
 - **File Size Limit**: 25MB maximum per image
 - **Collection Limit**: No maximum images per collection
-- **Validation**: Client and server-side format and corruption validation
-- **Error Handling**: Status codes for failed uploads with specific error types
+- **Validation**: Format, integrity, filename safety, and duplicate detection
+- **Security**: XSS-safe filename validation, 256-char limit
+- **Error Handling**: Comprehensive error types with atomic cleanup
 
-### Upload Workflow
+### Upload Workflow ✅
 1. Client drag-and-drop multiple files (including directory contents)
 2. Client-side validation for format and size
-3. Server receives upload and validates
-4. Returns success/error response
-5. Files placed in queue for processing
-6. Server calculates SHA256 hash for duplicate detection
-7. Server generates 400px thumbnail preserving aspect ratio
-8. Server moves files to collection directory
-9. Server stores metadata in collection's SQLite database
+3. Server receives upload and validates (format, integrity, safety, duplicates)
+4. Server calculates SHA256 hash for duplicate detection
+5. Server generates 400px thumbnail preserving aspect ratio using Sharp
+6. Server stores original and thumbnail in collection directory structure
+7. Server stores complete metadata in collection's SQLite database
+8. Returns success/error response with specific error types
 
 ### Future Extensibility Considerations
 - Database schema includes tables for future image tagging functionality

@@ -12,7 +12,8 @@ import { ImageMetadata } from "../../types";
 
 export class ImageUtils {
     static getImagePath = (collectionName: string, imageName: string, type: 'original' | 'thumbnail' = 'original'): string => {
-        return path.join(CONFIG.COLLECTIONS_DIRECTORY, collectionName, 'images', type, imageName);
+        const directoryName = type === 'thumbnail' ? 'thumbnails' : type;
+        return path.join(CONFIG.COLLECTIONS_DIRECTORY, collectionName, 'images', directoryName, imageName);
     };
 
     static calculateImageHash = async (filePath: string): Promise<string> => {
@@ -22,14 +23,30 @@ export class ImageUtils {
 
     static assertImageFileExists = async (collectionName: string, imageName: string, type: 'original' | 'thumbnail' = 'original'): Promise<void> => {
         const imagePath = this.getImagePath(collectionName, imageName, type);
-        const exists = await DirectoryFixtures.exists(imagePath);
+        // Use fs.stat to check for file existence (not DirectoryFixtures.exists which checks for directories)
+        let exists = false;
+        try {
+            const stat = await fs.stat(imagePath);
+            exists = stat.isFile();
+        } catch {
+            exists = false;
+        }
         expect(exists, `${type} image "${imageName}" not found in Collection "${collectionName}"`).true;
         console.log(`✓ ${type} image "${imageName}" exists in Collection "${collectionName}"`);
     };
 
     static assertImageFileDoesNotExist = async (collectionName: string, imageName: string, type: 'original' | 'thumbnail' = 'original'): Promise<void> => {
         const imagePath = this.getImagePath(collectionName, imageName, type);
-        const exists = await DirectoryFixtures.exists(imagePath);
+        
+        // Use fs.stat to check for file existence (not DirectoryFixtures.exists which checks for directories)
+        let exists = false;
+        try {
+            const stat = await fs.stat(imagePath);
+            exists = stat.isFile();
+        } catch {
+            exists = false;
+        }
+        
         expect(exists, `${type} image "${imageName}" should not exist in Collection "${collectionName}"`).false;
         console.log(`✓ ${type} image "${imageName}" does not exist in Collection "${collectionName}"`);
     };

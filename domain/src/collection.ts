@@ -4,6 +4,10 @@ import { CONFIG } from '../../config';
 import { validateCollectionName } from './collection-utils'
 import { initializeCollectionDatabase } from './database';
 import { fsOps } from './fs-operations';
+import sharp from 'sharp';
+import crypto from 'crypto';
+import { randomUUID } from 'crypto';
+import Database from 'better-sqlite3';
 import { 
     CollectionClearError,
     CollectionCreateError,
@@ -11,6 +15,7 @@ import {
     CollectionListError,
     CollectionLoadError,
     CollectionNotFoundError,
+    ImageAdditionError,
     PendingImplementationError
 } from '../errors';
 
@@ -23,6 +28,11 @@ export class Collection implements CollectionInstance {
 
     constructor(name: string) {
         this.name = name;
+    }
+
+    private getDB(): Database.Database {
+        const dbPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, this.name, 'collection.db');
+        return new Database(dbPath);
     }
 
     /**
@@ -142,8 +152,58 @@ export class Collection implements CollectionInstance {
      * Add an image to this Collection
      */
     async addImage(filePath: string): Promise<ImageMetadata> {
-        console.log(`args: filepath: ${filePath}`);
-        throw new PendingImplementationError('Collection.addImage');
+        try {
+            // Validate and normalize file format first
+            const { extension, mime } = this.validateAndNormalizeFormat(filePath);
+            
+            // Validate filename safety and length
+            this.validateFilename(filePath);
+            
+            // Validate file exists and is a file
+            await this.validateFileExists(filePath);
+            
+            // Calculate image hash for duplicate detection
+            const hash = await this.calculateImageHash(filePath);
+            
+            // Check for duplicates
+            await this.validateNoDuplicate(hash);
+            
+            // Validate image integrity and get metadata
+            const imageInfo = await this.validateAndGetImageInfo(filePath);
+            
+            // Generate unique image ID and name
+            const imageId = randomUUID();
+            const imageName = this.generateImageName();
+            
+            // Process and store image files
+            await this.processAndStoreImage(filePath, imageName, extension);
+            
+            // Create image metadata
+            const now = new Date();
+            const metadata: ImageMetadata = {
+                id: imageId,
+                collection: this.name,
+                name: imageName,
+                extension: extension as 'jpg' | 'png' | 'webp',
+                mime: mime as 'image/jpeg' | 'image/png' | 'image/webp',
+                size: (await fsOps.stat(filePath)).size,
+                hash,
+                width: imageInfo.width!,
+                height: imageInfo.height!,
+                aspect: imageInfo.width! / imageInfo.height!,
+                status: 'INBOX',
+                created: now,
+                updated: now
+            };
+            
+            // Store metadata in database
+            await this.storeImageMetadata(metadata);
+            
+            return metadata;
+            
+        } catch (error: unknown) {
+            throw new ImageAdditionError(this.name, error);
+        }
     }
 
     /**
@@ -192,5 +252,138 @@ export class Collection implements CollectionInstance {
     async deleteImages(imageIds: string[]): Promise<void> {
         console.log(`args: imageIds: ${imageIds}`);
         throw new PendingImplementationError('Collection.deleteImages');
+    }
+
+    // Helper methods for addImage()
+
+    private async validateFileExists(filePath: string): Promise<void> {
+        try {
+            const stats = await fsOps.stat(filePath);
+            if (!stats.isFile()) {
+                throw new Error(`"${filePath}" is not a file`);
+            }
+        } catch (error: unknown) {
+            if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
+                throw new Error(`"${filePath}" is not a file`);
+            }
+            throw error;
+        }
+    }
+
+    private validateAndNormalizeFormat(filePath: string): { extension: string; mime: string } {
+        const ext = path.extname(filePath).toLowerCase();
+        
+        switch (ext) {
+            case '.jpg':
+                return { extension: 'jpg', mime: 'image/jpeg' };
+            case '.jpeg':
+                return { extension: 'jpg', mime: 'image/jpeg' }; // Normalize to jpg
+            case '.png':
+                return { extension: 'png', mime: 'image/png' };
+            case '.webp':
+                return { extension: 'webp', mime: 'image/webp' };
+            default:
+                throw new Error('Unsupported file type, must be image file with extension jpg/jpeg/png/webp');
+        }
+    }
+
+    private validateFilename(filePath: string): void {
+        const filename = path.basename(filePath);
+        
+        // Check filename length (including extension)
+        if (filename.length > 256) {
+            throw new Error('Filename exceeds 256 characters');
+        }
+        
+        // Only allow Alphanumeric and . _ - ( )
+        const pattern = /^[A-Za-z0-9\(\)._-]+$/;
+        if (!pattern.test(filename)) {
+            throw new Error('Unsafe or invalid filename');
+        }
+    }
+
+    private async calculateImageHash(filePath: string): Promise<string> {
+        const buffer = await fsOps.readFile(filePath);
+        return crypto.createHash('sha256').update(buffer).digest('hex');
+    }
+
+    private async validateNoDuplicate(hash: string): Promise<void> {
+        const db = this.getDB();
+        
+        try {
+            const existing = db.prepare('SELECT id FROM images WHERE hash = ?').get(hash);
+            if (existing) {
+                throw new Error('Image already exists in Collection');
+            }
+        } finally {
+            db.close();
+        }
+    }
+
+    private async validateAndGetImageInfo(filePath: string): Promise<sharp.Metadata> {
+        try {
+            const imageInfo = await sharp(filePath).metadata();
+            
+            if (!imageInfo.width || !imageInfo.height) {
+                throw new Error('Invalid or corrupted image file');
+            }
+            
+            return imageInfo;
+        } catch {
+            throw new Error('Invalid or corrupted image file');
+        }
+    }
+
+    private generateImageName(): string {
+        return randomUUID().replace(/-/g, '');
+    }
+
+    private async processAndStoreImage(sourceFilePath: string, imageName: string, extension: string): Promise<void> {
+        const collectionPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, this.name);
+        const originalPath = path.join(collectionPath, 'images', 'original', `${imageName}.${extension}`);
+        const thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${imageName}.${extension}`);
+        
+        // Copy original image - use fsOps for mockable operations
+        const sourceBuffer = await fsOps.readFile(sourceFilePath);
+        await fsOps.writeFile(originalPath, sourceBuffer);
+        
+        // Generate thumbnail
+        await sharp(sourceFilePath)
+            .resize(CONFIG.THUMBNAIL_WIDTH, null, { 
+                withoutEnlargement: true,
+                fit: 'inside'
+            })
+            .toFile(thumbnailPath);
+    }
+
+    private async storeImageMetadata(metadata: ImageMetadata): Promise<void> {
+        const db = this.getDB();
+        
+        try {
+            const stmt = db.prepare(`
+                INSERT INTO images (
+                    id, collection, name, extension, mime, size, hash,
+                    width, height, aspect, status, created, updated
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+            
+            stmt.run(
+                metadata.id,
+                metadata.collection,
+                metadata.name,
+                metadata.extension,
+                metadata.mime,
+                metadata.size,
+                metadata.hash,
+                metadata.width,
+                metadata.height,
+                metadata.aspect,
+                metadata.status,
+                metadata.created.toISOString(),
+                metadata.updated.toISOString()
+            );
+        } finally {
+            db.close();
+        }
     }
 }
