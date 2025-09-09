@@ -1,17 +1,17 @@
 import { suite, test } from 'mocha';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { fsOps } from '../../../src/fs-operations';
+import { fsOps } from '../../../../src/fs-operations';
 
-import { Collection } from '../../../src/collection';
-import { validateError } from '../../utils';
-import { CollectionListError } from '../../../errors';
+import { Collection } from '../../../../src/collection';
+import { validateError } from '../../../utils';
+import { CollectionListError } from '../../../../errors';
 
 const collection1 = 'collection-1';
 const collection2 = 'collection-2';
 const collection3 = 'collection-3';
 
-suite('Collection Listing', () => {
+suite('Collections - Listing', () => {
    test('User requests list of existing Collections and some Collections exist', async () => {
         Collection.create(collection1);
         Collection.create(collection2);

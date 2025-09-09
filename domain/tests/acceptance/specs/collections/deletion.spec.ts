@@ -1,16 +1,16 @@
 import { suite, test } from 'mocha';
 import sinon from 'sinon';
-import { fsOps } from '../../../src/fs-operations';
+import { fsOps } from '../../../../src/fs-operations';
 
-import { Collection } from '../../../src/collection';
-import { CollectionUtils } from '../../utils/collection-utils';
-import { validateError } from '../../utils';
-import { CollectionDeleteError, CollectionNotFoundError } from '../../../errors';
+import { Collection } from '../../../../src/collection';
+import { CollectionUtils } from '../../../utils/collection-utils';
+import { validateError } from '../../../utils';
+import { CollectionDeleteError, CollectionNotFoundError } from '../../../../errors';
 
 const valid_name = 'test-collection';
 const non_existent_collection = 'non-existent';
 
-suite('Collection Deletion', () => {
+suite('Collections - Deletion', () => {
     test('User deletes a Collection', async () => {
         Collection.create(valid_name);
 

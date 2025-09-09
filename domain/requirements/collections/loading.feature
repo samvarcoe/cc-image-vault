@@ -1,4 +1,4 @@
-Feature: Collection Loading
+Feature: Collections - Loading
     User Story: As a user, I want to load Collections, so that I can continue to curate and exploer my images
 
     Acceptance Criteria

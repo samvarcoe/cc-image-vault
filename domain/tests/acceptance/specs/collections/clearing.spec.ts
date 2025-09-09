@@ -1,19 +1,19 @@
 import { suite, test } from 'mocha';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { fsOps } from '../../../src/fs-operations';
+import { fsOps } from '../../../../src/fs-operations';
 
 import { CONFIG } from '@/config';
-import { Collection } from '../../../src/collection';
+import { Collection } from '../../../../src/collection';
 import { DirectoryFixtures } from '@/utils/fixtures/directory-fixtures';
-import { CollectionUtils } from '../../utils/collection-utils';
-import { validateError } from '../../utils';
-import { CollectionClearError } from '../../../errors';
+import { CollectionUtils } from '../../../utils/collection-utils';
+import { validateError } from '../../../utils';
+import { CollectionClearError } from '../../../../errors';
 
 const collection1 = 'collection-1';
 const collection2 = 'collection-2';
 
-suite('Collection Clearing', () => {
+suite('Collections - Clearing', () => {
     test('User clears Collections', async () => {
         Collection.create(collection1);
         Collection.create(collection2);

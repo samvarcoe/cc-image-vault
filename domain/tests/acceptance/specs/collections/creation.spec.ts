@@ -1,20 +1,20 @@
 import { suite, test } from 'mocha';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { fsOps } from '../../../src/fs-operations';
+import { fsOps } from '../../../../src/fs-operations';
 
 import { CONFIG } from '@/config';
-import { Collection } from '../../../src/collection';
+import { Collection } from '../../../../src/collection';
 import { DirectoryFixtures } from '@/utils/fixtures/directory-fixtures';
-import { CollectionUtils } from '../../utils/collection-utils';
-import { validateError } from '../../utils';
-import { CollectionCreateError } from '../../../errors';
+import { CollectionUtils } from '../../../utils/collection-utils';
+import { validateError } from '../../../utils';
+import { CollectionCreateError } from '../../../../errors';
 
 const valid_name = 'test-collection';
 const invalid_name = 'invalid@name!';
 const existing_collection = 'existing-collection';
 
-suite('Collection Creation', () => {
+suite('Collections - Creation', () => {
     test('User creates Collection with valid name', async () => {
         Collection.create(valid_name);
 

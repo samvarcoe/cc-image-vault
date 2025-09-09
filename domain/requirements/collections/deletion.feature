@@ -1,4 +1,4 @@
-Feature: Collection Deletion
+Feature: Collections - Deletion
     User Story: As a user, I want to delete Collections, so that I can discard them I'm no longer interested in.
 
     Acceptance Criteria

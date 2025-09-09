@@ -1,16 +1,16 @@
 import { suite, test } from 'mocha';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { fsOps } from '../../../src/fs-operations';
+import { fsOps } from '../../../../src/fs-operations';
 
-import { Collection } from '../../../src/collection';
-import { validateError } from '../../utils';
-import { CollectionLoadError, CollectionNotFoundError } from '../../../errors';
+import { Collection } from '../../../../src/collection';
+import { validateError } from '../../../utils';
+import { CollectionLoadError, CollectionNotFoundError } from '../../../../errors';
 
 const valid_name = 'test-collection';
 const non_existent_collection = 'non-existent';
 
-suite('Collection Loading', () => {
+suite('Collections - Loading', () => {
     test('User loads Collection from filesystem', async () => {
         Collection.create(valid_name);
 
