@@ -46,11 +46,17 @@ CREATE INDEX idx_images_hash ON images(hash);
 
 ## Implementation Status
 - ✅ **Collection CRUD**: Create, load, delete, list, clear operations complete
-- ⏳ **Image CRUD**: Add, get, update, delete operations pending implementation
+- ✅ **Image Addition**: Add images to collections with validation, duplicate detection, and thumbnail generation
+- ✅ **Image Retrieval**: Get image metadata by ID with comprehensive validation and error handling
+- ⏳ **Image Management**: Update, delete, bulk operations pending implementation
 
 ## Validation & Error Handling
 - **Collection names**: Letters, numbers, hyphens only (`^[a-zA-Z0-9-]+$`)
-- **Specific error types**: `CollectionCreateError`, `CollectionLoadError`, `CollectionDeleteError`, `CollectionListError`, `CollectionClearError`, `CollectionNotFoundError`
+- **Image filenames**: Alphanumeric and `()._-` characters only, max 256 chars
+- **Image IDs**: Alphanumeric and hyphens only (`^[a-zA-Z0-9-]+$`), cannot be empty
+- **Specific error types**: 
+  - Collection: `CollectionCreateError`, `CollectionLoadError`, `CollectionDeleteError`, `CollectionListError`, `CollectionClearError`, `CollectionNotFoundError`
+  - Images: `ImageAdditionError`, `ImageRetrievalError`, `ImageNotFoundError`
 - **Atomic cleanup**: Failed operations leave no partial artifacts
 
 ## Exports

@@ -1,4 +1,4 @@
-import type { CollectionInstance, ImageMetadata, ImageUpdate, QueryOptions } from '../types';
+import type { CollectionInstance, Extension, ImageMetadata, ImageUpdate, Mime, QueryOptions } from '../types';
 import path from 'path';
 import { CONFIG } from '../../config';
 import { validateCollectionName } from './collection-utils'
@@ -16,6 +16,8 @@ import {
     CollectionLoadError,
     CollectionNotFoundError,
     ImageAdditionError,
+    ImageRetrievalError,
+    ImageNotFoundError,
     PendingImplementationError
 } from '../errors';
 
@@ -155,9 +157,11 @@ export class Collection implements CollectionInstance {
         try {
             // Validate and normalize file format first
             const { extension, mime } = this.validateAndNormalizeFormat(filePath);
+
+            const filename = this.extractFilename(filePath);
             
             // Validate filename safety and length
-            this.validateFilename(filePath);
+            this.validateFilename(filename);
             
             // Validate file exists and is a file
             await this.validateFileExists(filePath);
@@ -173,17 +177,17 @@ export class Collection implements CollectionInstance {
             
             // Generate unique image ID and name
             const imageId = randomUUID();
-            const imageName = this.generateImageName();
+            
             
             // Process and store image files
-            await this.processAndStoreImage(filePath, imageName, extension);
+            await this.processAndStoreImage(filePath, filename, extension);
             
             // Create image metadata
             const now = new Date();
             const metadata: ImageMetadata = {
                 id: imageId,
                 collection: this.name,
-                name: imageName,
+                name: filename,
                 extension: extension as 'jpg' | 'png' | 'webp',
                 mime: mime as 'image/jpeg' | 'image/png' | 'image/webp',
                 size: (await fsOps.stat(filePath)).size,
@@ -210,8 +214,59 @@ export class Collection implements CollectionInstance {
      * Get image metadata by ID
      */
     async getImage(imageId: string): Promise<ImageMetadata> {
-        console.log(`args: imageId: ${imageId}`);
-        throw new PendingImplementationError('Collection.getImage');
+        try {
+            // Validate image ID
+            this.validateImageId(imageId);
+            
+            // Query database for image
+            const db = this.getDB();
+            
+            try {
+                const stmt = db.prepare('SELECT * FROM images WHERE id = ?');
+                const row = stmt.get(imageId) as {
+                    id: string;
+                    collection: string;
+                    name: string;
+                    extension: string;
+                    mime: string;
+                    size: number;
+                    hash: string;
+                    width: number;
+                    height: number;
+                    aspect: number;
+                    status: string;
+                    created: string;
+                    updated: string;
+                } | undefined;
+                
+                if (!row) {
+                    throw new ImageNotFoundError(imageId);
+                }
+                
+                // Convert database row to ImageMetadata
+                const metadata: ImageMetadata = {
+                    id: row.id,
+                    collection: row.collection,
+                    name: row.name,
+                    extension: row.extension as Extension,
+                    mime: row.mime as Mime, 
+                    size: row.size,
+                    hash: row.hash,
+                    width: row.width,
+                    height: row.height,
+                    aspect: row.aspect,
+                    status: row.status as 'INBOX' | 'COLLECTION' | 'ARCHIVE',
+                    created: new Date(row.created),
+                    updated: new Date(row.updated)
+                };
+                
+                return metadata;
+            } finally {
+                db.close();
+            }
+        } catch (error: unknown) {
+            throw new ImageRetrievalError(this.name, error);
+        }
     }
 
     /**
@@ -256,6 +311,19 @@ export class Collection implements CollectionInstance {
 
     // Helper methods for addImage()
 
+    private validateImageId(imageId: string): void {
+        // Check for empty ID
+        if (!imageId || imageId.trim() === '') {
+            throw new Error('Image ID cannot be empty');
+        }
+        
+        // Check for invalid characters - UUIDs should only contain alphanumeric and hyphens
+        const validIdPattern = /^[a-zA-Z0-9-]+$/;
+        if (!validIdPattern.test(imageId)) {
+            throw new Error('Invalid image ID');
+        }
+    }
+
     private async validateFileExists(filePath: string): Promise<void> {
         try {
             const stats = await fsOps.stat(filePath);
@@ -287,8 +355,13 @@ export class Collection implements CollectionInstance {
         }
     }
 
-    private validateFilename(filePath: string): void {
-        const filename = path.basename(filePath);
+    private extractFilename(filepath: string): string {
+        const filename = path.basename(filepath);
+        const extension = path.extname(filepath);
+        return filename.slice(0, filename.length - extension.length);
+    }
+
+    private validateFilename(filename: string): void {
         
         // Check filename length (including extension)
         if (filename.length > 256) {
@@ -332,10 +405,6 @@ export class Collection implements CollectionInstance {
         } catch {
             throw new Error('Invalid or corrupted image file');
         }
-    }
-
-    private generateImageName(): string {
-        return randomUUID().replace(/-/g, '');
     }
 
     private async processAndStoreImage(sourceFilePath: string, imageName: string, extension: string): Promise<void> {

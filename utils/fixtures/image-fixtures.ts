@@ -14,7 +14,7 @@ interface ImageFixtureOptions {
 
 interface ImageFixture {
     filePath: string;
-    name: string;
+    filename: string;
     size: number;
     width: number;
     height: number;
@@ -23,12 +23,8 @@ interface ImageFixture {
 
 const getCacheKey = (options: ImageFixtureOptions): string => {
     const content = `${options.id}-${options.width}x${options.height}.${options.extension}`;
-    return createHash('md5').update(content).digest('hex');
-}
-
-function getCachePath(options: ImageFixtureOptions): string {
-    const key = getCacheKey(options);
-    return path.join(CACHE_DIR, `${key}.${options.extension}`);
+    const hash = createHash('md5').update(content).digest('hex');
+    return `_${hash}.(-)`
 }
 
 const createTestImage = (options: ImageFixtureOptions): Promise<Buffer> => {
@@ -48,14 +44,10 @@ const svg = `
             </linearGradient>
         </defs>
         <rect width="100%" height="100%" fill="url(#bg)"/>
-        // <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.min(width, height) / 2) - 1}" fill="none" opacity="1.0" stroke="#000000ff" stroke-width="2"/>
-        // <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.max(width, height) / 2) - 1}" fill="none" opacity="0.8" stroke="#000000ff" stroke-width="2"/>
         <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.min(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
         <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.max(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
         <text x="${width / 2}" y="${height / 2}" text-anchor="middle" font-family="Arial" font-size="16" fill="#010101ff">${name}</text>
         <text x="${width / 2}" y="${(height / 2) + 24}" text-anchor="middle" font-family="Arial" font-size="16" fill="#000000ff">${width}x${height}</text>
-
-        
       </svg>
     `;
 
@@ -80,25 +72,25 @@ const svg = `
  */
 export const getImageFixture = async (options: Partial<ImageFixtureOptions> = {}): Promise<ImageFixture> => {
     const {
-        id: name = `test-image-${Date.now()}`,
+        id = `test-image-${Date.now()}`,
         width = 600,
         height = 400,
         extension = 'jpeg'
     } = options;
 
-    const hash = getCacheKey({ id: name, width, height, extension });
-    const filePath = getCachePath({ id: name, width, height, extension });
+    const filename = getCacheKey({ id, width, height, extension });
+    const filePath = `${CACHE_DIR}/${filename}.${extension}`
     const size = await fs.stat(filePath).then((x) => x.size).catch(() => null);
 
     if (filePath && size) {
-        return { filePath, name: hash, size, width, height, extension };
+        return { filePath, filename, size, width, height, extension };
     }
 
     try {
-        const imageBuffer = await createTestImage({ id: name, width, height, extension });
+        const imageBuffer = await createTestImage({ id, width, height, extension });
         const size = imageBuffer.length;
         await fs.writeFile(filePath, imageBuffer);
-        return { filePath, name: hash, size, width, height, extension };
+        return { filePath, filename, size, width, height, extension };
         
     } catch (error: unknown) {
         throw new Error(`Failed to create or access cached image at ${filePath}: ${(error as Error).message}`);

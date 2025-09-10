@@ -23,12 +23,13 @@ const testCollectionName = 'test-image-collection';
 suite('Images - Addition', () => {
     test('User adds a jpg image to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test.image_(1)-jpg', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ id: 'test-jpg', extension: 'jpg' });
 
         const metadata = await collection.addImage(imageFixture.filePath);
 
         ImageUtils.assertImageMetadata(metadata, {
             collection: testCollectionName,
+            name: imageFixture.filename,
             extension: 'jpg',
             status: 'INBOX',
             mime: 'image/jpeg',
@@ -43,12 +44,13 @@ suite('Images - Addition', () => {
 
     test('User adds a jpg image with "jpeg" extension to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test.image_(1)-jpeg', extension: 'jpeg' });
+        const imageFixture = await getImageFixture({ id: 'test-jpeg', extension: 'jpeg' });
 
         const metadata = await collection.addImage(imageFixture.filePath);
 
         ImageUtils.assertImageMetadata(metadata, {
             collection: testCollectionName,
+            name: imageFixture.filename,
             extension: 'jpg', // Should be normalized to jpg
             status: 'INBOX',
             mime: 'image/jpeg',
@@ -64,12 +66,13 @@ suite('Images - Addition', () => {
 
     test('User adds a png image to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test.image_(1)-png', extension: 'png' });
+        const imageFixture = await getImageFixture({ id: 'test-png', extension: 'png' });
 
         const metadata = await collection.addImage(imageFixture.filePath);
 
         ImageUtils.assertImageMetadata(metadata, {
             collection: testCollectionName,
+            name: imageFixture.filename,
             extension: 'png',
             status: 'INBOX',
             mime: 'image/png',
@@ -84,12 +87,13 @@ suite('Images - Addition', () => {
 
     test('User adds a webp image to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test.image_(1)-webp', extension: 'webp' });
+        const imageFixture = await getImageFixture({ id: 'test-webp', extension: 'webp' });
 
         const metadata = await collection.addImage(imageFixture.filePath);
 
         ImageUtils.assertImageMetadata(metadata, {
             collection: testCollectionName,
+            name: imageFixture.filename,
             extension: 'webp',
             status: 'INBOX',
             mime: 'image/webp',
