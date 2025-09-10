@@ -61,6 +61,13 @@ export class ImageNotFoundError extends Error {
   }
 }
 
+export class ImageUpdateError extends Error {
+  constructor(collectionName: string, public cause: unknown) {
+    super(`Unable to update image in Collection "${collectionName}"`);
+    this.name = 'ImageUpdateError';
+  }
+}
+
 export class PendingImplementationError extends Error {
   constructor(public functionName: string) {
     super(`"${functionName} is not implemented yet`);

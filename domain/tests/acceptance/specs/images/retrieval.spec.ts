@@ -91,7 +91,7 @@ suite('Images - Retrieval', () => {
         const addedMetadata = await collection.addImage(imageFixture.filePath);
         
         // Mock database operation to simulate internal error
-        const mockGetDB = sinon.stub(collection as unknown as { getDB: () => unknown }, 'getDB').throws(new Error('Database connection failed'));
+        sinon.stub(collection as unknown as { getDB: () => unknown }, 'getDB').throws(new Error('Database connection failed'));
         
         console.log('Validating that the correct Error is thrown when internal error occurs during image retrieval');
         const error = await validateAsyncError(() => collection.getImage(addedMetadata.id));
@@ -99,7 +99,5 @@ suite('Images - Retrieval', () => {
         error
             .shouldHaveType(ImageRetrievalError)
             .shouldHaveMessage(`Unable to retrieve image from Collection "${testCollectionName}"`);
-            
-        mockGetDB.restore();
     });
 });
