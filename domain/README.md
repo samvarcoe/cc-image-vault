@@ -3,6 +3,12 @@
 ## Collection Management
 Complete CRUD operations for isolated image collections with comprehensive error handling and validation.
 
+## Exports
+```typescript
+export { Collection } from './src/collection';
+export type * from './types';
+```
+
 ### Architecture
 - **Self-contained collections**: Each collection has its own directory and SQLite database
 - **Dynamic discovery**: Collections found by filesystem scan, no global registry required
@@ -48,19 +54,22 @@ CREATE INDEX idx_images_hash ON images(hash);
 - ✅ **Collection CRUD**: Create, load, delete, list, clear operations complete
 - ✅ **Image Addition**: Add images to collections with validation, duplicate detection, and thumbnail generation
 - ✅ **Image Retrieval**: Get image metadata by ID with comprehensive validation and error handling
-- ⏳ **Image Management**: Update, delete, bulk operations pending implementation
+- ✅ **Image Status Updates**: Update individual image status (INBOX → COLLECTION → ARCHIVE) with validation
+- ⏳ **Image Management**: Delete, bulk operations pending implementation
 
 ## Validation & Error Handling
 - **Collection names**: Letters, numbers, hyphens only (`^[a-zA-Z0-9-]+$`)
 - **Image filenames**: Alphanumeric and `()._-` characters only, max 256 chars
-- **Image IDs**: Alphanumeric and hyphens only (`^[a-zA-Z0-9-]+$`), cannot be empty
+- **Image IDs**: UUID v4 format validation with security redaction for invalid IDs
+- **Image status**: Must be one of INBOX, COLLECTION, ARCHIVE
 - **Specific error types**: 
   - Collection: `CollectionCreateError`, `CollectionLoadError`, `CollectionDeleteError`, `CollectionListError`, `CollectionClearError`, `CollectionNotFoundError`
-  - Images: `ImageAdditionError`, `ImageRetrievalError`, `ImageNotFoundError`
+  - Images: `ImageAdditionError`, `ImageRetrievalError`, `ImageNotFoundError`, `ImageUpdateError`
 - **Atomic cleanup**: Failed operations leave no partial artifacts
 
-## Exports
-```typescript
-export { Collection } from './src/collection';
-export type * from './types';
-```
+## Testing
+### Test Setup
+- Test isolation is achieved by stubbing the configuration before each test so that each test has it's own temporary collections directory
+- All stubs and fixtures are automatically cleared up after each tests
+- Hooks are implemented in `domain/tests/acceptance/setup.ts` alongside the test preparation and config
+

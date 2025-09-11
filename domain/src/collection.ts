@@ -18,8 +18,15 @@ import {
     ImageAdditionError,
     ImageRetrievalError,
     ImageNotFoundError,
+    ImageUpdateError,
     PendingImplementationError
 } from '../errors';
+
+const isUUID = (uuid: string): boolean => {
+    // Specifically validates UUID v4 (what randomUUID() generates)
+    const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return pattern.test(uuid);
+}
 
 /**
  * Collection class for managing isolated image collections
@@ -32,9 +39,9 @@ export class Collection implements CollectionInstance {
         this.name = name;
     }
 
-    private getDB(): Database.Database {
-        const dbPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, this.name, 'collection.db');
-        return new Database(dbPath);
+    private getDatabase(): Database.Database {
+        const databasePath = path.join(CONFIG.COLLECTIONS_DIRECTORY, this.name, 'collection.db');
+        return new Database(databasePath);
     }
 
     /**
@@ -210,34 +217,45 @@ export class Collection implements CollectionInstance {
         }
     }
 
+    validateImageExists(imageId: string) {
+        const database = this.getDatabase();
+        try {
+            const row = database.prepare('SELECT * FROM images WHERE id = ?').get(imageId)
+            if (row == undefined) {
+                throw new ImageNotFoundError(imageId);
+            }
+        } finally {
+            database.close()
+        }
+    }
+
     /**
      * Get image metadata by ID
      */
     async getImage(imageId: string): Promise<ImageMetadata> {
         try {
-            // Validate image ID
             this.validateImageId(imageId);
             
-            // Query database for image
-            const db = this.getDB();
+            const database = this.getDatabase();
             
             try {
-                const stmt = db.prepare('SELECT * FROM images WHERE id = ?');
-                const row = stmt.get(imageId) as {
-                    id: string;
-                    collection: string;
-                    name: string;
-                    extension: string;
-                    mime: string;
-                    size: number;
-                    hash: string;
-                    width: number;
-                    height: number;
-                    aspect: number;
-                    status: string;
-                    created: string;
-                    updated: string;
-                } | undefined;
+                const row = database
+                    .prepare('SELECT * FROM images WHERE id = ?')
+                    .get(imageId) as {
+                        id: string;
+                        collection: string;
+                        name: string;
+                        extension: string;
+                        mime: string;
+                        size: number;
+                        hash: string;
+                        width: number;
+                        height: number;
+                        aspect: number;
+                        status: string;
+                        created: string;
+                        updated: string;
+                    } | undefined;
                 
                 if (!row) {
                     throw new ImageNotFoundError(imageId);
@@ -262,19 +280,45 @@ export class Collection implements CollectionInstance {
                 
                 return metadata;
             } finally {
-                db.close();
+                database.close();
             }
         } catch (error: unknown) {
-            throw new ImageRetrievalError(this.name, error);
+            throw new ImageRetrievalError(this.name, imageId, error);
         }
     }
 
     /**
      * Update image status
      */
-    async updateImage(imageId: string, status: ImageUpdate): Promise<ImageMetadata> {
-        console.log(`args: imageId: ${imageId}, status: ${status}`);
-        throw new PendingImplementationError('Collection.updateImage');
+    async updateImage(imageId: string, update: ImageUpdate): Promise<ImageMetadata> {
+        try {
+            this.validateImageId(imageId);
+            this.validateImageExists(imageId);
+            this.validateImageStatus(update.status);
+            
+            const image = await this.getImage(imageId);
+            const database = this.getDatabase();
+            const now = new Date();
+            
+            try {
+                database
+                    .prepare('UPDATE images SET status = ?, updated = ? WHERE id = ?')
+                    .run(update.status, now.toISOString(), imageId);
+                
+                const updatedMetadata: ImageMetadata = {
+                    ...image,
+                    status: update.status,
+                    updated: now
+                };
+                
+                return updatedMetadata;
+
+            } finally {
+                database.close();
+            }
+        } catch (error: unknown) {
+            throw new ImageUpdateError(this.name, imageId, error);
+        }
     }
 
     /**
@@ -311,16 +355,23 @@ export class Collection implements CollectionInstance {
 
     // Helper methods for addImage()
 
-    private validateImageId(imageId: string): void {
-        // Check for empty ID
-        if (!imageId || imageId.trim() === '') {
-            throw new Error('Image ID cannot be empty');
-        }
+    // private validateImageId(imageId: string): void {
+    //     // Check for empty ID
+    //     if (!imageId || imageId.trim() === '') {
+    //         throw new Error('Image ID cannot be empty');
+    //     }
         
-        // Check for invalid characters - UUIDs should only contain alphanumeric and hyphens
-        const validIdPattern = /^[a-zA-Z0-9-]+$/;
-        if (!validIdPattern.test(imageId)) {
-            throw new Error('Invalid image ID');
+    //     // Check for invalid characters - UUIDs should only contain alphanumeric and hyphens
+    //     const validIdPattern = /^[a-zA-Z0-9-]+$/;
+    //     if (!validIdPattern.test(imageId)) {
+    //         throw new Error('Invalid image ID');
+    //     }
+    // }
+
+    private validateImageStatus(status: string): void {
+        const validStatuses = ['INBOX', 'COLLECTION', 'ARCHIVE'];
+        if (!validStatuses.includes(status)) {
+            throw new Error('Invalid status value');
         }
     }
 
@@ -375,21 +426,34 @@ export class Collection implements CollectionInstance {
         }
     }
 
+//     const isUUID = (uuid: string): boolean => {
+//     // Specifically validates UUID v4 (what randomUUID() generates)
+    
+//     return 
+// }
+    private validateImageId(imageID: string) {
+        const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+        if(!pattern.test(imageID)) {
+            throw new Error('Invalid imageID');
+        } 
+
+    }
+
     private async calculateImageHash(filePath: string): Promise<string> {
         const buffer = await fsOps.readFile(filePath);
         return crypto.createHash('sha256').update(buffer).digest('hex');
     }
 
     private async validateNoDuplicate(hash: string): Promise<void> {
-        const db = this.getDB();
+        const database = this.getDatabase();
         
         try {
-            const existing = db.prepare('SELECT id FROM images WHERE hash = ?').get(hash);
+            const existing = database.prepare('SELECT id FROM images WHERE hash = ?').get(hash);
             if (existing) {
                 throw new Error('Image already exists in Collection');
             }
         } finally {
-            db.close();
+            database.close();
         }
     }
 
@@ -426,33 +490,33 @@ export class Collection implements CollectionInstance {
     }
 
     private async storeImageMetadata(metadata: ImageMetadata): Promise<void> {
-        const db = this.getDB();
+        const database = this.getDatabase();
         
         try {
-            const stmt = db.prepare(`
-                INSERT INTO images (
-                    id, collection, name, extension, mime, size, hash,
-                    width, height, aspect, status, created, updated
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `);
-            
-            stmt.run(
-                metadata.id,
-                metadata.collection,
-                metadata.name,
-                metadata.extension,
-                metadata.mime,
-                metadata.size,
-                metadata.hash,
-                metadata.width,
-                metadata.height,
-                metadata.aspect,
-                metadata.status,
-                metadata.created.toISOString(),
-                metadata.updated.toISOString()
-            );
+            database
+                .prepare(
+                    `INSERT INTO images (
+                        id, collection, name, extension, mime, size, hash,
+                        width, height, aspect, status, created, updated
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+                )
+                .run(
+                    metadata.id,
+                    metadata.collection,
+                    metadata.name,
+                    metadata.extension,
+                    metadata.mime,
+                    metadata.size,
+                    metadata.hash,
+                    metadata.width,
+                    metadata.height,
+                    metadata.aspect,
+                    metadata.status,
+                    metadata.created.toISOString(),
+                    metadata.updated.toISOString()
+                );
         } finally {
-            db.close();
+            database.close();
         }
     }
 }

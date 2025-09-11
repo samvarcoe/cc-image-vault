@@ -68,7 +68,7 @@ export class ImageUtils {
             id: expected.id || _.isString,
             collection: expected.collection || _.isString,
             name: expected.name || _.isString,
-            extension: expected.extension ||  ((x: string) => ['.jpg', '.png', '.webp'].includes(x)),
+            extension: expected.extension ||  ((x: string) => ['jpg', 'png', 'webp'].includes(x)),
             mime: expected.mime || ((x: string) => ['image/jpeg', 'image/png', 'image/webp'].includes(x)),
             size: expected.size || _.isNumber,
             hash: expected.hash || _.isString,

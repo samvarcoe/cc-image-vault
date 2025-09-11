@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { fsOps } from '../../../../src/fs-operations';
 
 import { Collection } from '../../../../src/collection';
-import { validateError } from '../../../utils';
+import { captureAssertableError } from '../../../utils';
 import { CollectionLoadError, CollectionNotFoundError } from '../../../../errors';
 
 const valid_name = 'test-collection';
@@ -21,7 +21,7 @@ suite('Collections - Loading', () => {
 
     test('User attempts to load a non-existent Collection', async () => {
         console.log('Validating that the correct Error is thrown when attempting to load a Collection that doesn\'t exist');
-        validateError(() => Collection.load(non_existent_collection))
+        captureAssertableError(() => Collection.load(non_existent_collection))
             .shouldHaveType(CollectionLoadError)
             .shouldHaveMessage(`Unable to load Collection: "${non_existent_collection}"`)
             .shouldHaveCause(CollectionNotFoundError)
@@ -36,7 +36,7 @@ suite('Collections - Loading', () => {
         sinon.stub(fsOps, 'existsSync').throws(new Error('Filesystem error'));
 
         console.log('Validating that the correct Error is thrown when an internal error occurs when loading a Collection');
-        validateError(() => Collection.load(valid_name))
+        captureAssertableError(() => Collection.load(valid_name))
             .shouldHaveType(CollectionLoadError)
             .shouldHaveMessage(`Unable to load Collection: "${valid_name}"`);
     });

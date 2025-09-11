@@ -2,8 +2,8 @@ import { suite, test } from 'mocha';
 
 import { Collection } from '../../../../src/collection';
 import { ImageUtils } from '../../../utils/image-utils';
-import { validateAsyncError } from '../../../utils';
-import { ImageUpdateError, ImageNotFoundError } from '../../../../errors';
+import { captureAssertableAsyncError } from '../../../utils';
+import { ImageUpdateError, ImageRetrievalError, ImageNotFoundError } from '../../../../errors';
 
 import { getImageFixture } from '@/utils/fixtures/image-fixtures';
 import sinon from 'sinon';
@@ -38,15 +38,15 @@ suite('Images - Update', () => {
 
     test('User attempts to update the status of a non-existent image', async () => {
         const collection = Collection.create(testCollectionName);
-        const nonExistentImageId = 'non-existent-image-id';
+        const nonExistentImageId = crypto.randomUUID();
         
-        const error = await validateAsyncError(async () => {
+        const error = await captureAssertableAsyncError(async () => {
             await collection.updateImage(nonExistentImageId, { status: 'COLLECTION' });
         });
         
         error
             .shouldHaveType(ImageUpdateError)
-            .shouldHaveMessage(`Unable to update image in Collection "${testCollectionName}"`)
+            .shouldHaveMessage(`Unable to update image: "${nonExistentImageId}" in Collection: "${testCollectionName}"`)
             .shouldHaveCause(ImageNotFoundError)
             .shouldHaveCauseMessage(`Image not found with ID: "${nonExistentImageId}"`);
         
@@ -57,32 +57,16 @@ suite('Images - Update', () => {
         const collection = Collection.create(testCollectionName);
         const invalidImageId = '../../../etc/passwd'; // Path traversal attempt
         
-        const error = await validateAsyncError(async () => {
+        const error = await captureAssertableAsyncError(async () => {
             await collection.updateImage(invalidImageId, { status: 'COLLECTION' });
         });
         
         error
             .shouldHaveType(ImageUpdateError)
-            .shouldHaveMessage(`Unable to update image in Collection "${testCollectionName}"`)
-            .shouldHaveCauseMessage('Invalid image ID');
+            .shouldHaveMessage(`Unable to update image: "${invalidImageId}" in Collection: "${testCollectionName}"`)
+            .shouldHaveCauseMessage('Invalid imageID');
         
         console.log(`✓ Invalid image ID properly rejected for security`);
-    });
-
-    test('User attempts to update the status of an image using an empty image ID', async () => {
-        const collection = Collection.create(testCollectionName);
-        const emptyImageId = '';
-        
-        const error = await validateAsyncError(async () => {
-            await collection.updateImage(emptyImageId, { status: 'COLLECTION' });
-        });
-        
-        error
-            .shouldHaveType(ImageUpdateError)
-            .shouldHaveMessage(`Unable to update image in Collection "${testCollectionName}"`)
-            .shouldHaveCauseMessage('Image ID cannot be empty');
-        
-        console.log(`✓ Empty image ID properly rejected`);
     });
 
     test('User attempts to update the status of an image using an invalid status value', async () => {
@@ -92,7 +76,7 @@ suite('Images - Update', () => {
         // Add an image to update
         const originalMetadata = await collection.addImage(imageFixture.filePath);
         
-        const error = await validateAsyncError(async () => {
+        const error = await captureAssertableAsyncError(async () => {
             // TypeScript would normally catch this, but we test runtime validation
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await collection.updateImage(originalMetadata.id, { status: 'INVALID_STATUS' as any });
@@ -100,7 +84,7 @@ suite('Images - Update', () => {
         
         error
             .shouldHaveType(ImageUpdateError)
-            .shouldHaveMessage(`Unable to update image in Collection "${testCollectionName}"`)
+            .shouldHaveMessage(`Unable to update image: "${originalMetadata.id}" in Collection: "${testCollectionName}"`)
             .shouldHaveCauseMessage('Invalid status value');
         
         console.log(`✓ Invalid status value properly rejected`);
@@ -114,15 +98,15 @@ suite('Images - Update', () => {
         const originalMetadata = await collection.addImage(imageFixture.filePath);
 
         // Mock database operation to simulate internal error
-        sinon.stub(collection as unknown as { getDB: () => unknown }, 'getDB').throws(new Error('Database connection failed'));
-        
-        const error = await validateAsyncError(async () => {
+        sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));
+
+        const error = await captureAssertableAsyncError(async () => {
             await collection.updateImage(originalMetadata.id, { status: 'COLLECTION' });
         });
         
         error
             .shouldHaveType(ImageUpdateError)
-            .shouldHaveMessage(`Unable to update image in Collection "${testCollectionName}"`);
+            .shouldHaveMessage(`Unable to update image: "${originalMetadata.id}" in Collection: "${testCollectionName}"`);
         
         console.log(`✓ Internal errors properly wrapped in ImageUpdateError`);
     });

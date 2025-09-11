@@ -7,7 +7,7 @@ import { CONFIG } from '@/config';
 import { Collection } from '../../../../src/collection';
 import { DirectoryFixtures } from '@/utils/fixtures/directory-fixtures';
 import { CollectionUtils } from '../../../utils/collection-utils';
-import { validateError } from '../../../utils';
+import { captureAssertableError } from '../../../utils';
 import { CollectionClearError } from '../../../../errors';
 
 const collection1 = 'collection-1';
@@ -39,7 +39,7 @@ suite('Collections - Clearing', () => {
         sinon.stub(fsOps, 'readdirSync').throws(new Error('Filesystem error'));
 
         console.log('Validating that the correct Error is thrown when An internal error occurs when clearing Collections');
-        validateError(() => Collection.clear())
+        captureAssertableError(() => Collection.clear())
             .shouldHaveType(CollectionClearError)
             .shouldHaveMessage('Unable to clear Collections')
 

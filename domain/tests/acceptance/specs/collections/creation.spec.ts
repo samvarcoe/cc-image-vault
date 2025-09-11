@@ -7,7 +7,7 @@ import { CONFIG } from '@/config';
 import { Collection } from '../../../../src/collection';
 import { DirectoryFixtures } from '@/utils/fixtures/directory-fixtures';
 import { CollectionUtils } from '../../../utils/collection-utils';
-import { validateError } from '../../../utils';
+import { captureAssertableError } from '../../../utils';
 import { CollectionCreateError } from '../../../../errors';
 
 const valid_name = 'test-collection';
@@ -27,7 +27,7 @@ suite('Collections - Creation', () => {
        Collection.create(existing_collection); 
 
         console.log('Validating that the correct Error is thrown when attempting to create a Collection with a duplicate name');
-        validateError(() => Collection.create(existing_collection))
+        captureAssertableError(() => Collection.create(existing_collection))
             .shouldHaveType(CollectionCreateError)
             .shouldHaveMessage(`Unable to create Collection: "${existing_collection}"`)
             .shouldHaveCause(Error)
@@ -41,7 +41,7 @@ suite('Collections - Creation', () => {
 
     test('User attempts to create a Collection with invalid name', async () => {
         console.log('Validating that the correct Error is thrown when attempting to create a Collection with an invalid name');
-        validateError(() => Collection.create(invalid_name))
+        captureAssertableError(() => Collection.create(invalid_name))
             .shouldHaveType(CollectionCreateError)
             .shouldHaveMessage(`Unable to create Collection: "${invalid_name}"`)
             .shouldHaveCause(Error)
@@ -53,7 +53,7 @@ suite('Collections - Creation', () => {
     test('An internal error occurs when creating a Collection', async () => {
         sinon.stub(fsOps, 'mkdirSync').throws(new Error('Filesystem error'));
 
-        validateError(() => Collection.create(valid_name))
+        captureAssertableError(() => Collection.create(valid_name))
             .shouldHaveType(CollectionCreateError)
             .shouldHaveMessage(`Unable to create Collection: "${valid_name}"`)
 

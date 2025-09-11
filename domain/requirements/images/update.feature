@@ -14,31 +14,25 @@ Feature: Images - Update
         And an image exists in the Collection
         When the user updates the image status
         Then the system returns the updated ImageMetadata
-        And subsequent calls to retrieve the image return the updated ImageMetadata
+        And subsequent attempts to retrieve the image return the updated ImageMetadata
 
     Scenario: User attempts to update the status of a non-existent image
         Given a Collection exists with name: [name]
-        When the user attempts to update the status of an image with an [imageId] that does not exist
-        Then the system throws "ImageUpdateError: Unable to update image in Collection \"[name]\""
+        When the user attempts to update the status of an image with a valid imageId: [imageId] that does not exist
+        Then the system throws "ImageUpdateError: Unable to update image: \"[imageID]\" in Collection: \"[name]\""
         And the error cause is: "ImageNotFoundError: Image not found with ID: \"[imageId]\""
 
     Scenario: User attempts to update the status of an image using an invalid image ID
         Given a Collection exists with name: [name]
         When the user attempts to update an image with an invalid ID containing unsafe characters
-        Then the system throws "ImageUpdateError: Unable to update image in Collection \"[name]\""
+        Then the system throws "ImageUpdateError: Unable to update image: \"[imageID]\" in Collection: \"[name]\""
         And the error cause is: "Error: Invalid image ID"
-
-    Scenario: User attempts to update the status of an image using an empty image ID
-        Given a Collection exists with name: [name]
-        When the user attempts to update an image with an empty ID
-        Then the system throws "ImageUpdateError: Unable to update image in Collection \"[name]\""
-        And the error cause is: "Error: Image ID cannot be empty"
 
     Scenario: User attempts to update the status of an image using an invalid status value
         Given a Collection exists with name: [name]
         And an image exists in the Collection
         When the user attempts to update the image with an invalid status value
-        Then the system throws "ImageUpdateError: Unable to update image in Collection \"[name]\""
+        Then the system throws "ImageUpdateError: Unable to update image: \"[imageID]\" in Collection: \"[name]\""
         And the error cause is: "Error: Invalid status value"
 
     Scenario: An internal error occurs when the user attempts to update the status of an image
@@ -46,4 +40,4 @@ Feature: Images - Update
         And an image exists in the Collection
         When the user attempts to update the image status
         But there is an internal error
-        Then the system throws "ImageUpdateError: Unable to update image in Collection \"[name]\""
+        Then the system throws "ImageUpdateError: Unable to update image: \"[imageID]\" in Collection: \"[name]\""

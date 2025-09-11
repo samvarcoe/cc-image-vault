@@ -4,7 +4,7 @@ Feature: Images - Retrieval
     Acceptance Criteria
       - AC1: Images can be retrieved by their unique ID from the Collection database
       - AC2: System validates image ID for safety and non-empty values
-      - AC3: System throws specific errors for invalid IDs, missing images, and internal failures
+      - AC3: System throws specific errors for invalid IDs and internal failures
       - AC4: Retrieved images return complete ImageMetadata as defined in domain types
 
     Scenario: User retrieves image using a valid ID
@@ -16,24 +16,18 @@ Feature: Images - Retrieval
     Scenario: User attempts to retrieve a non-existent image
         Given a Collection exists with name: [name]
         When the user attempts to retrieve an image with an [imageID] that does not exist
-        Then the system throws "ImageRetrievalError: Unable to retrieve image from Collection \"[name]\""
+        Then the system throws "Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""
         And the error cause is: "ImageNotFoundError: Image not found with ID: \"[imageId]\""
 
     Scenario: User attempts to retrieve an image using an invalid ID
         Given a Collection exists with name: [name]
         When the user attempts to retrieve an image with an invalid ID containing unsafe characters
-        Then the system throws "ImageRetrievalError: Unable to retrieve image from Collection \"[name]\""
+        Then the system throws "Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""
         And the error cause is: "Error: Invalid image ID"
-
-    Scenario: User attempts to retrieve an image using an empty ID
-        Given a Collection exists with name: [name]
-        When the user attempts to retrieve an image with an empty ID
-        Then the system throws "ImageRetrievalError: Unable to retrieve image from Collection \"[name]\""
-        And the error cause is: "Error: Image ID cannot be empty"
 
     Scenario: An internal error occurs when retrieving an image
         Given a Collection exists with name: [name]
         And an image exists in the Collection
-        When the user attempts to retrieve the image using the correct ID
+        When the user attempts to retrieve the image using the correct ID: [imageID]
         But there is an internal error
-        Then the system throws "ImageRetrievalError: Unable to retrieve image from Collection \"[name]\""
+        Then the system throws "Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""

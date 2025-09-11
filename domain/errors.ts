@@ -48,8 +48,8 @@ export class ImageAdditionError extends Error {
 }
 
 export class ImageRetrievalError extends Error {
-  constructor(collectionName: string, public cause: unknown) {
-    super(`Unable to retrieve image from Collection "${collectionName}"`);
+  constructor(collectionName: string, imageId: string, public cause: unknown) {
+    super(`Unable to retrieve image: "${imageId}" from Collection: "${collectionName}"`);
     this.name = 'ImageRetrievalError';
   }
 }
@@ -62,8 +62,8 @@ export class ImageNotFoundError extends Error {
 }
 
 export class ImageUpdateError extends Error {
-  constructor(collectionName: string, public cause: unknown) {
-    super(`Unable to update image in Collection "${collectionName}"`);
+  constructor(collectionName: string, imageId:string, public cause: unknown) {
+    super(`Unable to update image: "${imageId}" in Collection: "${collectionName}"`);
     this.name = 'ImageUpdateError';
   }
 }

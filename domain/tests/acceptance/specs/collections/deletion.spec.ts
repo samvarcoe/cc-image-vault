@@ -4,7 +4,7 @@ import { fsOps } from '../../../../src/fs-operations';
 
 import { Collection } from '../../../../src/collection';
 import { CollectionUtils } from '../../../utils/collection-utils';
-import { validateError } from '../../../utils';
+import { captureAssertableError } from '../../../utils';
 import { CollectionDeleteError, CollectionNotFoundError } from '../../../../errors';
 
 const valid_name = 'test-collection';
@@ -21,7 +21,7 @@ suite('Collections - Deletion', () => {
 
     test('User attempts to delete a Collection that does not exist', async () => {
         console.log('Validating that the correct Error is thrown when attempting to delete a Collection that doesn\'t exist');
-        validateError(() => Collection.delete(non_existent_collection))
+        captureAssertableError(() => Collection.delete(non_existent_collection))
             .shouldHaveType(CollectionDeleteError)
             .shouldHaveMessage(`Unable to delete Collection: "${non_existent_collection}"`)
             .shouldHaveCause(CollectionNotFoundError)
@@ -34,7 +34,7 @@ suite('Collections - Deletion', () => {
         sinon.stub(fsOps, 'rmSync').throws(new Error('Filesystem error'));
 
         console.log('Validating that the correct Error is thrown when An internal error occurs when deleting a Collection');
-        validateError(() => Collection.delete(valid_name))
+        captureAssertableError(() => Collection.delete(valid_name))
             .shouldHaveType(CollectionDeleteError)
             .shouldHaveMessage(`Unable to delete Collection: "${valid_name}"`)
 

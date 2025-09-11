@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { fsOps } from '../../../../src/fs-operations';
 
 import { Collection } from '../../../../src/collection';
-import { validateError } from '../../../utils';
+import { captureAssertableError } from '../../../utils';
 import { CollectionListError } from '../../../../errors';
 
 const collection1 = 'collection-1';
@@ -36,7 +36,7 @@ suite('Collections - Listing', () => {
         sinon.stub(fsOps, 'readdirSync').throws(new Error('Filesystem error'));
 
         console.log('Validating that the correct Error is thrown when An internal error occurs when listing Collections');
-        validateError(() => Collection.list())
+        captureAssertableError(() => Collection.list())
             .shouldHaveType(CollectionListError)
             .shouldHaveMessage('Unable to list Collections')
     });

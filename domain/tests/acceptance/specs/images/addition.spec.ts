@@ -5,7 +5,7 @@ import path from 'path';
 
 import { Collection } from '../../../../src/collection';
 import { ImageUtils } from '../../../utils/image-utils';
-import { validateAsyncError } from '../../../utils';
+import { captureAssertableAsyncError } from '../../../utils';
 import { ImageAdditionError } from '../../../../errors';
 
 import { 
@@ -110,7 +110,7 @@ suite('Images - Addition', () => {
         const nonExistentPath = './blah/blah/blah.jpg';
 
         console.log('Validating that the correct Error is thrown when attempting to add non-existent image file');
-        const error = await validateAsyncError(() => collection.addImage(nonExistentPath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(nonExistentPath));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -129,7 +129,7 @@ suite('Images - Addition', () => {
         await collection.addImage(imageFixture.filePath);
 
         console.log('Validating that the correct Error is thrown when attempting to add duplicate image');
-        const error = await validateAsyncError(() => collection.addImage(imageFixture.filePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(imageFixture.filePath));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -149,7 +149,7 @@ suite('Images - Addition', () => {
         const unsupportedFilePath = await getUnsupportedFileFixture();
 
         console.log('Validating that the correct Error is thrown when attempting to add unsupported file type');
-        const error = await validateAsyncError(() => collection.addImage(unsupportedFilePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(unsupportedFilePath));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -165,7 +165,7 @@ suite('Images - Addition', () => {
         const corruptedFilePath = await getCorruptedImageFixture('jpg');
 
         console.log('Validating that the correct Error is thrown when attempting to add corrupted image');
-        const error = await validateAsyncError(() => collection.addImage(corruptedFilePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(corruptedFilePath));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -181,7 +181,7 @@ suite('Images - Addition', () => {
         const unsafeFilePath = './some/path/javascript:alert(1).jpg';
 
         console.log('Validating that the correct Error is thrown when attempting to add image with unsafe filename');
-        const error = await validateAsyncError(() => collection.addImage(unsafeFilePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(unsafeFilePath));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -198,7 +198,7 @@ suite('Images - Addition', () => {
         const longFilePath = `./some/path/${longName}.jpg`;
 
         console.log('Validating that the correct Error is thrown when attempting to add image with long filename');
-        const error = await validateAsyncError(() => collection.addImage(longFilePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(longFilePath));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -217,7 +217,7 @@ suite('Images - Addition', () => {
         sinon.stub(fsOps, 'writeFile').throws(new Error('Filesystem unavailable'));
 
         console.log('Validating that the correct Error is thrown when internal error occurs during image addition');
-        const error = await validateAsyncError(() => collection.addImage(imageFixture.filePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(imageFixture.filePath));
 
         error
             .shouldHaveType(ImageAdditionError)
