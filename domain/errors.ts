@@ -68,6 +68,13 @@ export class ImageUpdateError extends Error {
   }
 }
 
+export class ImageDeletionError extends Error {
+  constructor(collectionName: string, imageId: string, public cause: unknown) {
+    super(`Unable to delete image: "${imageId}" from Collection: "${collectionName}"`);
+    this.name = 'ImageDeletionError';
+  }
+}
+
 export class PendingImplementationError extends Error {
   constructor(public functionName: string) {
     super(`"${functionName} is not implemented yet`);

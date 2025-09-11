@@ -3,7 +3,7 @@ Feature: Images - Delete
 
     Acceptance Criteria:
       - AC1: Images can be permanently deleted by their unique ID
-      - AC2: System validates image ID for safety and non-empty values
+      - AC2: System validates image ID for UUID format 
       - AC3: System removes both original image file and thumbnail from filesystem
       - AC4: System removes image metadata from the Collection database
       - AC5: Deletion operations are atomic - either complete success or no changes
@@ -26,7 +26,7 @@ Feature: Images - Delete
 
     Scenario: User attempts to delete an image using an invalid image ID
         Given a Collection exists with name: [name]
-        When the user attempts to delete an image with an invalid ID: [imageId] containing unsafe characters
+        When the user attempts to delete an image with an invalid ID: [imageId]
         Then the system throws "ImageDeletionError: Unable to delete image: \"[imageId]\" from Collection: \"[name]\""
         And the error cause is: "Error: Invalid image ID"
 

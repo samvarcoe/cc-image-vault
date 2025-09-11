@@ -22,12 +22,6 @@ import {
     PendingImplementationError
 } from '../errors';
 
-const isUUID = (uuid: string): boolean => {
-    // Specifically validates UUID v4 (what randomUUID() generates)
-    const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    return pattern.test(uuid);
-}
-
 /**
  * Collection class for managing isolated image collections
  * Each collection is self-contained with its own directory and SQLite database
@@ -185,7 +179,6 @@ export class Collection implements CollectionInstance {
             // Generate unique image ID and name
             const imageId = randomUUID();
             
-            
             // Process and store image files
             await this.processAndStoreImage(filePath, filename, extension);
             
@@ -235,7 +228,7 @@ export class Collection implements CollectionInstance {
     async getImage(imageId: string): Promise<ImageMetadata> {
         try {
             this.validateImageId(imageId);
-            
+
             const database = this.getDatabase();
             
             try {
@@ -353,21 +346,6 @@ export class Collection implements CollectionInstance {
         throw new PendingImplementationError('Collection.deleteImages');
     }
 
-    // Helper methods for addImage()
-
-    // private validateImageId(imageId: string): void {
-    //     // Check for empty ID
-    //     if (!imageId || imageId.trim() === '') {
-    //         throw new Error('Image ID cannot be empty');
-    //     }
-        
-    //     // Check for invalid characters - UUIDs should only contain alphanumeric and hyphens
-    //     const validIdPattern = /^[a-zA-Z0-9-]+$/;
-    //     if (!validIdPattern.test(imageId)) {
-    //         throw new Error('Invalid image ID');
-    //     }
-    // }
-
     private validateImageStatus(status: string): void {
         const validStatuses = ['INBOX', 'COLLECTION', 'ARCHIVE'];
         if (!validStatuses.includes(status)) {
@@ -426,11 +404,6 @@ export class Collection implements CollectionInstance {
         }
     }
 
-//     const isUUID = (uuid: string): boolean => {
-//     // Specifically validates UUID v4 (what randomUUID() generates)
-    
-//     return 
-// }
     private validateImageId(imageID: string) {
         const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         if(!pattern.test(imageID)) {
@@ -471,10 +444,10 @@ export class Collection implements CollectionInstance {
         }
     }
 
-    private async processAndStoreImage(sourceFilePath: string, imageName: string, extension: string): Promise<void> {
+    private async processAndStoreImage(sourceFilePath: string, imageID: string, extension: string): Promise<void> {
         const collectionPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, this.name);
-        const originalPath = path.join(collectionPath, 'images', 'original', `${imageName}.${extension}`);
-        const thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${imageName}.${extension}`);
+        const originalPath = path.join(collectionPath, 'images', 'original', `${imageID}.${extension}`);
+        const thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${imageID}.${extension}`);
         
         // Copy original image - use fsOps for mockable operations
         const sourceBuffer = await fsOps.readFile(sourceFilePath);

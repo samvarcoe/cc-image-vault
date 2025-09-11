@@ -3,7 +3,7 @@ import { suite, test } from 'mocha';
 import { Collection } from '../../../../src/collection';
 import { ImageUtils } from '../../../utils/image-utils';
 import { captureAssertableAsyncError } from '../../../utils';
-import { ImageUpdateError, ImageRetrievalError, ImageNotFoundError } from '../../../../errors';
+import { ImageUpdateError, ImageNotFoundError } from '../../../../errors';
 
 import { getImageFixture } from '@/utils/fixtures/image-fixtures';
 import sinon from 'sinon';
