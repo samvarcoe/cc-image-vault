@@ -38,8 +38,8 @@ suite('Images - Addition', () => {
             aspect: imageFixture.width / imageFixture.height
         });
 
-        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.name}.jpg`, 'original');
-        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.name}.jpg`, 'thumbnail');
+        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.id}.jpg`, 'original');
+        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.id}.jpg`, 'thumbnail');
     });
 
     test('User adds a jpg image with "jpeg" extension to a Collection', async () => {
@@ -60,8 +60,8 @@ suite('Images - Addition', () => {
         });
 
         // File should be stored with .jpg extension regardless of original .jpeg
-        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.name}.jpg`, 'original');
-        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.name}.jpg`, 'thumbnail');
+        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.id}.jpg`, 'original');
+        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.id}.jpg`, 'thumbnail');
     });
 
     test('User adds a png image to a Collection', async () => {
@@ -81,8 +81,8 @@ suite('Images - Addition', () => {
             aspect: imageFixture.width / imageFixture.height
         });
 
-        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.name}.png`, 'original');
-        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.name}.png`, 'thumbnail');
+        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.id}.png`, 'original');
+        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.id}.png`, 'thumbnail');
     });
 
     test('User adds a webp image to a Collection', async () => {
@@ -101,8 +101,8 @@ suite('Images - Addition', () => {
             height: imageFixture.height
         });
 
-        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.name}.webp`, 'original');
-        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.name}.webp`, 'thumbnail');
+        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.id}.webp`, 'original');
+        await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.id}.webp`, 'thumbnail');
     });
 
     test('User attempts to add an image to a Collection using a path that does not exist', async () => {

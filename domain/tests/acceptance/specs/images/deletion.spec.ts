@@ -68,7 +68,7 @@ suite('Images - Delete', () => {
             .shouldHaveType(ImageDeletionError)
             .shouldHaveMessage(`Unable to delete image: "${invalidImageId}" from Collection: "${testCollectionName}"`)
             .shouldHaveCause(Error)
-            .shouldHaveCauseMessage('Invalid image ID');
+            .shouldHaveCauseMessage('Invalid imageID');
     });
 
     test('An internal error occurs when deleting an image', async () => {

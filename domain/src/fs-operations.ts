@@ -13,8 +13,10 @@ export const fsOps = {
   rmSync: fs.rmSync.bind(fs),
   readdirSync: fs.readdirSync.bind(fs),
   writeFileSync: fs.writeFileSync.bind(fs),
+  unlinkSync: fs.unlinkSync.bind(fs),
   // Async operations
   stat: promises.stat.bind(promises),
   readFile: promises.readFile.bind(promises),
-  writeFile: promises.writeFile.bind(promises)
+  writeFile: promises.writeFile.bind(promises),
+  unlink: promises.unlink.bind(promises)
 };

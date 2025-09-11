@@ -31,8 +31,8 @@ export class ImageUtils {
         } catch {
             exists = false;
         }
-        expect(exists, `${type} image "${imageName}" not found in Collection "${collectionName}"`).true;
-        console.log(`✓ ${type} image "${imageName}" exists in Collection "${collectionName}"`);
+        expect(exists, `${type} image file for: "${imageName}" does not exist at "${imagePath}"`).true;
+        console.log(`✓ ${type} image file for: "${imageName}" exists at "${imagePath}"`);
     };
 
     static assertImageFileDoesNotExist = async (collectionName: string, imageName: string, type: 'original' | 'thumbnail' = 'original'): Promise<void> => {
@@ -46,9 +46,9 @@ export class ImageUtils {
         } catch {
             exists = false;
         }
-        
-        expect(exists, `${type} image "${imageName}" should not exist in Collection "${collectionName}"`).false;
-        console.log(`✓ ${type} image "${imageName}" does not exist in Collection "${collectionName}"`);
+
+        expect(exists, `${type} image file for: "${imageName}" should not exist at "${imagePath}"`).false;
+        console.log(`✓ ${type} image file for: "${imageName}" does not exist at "${imagePath}"`);
     };
 
     static assertNoImageFilesCreated = async (collectionName: string): Promise<void> => {

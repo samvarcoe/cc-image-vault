@@ -16,6 +16,7 @@ import {
     CollectionLoadError,
     CollectionNotFoundError,
     ImageAdditionError,
+    ImageDeletionError,
     ImageRetrievalError,
     ImageNotFoundError,
     ImageUpdateError,
@@ -180,7 +181,7 @@ export class Collection implements CollectionInstance {
             const imageId = randomUUID();
             
             // Process and store image files
-            await this.processAndStoreImage(filePath, filename, extension);
+            await this.processAndStoreImage(filePath, imageId, extension);
             
             // Create image metadata
             const now = new Date();
@@ -318,8 +319,74 @@ export class Collection implements CollectionInstance {
      * Delete an image from this Collection
      */
     async deleteImage(imageId: string): Promise<void> {
-        console.log(`args: imageId: ${imageId}`);
-        throw new PendingImplementationError('Collection.deleteImage');
+        try {
+            // Validate image ID format
+            this.validateImageId(imageId);
+            
+            // Get image metadata to validate existence and for file paths
+            const imageMetadata = await this.getImage(imageId);
+            
+            // Build file paths for original and thumbnail
+            const collectionPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, this.name);
+            const originalPath = path.join(collectionPath, 'images', 'original', `${imageId}.${imageMetadata.extension}`);
+            const thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${imageId}.${imageMetadata.extension}`);
+            
+            // Database-first deletion with rollback capability
+            const database = this.getDatabase();
+            let imageRemoved = false;
+            
+            try {
+                // Remove from database first
+                database.prepare('DELETE FROM images WHERE id = ?').run(imageId);
+                imageRemoved = true;
+                
+                // Remove files (original and thumbnail)
+                await fsOps.unlink(originalPath);
+                await fsOps.unlink(thumbnailPath);
+                
+            } catch (fileError) {
+                // Rollback database deletion if file deletion failed
+                if (imageRemoved) {
+                    try {
+                        database
+                            .prepare(
+                                `INSERT INTO images (
+                                    id, collection, name, extension, mime, size, hash,
+                                    width, height, aspect, status, created, updated
+                                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+                            )
+                            .run(
+                                imageMetadata.id,
+                                imageMetadata.collection,
+                                imageMetadata.name,
+                                imageMetadata.extension,
+                                imageMetadata.mime,
+                                imageMetadata.size,
+                                imageMetadata.hash,
+                                imageMetadata.width,
+                                imageMetadata.height,
+                                imageMetadata.aspect,
+                                imageMetadata.status,
+                                imageMetadata.created.toISOString(),
+                                imageMetadata.updated.toISOString()
+                            );
+                    } catch (rollbackError) {
+                        console.error(`Failed to rollback database deletion for image ${imageId}:`, rollbackError);
+                    }
+                }
+                throw fileError;
+            } finally {
+                database.close();
+            }
+            
+        } catch (error: unknown) {
+            // Handle specific error cases for proper error wrapping
+            if (error instanceof ImageRetrievalError && error.cause instanceof ImageNotFoundError) {
+                throw new ImageDeletionError(this.name, imageId, error.cause);
+            }
+            
+            throw new ImageDeletionError(this.name, imageId, error);
+        }
     }
 
     /**
