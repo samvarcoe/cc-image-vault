@@ -40,7 +40,7 @@ A simple application that lets users upload their images and sort them into "col
 
 ### Collections
 ```typescript
-GET    /api/collections                   // Returns list of all collections
+GET    /api/collections                   // Returns list of collection names ✅
 POST   /api/collections                   // Creates new collection
 GET    /api/collections/:id               // Returns collection metadata  
 DELETE /api/collections/:id               // Deletes entire collection
