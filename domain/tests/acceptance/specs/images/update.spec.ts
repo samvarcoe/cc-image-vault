@@ -10,7 +10,7 @@ import sinon from 'sinon';
 
 const testCollectionName = 'test-image-update-collection';
 
-suite('Images - Update', () => {
+suite('Domain - Images - Update', () => {
     test('User updates the status of an image', async () => {
         const collection = Collection.create(testCollectionName);
         const imageFixture = await getImageFixture({ id: 'test-update-image', extension: 'jpg' });

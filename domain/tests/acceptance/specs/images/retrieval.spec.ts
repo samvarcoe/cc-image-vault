@@ -10,7 +10,7 @@ import { getImageFixture } from '@/utils/fixtures/image-fixtures';
 
 const testCollectionName = 'test-image-retrieval';
 
-suite('Images - Retrieval', () => {
+suite('Domain - Images - Retrieval', () => {
     test('User retrieves image using a valid ID', async () => {
         const collection = Collection.create(testCollectionName);
         const imageFixture = await getImageFixture({ id: 'retrieval-test', extension: 'jpg' });

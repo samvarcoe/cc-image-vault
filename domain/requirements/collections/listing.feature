@@ -1,4 +1,4 @@
-Feature: Collections - Listing
+Feature: Domain - Collections - Listing
     User Story: As a user, I want to list Collections, so that I can what is available and select the collection I am interested in
 
     Acceptance Criteria

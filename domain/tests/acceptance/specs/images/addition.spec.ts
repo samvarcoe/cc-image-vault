@@ -20,7 +20,7 @@ import { CONFIG } from '@/config';
 
 const testCollectionName = 'test-image-collection';
 
-suite('Images - Addition', () => {
+suite('Domain - Images - Addition', () => {
     test('User adds a jpg image to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
         const imageFixture = await getImageFixture({ id: 'test-jpg', extension: 'jpg' });

@@ -10,7 +10,7 @@ import { getImageFixture } from '@/utils/fixtures/image-fixtures';
 
 const testCollectionName = 'test-image-deletion';
 
-suite('Images - Delete', () => {
+suite('Domain - Images - Delete', () => {
     test('User deletes an image from a Collection', async () => {
         const collection = Collection.create(testCollectionName);
         const imageFixture = await getImageFixture({ id: 'deletion-test', extension: 'jpg' });

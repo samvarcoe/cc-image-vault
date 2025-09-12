@@ -10,7 +10,7 @@ import { CollectionLoadError, CollectionNotFoundError } from '../../../../errors
 const valid_name = 'test-collection';
 const non_existent_collection = 'non-existent';
 
-suite('Collections - Loading', () => {
+suite('Domain - Collections - Loading', () => {
     test('User loads Collection from filesystem', async () => {
         Collection.create(valid_name);
 

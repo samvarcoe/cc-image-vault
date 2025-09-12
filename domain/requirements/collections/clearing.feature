@@ -1,4 +1,4 @@
-Feature: Collections - Clearing 
+Feature: Domain - Collections - Clearing 
     User Story: As a user, I want to clear Collections, so that I can discard everything and start fresh
 
     Acceptance Criteria

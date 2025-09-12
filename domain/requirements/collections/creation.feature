@@ -1,4 +1,4 @@
-Feature: Collections - Creation
+Feature: Domain - Collections - Creation
     User Story: As a user, I want to create Collections, so that I can begin organising my images.
 
     Acceptance Criteria

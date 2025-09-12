@@ -1,4 +1,4 @@
-Feature: Images - Update
+Feature: Domain - Images - Update
     User Story: As a user, I want to update the images in my Collection, so that I can organize them into different categories (INBOX, COLLECTION, ARCHIVE)
 
     Acceptance Criteria

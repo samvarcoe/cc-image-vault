@@ -11,7 +11,7 @@ const collection1 = 'collection-1';
 const collection2 = 'collection-2';
 const collection3 = 'collection-3';
 
-suite('Collections - Listing', () => {
+suite('Domain - Collections - Listing', () => {
    test('User requests list of existing Collections and some Collections exist', async () => {
         Collection.create(collection1);
         Collection.create(collection2);

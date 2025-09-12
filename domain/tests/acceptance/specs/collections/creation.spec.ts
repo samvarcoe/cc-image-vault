@@ -14,7 +14,7 @@ const valid_name = 'test-collection';
 const invalid_name = 'invalid@name!';
 const existing_collection = 'existing-collection';
 
-suite('Collections - Creation', () => {
+suite('Domain - Collections - Creation', () => {
     test('User creates Collection with valid name', async () => {
         Collection.create(valid_name);
 

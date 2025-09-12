@@ -10,7 +10,7 @@ import { CollectionDeleteError, CollectionNotFoundError } from '../../../../erro
 const valid_name = 'test-collection';
 const non_existent_collection = 'non-existent';
 
-suite('Collections - Deletion', () => {
+suite('Domain - Collections - Deletion', () => {
     test('User deletes a Collection', async () => {
         Collection.create(valid_name);
 

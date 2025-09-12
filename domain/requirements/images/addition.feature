@@ -1,4 +1,4 @@
-Feature: Images - Addition
+Feature: Domain - Images - Addition
     User Story: As a user, I want to add images to my Collection, so that I can manage and organize them effectively.
 
     Acceptance Criteria

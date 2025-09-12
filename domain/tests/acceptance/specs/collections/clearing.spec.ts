@@ -13,7 +13,7 @@ import { CollectionClearError } from '../../../../errors';
 const collection1 = 'collection-1';
 const collection2 = 'collection-2';
 
-suite('Collections - Clearing', () => {
+suite('Domain - Collections - Clearing', () => {
     test('User clears Collections', async () => {
         Collection.create(collection1);
         Collection.create(collection2);

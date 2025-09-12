@@ -10,3 +10,5 @@ private
 test-results
 utils/fixtures/images/
 test.ts
+# stryker temp files
+.stryker-tmp

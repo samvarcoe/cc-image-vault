@@ -1,4 +1,4 @@
-Feature: Images - Delete
+Feature: Domain - Images - Delete
     User Story: As a user, I want to delete unwanted images from my collection, so that I can keep my collection clean and organized
 
     Acceptance Criteria:

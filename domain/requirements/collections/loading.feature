@@ -1,5 +1,5 @@
-Feature: Collections - Loading
-    User Story: As a user, I want to load Collections, so that I can continue to curate and exploer my images
+Feature: Domain - Collections - Loading
+    User Story: As a user, I want to load Collections, so that I can continue to curate and explore my images
 
     Acceptance Criteria
       - AC1: Collections can be loaded from the filesystem

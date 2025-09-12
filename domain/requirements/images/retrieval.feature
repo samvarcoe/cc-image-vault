@@ -1,4 +1,4 @@
-Feature: Images - Retrieval
+Feature: Domain - Images - Retrieval
     User Story: As a user, I want to retrieve specific images from my Collection, so that I can view and work with them
 
     Acceptance Criteria
