@@ -4,7 +4,7 @@ import compression from 'compression';
 import { CONFIG } from './config';
 import { routes as apiRoutes } from './api/src/routes';
 import { fsOps } from './domain/src/fs-operations';
-// import { routes as pageRoutes } from './client/src/routes';
+import { routes as pageRoutes } from './client/src/routes';
 
 const forceFSError = (req: Request, res: Response, next: NextFunction) => {
     if (CONFIG.MODE === 'DEV' && req.headers['x-force-fs-error']) {
@@ -19,10 +19,10 @@ const app = express()
     .use(express.json())
     .use(compression())
     .use(forceFSError)
-    .use('/api', apiRoutes);
-    // .use('/', pageRoutes)
+    .use('/api', apiRoutes)
+    .use('/', pageRoutes);
 
 
 app.listen(CONFIG.PORT, () => {
-    console.log(`Image Vault API server running on http://localhost:${CONFIG.PORT}`);
+    console.log(`Image Vault running on http://localhost:${CONFIG.PORT}`);
 });

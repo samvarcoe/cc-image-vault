@@ -1,34 +1,46 @@
-export class Model {
-    constructor(initialData) {
+import type { FocusState } from '../types';
+
+export abstract class Model<T> {
+    protected data: T;
+
+    constructor(initialData: T) {
         this.data = initialData;
     }
-    serialize() {
+
+    serialize(): string {
         return JSON.stringify(this.data);
     }
 }
-export class View {
-    constructor(model, slug) {
-        this.model = model;
-        this.slug = slug;
+
+export abstract class View<M extends Model<unknown>> {
+    constructor(protected model: M, protected slug: string) { }
+
+    private focusState: FocusState = { id: null, start: null, end: null };
+
+    abstract title(): string;
+
+    private captureFocus(): void {
         this.focusState = { id: null, start: null, end: null };
-    }
-    captureFocus() {
-        this.focusState = { id: null, start: null, end: null };
+
         const element = document.activeElement;
+        
         if (element instanceof HTMLElement && element.dataset.id) {
             this.focusState.id = element.dataset.id;
+
             if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
                 this.focusState.start = element.selectionStart;
                 this.focusState.end = element.selectionEnd;
             }
         }
     }
-    restoreFocus() {
+
+    private restoreFocus(): void {
         if (this.focusState.id) {
             requestAnimationFrame(() => {
-                const element = document.querySelector(`[data-id="${this.focusState.id}"]`);
+                const element = document.querySelector<HTMLElement>(`[data-id="${this.focusState.id}"]`);
                 if (element) {
                     element.focus();
+                    
                     if ((element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) &&
                         this.focusState.start !== null && this.focusState.end !== null) {
                         element.setSelectionRange(this.focusState.start, this.focusState.end);
@@ -37,17 +49,22 @@ export class View {
             });
         }
     }
-    update() {
+
+    update(): void {
         this.captureFocus();
-        document.getElementById('content').innerHTML = this.renderContent();
+        document.getElementById('content')!.innerHTML = this.renderContent();
         this.restoreFocus();
     }
-    render() {
+
+    abstract renderContent(): string;
+
+    render(): string {
         const slug = this.slug;
         const title = this.title();
         const content = this.renderContent();
         const modelData = this.model.serialize();
-        return `
+
+        return /*html*/`
             <!DOCTYPE html>
             <html lang="en">
                 <head>
@@ -85,9 +102,7 @@ export class View {
         `;
     }
 }
-export class Controller {
-    constructor(model, view) {
-        this.model = model;
-        this.view = view;
-    }
+
+export abstract class Controller<M extends Model<unknown>, V extends View<M>> {
+    constructor(protected model: M, protected view: V) {}
 }
