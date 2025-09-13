@@ -73,11 +73,7 @@ export class Element {
     await this.locator.setInputFiles(files);
   };
 
-  getText = async (): Promise<string | null> => {
-    return await this.locator.textContent();
-  };
-
-  shouldBeDisplayed = async (timeout = 10000) => {
+  shouldBeDisplayed = async (timeout = 2000) => {
     console.log(`Verifying ${this.name} is visible on the page`);
     await expect(this.locator, `${this.name} is not visible on the page after ${timeout}ms timeout using selector: ${this.selector}`).toBeVisible({ timeout });
     console.log(`${this.name} is confirmed as visible on the page`);
@@ -89,13 +85,13 @@ export class Element {
     console.log(`${this.name} is confirmed as not visible on the page`);
   };
 
-  shouldNotExist = async (timeout = 10000) => {
+  shouldNotExist = async (timeout = 2000) => {
     console.log(`Verifying ${this.name} does not exist in the DOM`);
     await expect(this.locator, `${this.name} exists in the DOM when it should be removed after ${timeout}ms timeout using selector: ${this.selector}`).not.toBeAttached({ timeout });
     console.log(`${this.name} is confirmed as not existing in the DOM`);
   };
 
-  shouldHaveText = async (text: string | number, timeout = 10000) => {
+  shouldHaveText = async (text: string | number, timeout = 2000) => {
     const expectedText = text.toString();
     console.log(`Verifying ${this.name} has exact text: "${expectedText}"`);
     
@@ -103,7 +99,7 @@ export class Element {
     console.log(`${this.name} text content matches expected value: "${expectedText}"`);
   };
 
-  shouldContainText = async (text: string | number, timeout = 10000) => {
+  shouldContainText = async (text: string | number, timeout = 2000) => {
     const expectedText = text.toString();
     console.log(`Verifying ${this.name} contains text: "${expectedText}"`);
     
@@ -127,7 +123,7 @@ export class Element {
     return await this.locator.isDisabled();
   };
 
-  shouldHaveCount = async (count: number, timeout = 10000) => {
+  shouldHaveCount = async (count: number, timeout = 2000) => {
     console.log(`Verifying ${this.name} has exactly ${count} matching elements`);
     
     await expect(this.locator, `${this.name} element count does not match expected ${count} using selector: ${this.selector}`).toHaveCount(count, { timeout });
@@ -152,14 +148,14 @@ export class Element {
     console.log(`${this.name} successfully maintained sticky position during scroll`);
   };
 
-  shouldBeSelected = async (timeout = 10000) => {
+  shouldBeSelected = async (timeout = 2000) => {
     console.log(`Verifying ${this.name} is in selected state`);
     
     await expect(this.locator, `${this.name} is not in selected state (aria-pressed attribute is not "true") using selector: ${this.selector}`).toHaveAttribute('aria-pressed', 'true', { timeout });
     console.log(`${this.name} is confirmed as selected (aria-pressed="true")`);
   };
 
-  shouldNotBeSelected = async (timeout = 10000) => {
+  shouldNotBeSelected = async (timeout = 2000) => {
     console.log(`Verifying ${this.name} is not in selected state`);
     
     await expect(this.locator, `${this.name} is in selected state when it should be unselected (aria-pressed attribute is not "false") using selector: ${this.selector}`).toHaveAttribute('aria-pressed', 'false', { timeout });
@@ -188,4 +184,9 @@ export class Element {
     expect(aspect, `${this.name} does not have an aspect ratio of ${expectedAspectRatio}`).toBeCloseTo(expectedAspectRatio, 3);
     console.log(`${this.name} is confirmed as having aspect ratio of ${expectedAspectRatio}`);
   };
+
+  shouldHaveHref = async (expected: string) => {
+    const actual = this.locator.getAttribute('href');
+    expect(actual, `${this.name} does not link to "${expected}"`).toEqual(expected);
+  }
 }

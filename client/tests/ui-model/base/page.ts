@@ -9,7 +9,7 @@ export abstract class PageObject {
         this.page = page;
     }
 
-    async visit(timeout = 10000): Promise<void> {
+    async visit(timeout = 2000): Promise<void> {
         console.log(`Navigating to ${this.constructor.name}: ${this.url}`);
         await this.page.goto(this.url);
         await this.page.waitForLoadState('load', { timeout });;
@@ -32,7 +32,7 @@ export abstract class PageObject {
         return await this.page.title();
     }
 
-    async shouldBeOnPage(timeout = 10000): Promise<void> {
+    async shouldBeOnPage(timeout = 2000): Promise<void> {
         console.log(`Verifying that the current page is: "${this.constructor.name}"`);
 
         const failureMessage = `Current page is not: "${this.constructor.name}"\n\tExpected URL pattern: ${this.url}\n\tCurrent URL: ${this.page.url()}`;
@@ -41,7 +41,7 @@ export abstract class PageObject {
         console.log(`Current page is: "${this.constructor.name}"`);
     }
     
-    async shouldHaveTitle(expectedTitle: string, timeout = 10000): Promise<void> {
+    async shouldHaveTitle(expectedTitle: string, timeout = 2000): Promise<void> {
         console.log(`Verifying that the page title is: "${expectedTitle}"`);
 
         const failureMessage = `Current page title is not: "${expectedTitle}"\n\tExpected title: "${expectedTitle}"\n\tCurrent title: "${await this.getTitle()}"`;

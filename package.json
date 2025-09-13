@@ -8,8 +8,8 @@
     "lint": "npx eslint",
     "api:tests": "npx mocha --config api/tests/acceptance/.mocharc.json",
     "domain:tests": "npx mocha --config domain/tests/acceptance/.mocharc.json",
-    "ui:tests": "npx playwright test --config client/tests/acceptance/playwright.config.ts",
-    "tests:all": "npm run domain:tests && npm run api:tests"
+    "client:tests": "npx playwright test --config client/tests/acceptance/playwright.config.ts",
+    "tests:all": "npm run domain:tests && npm run api:tests && npm run client:tests"
   },
   "repository": {
     "type": "git",

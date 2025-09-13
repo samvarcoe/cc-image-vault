@@ -1,8 +1,8 @@
 import { Page } from 'playwright/test';
-import { App } from './base/app';
+import { UI } from './base/ui';
 import { HomePage } from './pages/home';
 
-export class ImageVaultApp extends App {
+export class ImageVault extends UI {
   constructor(page: Page) {
     super(page);
   }

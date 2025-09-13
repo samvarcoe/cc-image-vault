@@ -23,4 +23,8 @@ export default defineConfig({
     },
   ],
   outputDir: '../../../output/client-test-artifacts',
+  expect: {
+    // Maximum time expect() should wait for the condition to be met.
+    timeout: 5000,
+  }
 });

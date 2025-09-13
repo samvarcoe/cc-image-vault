@@ -14,7 +14,7 @@ interface NetworkEvent {
     error?: string;
 }
 
-export abstract class App {
+export abstract class UI {
     protected page: Page;
     private consoleErrors: string[] = [];
     private consoleWarnings: string[] = [];
