@@ -19,9 +19,8 @@ const app = express()
     .use(express.json())
     .use(compression())
     .use(forceFSError)
-    .use('/api', apiRoutes)
-    .use('/', pageRoutes);
-
+    .use('/', pageRoutes)
+    .use('/api', apiRoutes);
 
 app.listen(CONFIG.PORT, () => {
     console.log(`Image Vault running on http://localhost:${CONFIG.PORT}`);
