@@ -137,8 +137,11 @@ export abstract class UI {
         return [...this.consoleWarnings];
     }
 
-    shouldHaveUrl(expectedUrl: string): void {
-        expect(this.getCurrentUrl(), `The browser is not at url: ${expectedUrl}`).toBe(expectedUrl);
+    async shouldHaveUrl(expectedUrl: string): Promise<void> {
+        await this.page.waitForLoadState('networkidle');
+        const currentUrl = this.getCurrentUrl();
+        const currentPath = new URL(currentUrl).pathname;
+        expect(currentPath, `The browser is not at url: ${expectedUrl}`).toBe(expectedUrl);
         console.log(`✓ The browser is at url: "${expectedUrl}"`);
     }
 

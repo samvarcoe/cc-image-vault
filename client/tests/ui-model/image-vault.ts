@@ -3,11 +3,11 @@ import { UI } from './base/ui';
 import { HomePage } from './pages/home';
 
 export class ImageVault extends UI {
-  constructor(page: Page) {
-    super(page);
-  }
+    constructor(page: Page) {
+        super(page);
+    }
 
-  get homePage(): HomePage {
-    return this.pageObject(HomePage);
-  }
+    get homePage(): HomePage {
+        return this.pageObject(HomePage);
+    }
 }

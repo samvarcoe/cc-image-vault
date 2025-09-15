@@ -17,9 +17,9 @@ export { routes } from './src/routes';
 ### MVC Implementation
 ```text
 client/src/
-├── mvc.ts                 # Base Model, View, Controller classes
-├── routes.ts              # Express router definitions
-├── pages/home/            # Home page MVC components
+├── mvc.ts                # Base Model, View, Controller classes
+├── routes.ts             # Express router definitions
+├── pages/home/           # Home page MVC components
 │   ├── model.ts          # Data management and state
 │   ├── view.ts           # HTML rendering and templating
 │   └── controller.ts     # Event handling and user interactions
@@ -33,19 +33,20 @@ client/src/
 - **Focus Management**: Automatic focus preservation across page updates
 
 ## Implementation Status
-- ✅ **Home Page**: Complete MVC implementation for viewing collections
-- ✅ **Collection Display**: Card-based layout with navigation links
+- ✅ **Home Page**: Complete MVC implementation for viewing collections with refactored architecture
+- ✅ **Collection Display**: Card-based layout with navigation links and responsive design
 - ✅ **Error Handling**: User-friendly messages for loading errors and empty states
 - ⏳ **Collection Management**: Create, edit, delete operations pending implementation
 - ⏳ **Image Operations**: Image viewing, upload, management interfaces pending implementation
 
 ### Home Page Details
 The home page (`/`) provides:
-- Collection listing in card-based layout with collection names
+- Collection listing in card-based layout with collection names and hover effects
 - Navigation links to individual collection pages (`/collection/:id`)
 - Empty state message: "No Collections found, create one to get started"
 - Error state message: "Unable to load collections"
-- All acceptance tests passing (3 scenarios)
+- Responsive design from mobile (375px) to desktop (1920px) with TailwindCSS
+- All 4 acceptance test scenarios passing with comprehensive coverage
 
 ## Styling with Tailwind CSS
 

@@ -16,11 +16,11 @@ export class HomePage extends PageObject {
 }
 
 class CollectionCard extends Element {
-  get title(): Element {
-    return this.child(Element, 'Name', '[data-id="collection-title"]');
-  }
+    get title(): Element {
+        return this.child(Element, 'Name', '[data-id="collection-title"]');
+    }
 
-  get link(): Element {
-    return this.child(Element, 'Link', '[data-id="collection-link"]')
-  }
+    get link(): Element {
+        return this.child(Element, 'Link', '[data-id="collection-link"]')
+    }
 }

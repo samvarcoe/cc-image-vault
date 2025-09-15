@@ -19,6 +19,12 @@ Feature: Client - Home Page - Viewing Collections
         And each collection card shows the collection name
         And each collection card links to the collection's main page
 
+    Scenario: User navigates to a collection from the home page
+        Given there are some collections in the system
+        And the user is on the home page
+        When the user clicks on a collection card
+        Then the user is navigated to that collection's main page
+
     Scenario: User visits home page and no collections exist
         Given there are no collections in the system
         When the user visits the home page
