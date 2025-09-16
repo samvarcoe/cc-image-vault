@@ -99,6 +99,3 @@ client/tests/ui-model/
 ├── pages/home.ts        # Home page model
 └── image-vault.ts       # Application-level model
 ```
-
-### Reference Components
-Pre-built UI components are available in `/workspace/projects/ui-reference/` for reference and inspiration. These demonstrate common patterns using Tailwind classes that can be adapted for the Image Vault implementation.

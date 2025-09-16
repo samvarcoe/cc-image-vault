@@ -15,6 +15,7 @@ export default defineConfig({
     connectOptions: {
       wsEndpoint: 'ws://playwright-server:8080',  // Connect to the remote playwright server
     },
+    actionTimeout: 1000
   },
   projects: [
     {
@@ -25,6 +26,6 @@ export default defineConfig({
   outputDir: '../../../output/client-test-artifacts',
   expect: {
     // Maximum time expect() should wait for the condition to be met.
-    timeout: 5000,
+    timeout: 1000,
   }
 });

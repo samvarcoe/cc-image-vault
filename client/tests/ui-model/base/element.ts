@@ -73,9 +73,9 @@ export class Element {
         await this.locator.setInputFiles(files);
     };
 
-    shouldBeDisplayed = async (timeout = 2000) => {
+    shouldBeDisplayed = async () => {
         console.log(`Verifying ${this.name} is visible on the page`);
-        await expect(this.locator, `${this.name} is not visible on the page after ${timeout}ms timeout using selector: ${this.selector}`).toBeVisible({ timeout });
+        await expect(this.locator, `${this.name} is not visible on the page using selector: ${this.selector}`).toBeVisible();
         console.log(`${this.name} is confirmed as visible on the page`);
     };
 
@@ -188,5 +188,15 @@ export class Element {
     shouldHaveHref = async (expected: string) => {
         const actual = await this.locator.getAttribute('href');
         expect(actual, `${this.name} does not link to "${expected}"`).toEqual(expected);
-    }
+    };
+
+    shouldHavePlaceholder = async (expected: string) => {
+        const actual = await this.locator.getAttribute('placeholder');
+        expect(actual, `${this.name} does not have a placeholder of "${expected}"`).toEqual(expected);
+    };
+
+    shouldHaveValue = async (expected: string) => {
+        const actual = await this.locator.getAttribute('value');
+        expect(actual, `${this.name} does not have a value of "${expected}"`).toEqual(expected);
+    };
 }
