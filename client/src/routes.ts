@@ -6,22 +6,16 @@ import HomePageView from './pages/home/view';
 
 export const routes = express.Router();
 
-routes.get('/', async (req, res) => {
+routes.get('/', async (_, res) => {
     try {
-        // Check for test error simulation header
-        if (req.headers['x-test-force-fs-error']) {
-            const model = new HomePageModel({ error: 'Unable to load collections' });
-            const view = new HomePageView(model);
-            res.send(view.render());
-            return;
-        }
-
         const collections = Collection.list();
         const model = new HomePageModel({ collections });
         const view = new HomePageView(model);
         res.send(view.render());
-    } catch {
-        const model = new HomePageModel({ error: 'Unable to load collections' });
+
+    } catch (error: unknown ){
+        const message = (error as Error).message || 'Unable to list collections'
+        const model = new HomePageModel({ error: message});
         const view = new HomePageView(model);
         res.send(view.render());
     }

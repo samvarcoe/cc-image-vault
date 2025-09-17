@@ -8,14 +8,21 @@ export class HomePage extends PageObject {
         return this.element('User Message', '[data-id="user-message"]');
     }
 
-    get creationForm(): CreationForm {
-        return this.component(CreationForm, 'Creation Form', '[data-id="creation-form"]');
+    get collectionsList(): CollectionsList {
+        return this.component(CollectionsList, 'Collections List', '[data-id="collections-list"]');
+    }
+    
+}
+
+class CollectionsList extends Element {
+    collection(name?: string): CollectionCard {
+        return name
+            ? this.child(CollectionCard, `Collection Card: "${name}"`, `[data-id="collection-card-${name}"]`)
+            : this.child(CollectionCard, 'Collection Card', '[data-id^="collection-card-"]');
     }
 
-    collectionCard(name?: string): CollectionCard {
-        return name
-            ? this.component(CollectionCard, `Collection Card: "${name}"`, `[data-id="collection-card-${name}"]`)
-            : this.component(CollectionCard, 'Collection Card', '[data-id^="collection-card-"]');
+    get creationForm(): CreationForm {
+        return this.child(CreationForm, 'Creation Form', '[data-id="creation-form"]');
     }
 }
 

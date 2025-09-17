@@ -33,4 +33,4 @@ Feature: Client - Home Page - Viewing Collections
     Scenario: Error occurs when loading collections on home page
         Given the user visits the home page
         When there is an error retrieving the collections list
-        Then the page displays the message "Unable to load collections"
+        Then the page displays the message "Unable to list collections"

@@ -68,10 +68,6 @@ export default class HomePageView extends View<HomePageModel> {
             return this.errorMessage();
         }
 
-        if (this.model.getCollections().length === 0) {
-            return this.emptyMessage();
-        }
-
         return this.collectionsList();
     }
 
@@ -85,9 +81,7 @@ export default class HomePageView extends View<HomePageModel> {
 
     private emptyMessage(): string {
         return /*html*/`
-            <div class="px-8 py-20 text-center">
-                <p class="text-base lg:text-lg text-slate-600 dark:text-slate-400" data-id="user-message">No Collections found, create one to get started</p>
-            </div>
+            <p class="px-8 py-12 text-center text-base lg:text-lg text-slate-600 dark:text-slate-400" data-id="empty-collections-message">No Collections found, create one to get started</p>
         `;
     }
 
@@ -96,10 +90,14 @@ export default class HomePageView extends View<HomePageModel> {
             .map((name) => this.collectionCard(name))
             .join('');
 
+        const userMessage = this.userMessage();
+
         return /*html*/`
-            <ul role="list" class="divide-y divide-slate-200 dark:divide-slate-700">
-                ${collectionsHtml}
+            <ul role="list" class="divide-y divide-slate-200 dark:divide-slate-700" data-id="collections-list">
+                ${this.model.getCollections().length === 0 ? this.emptyMessage() : collectionsHtml}
+                ${this.creationForm()}
             </ul>
+            ${userMessage}
         `;
     }
 
@@ -115,6 +113,57 @@ export default class HomePageView extends View<HomePageModel> {
                     </p>
                 </div>
             </li>
+        `;
+    }
+
+    private creationForm(): string {
+        const isLoading = this.model.isCreationFormLoading();
+        const name = this.model.getCreationFormName();
+
+        return /*html*/`
+            <li class="relative px-8 py-6" data-id="creation-form">
+                <form class="flex gap-4 items-center" data-id="creation-form-element">
+                    <input
+                        type="text"
+                        name="name"
+                        data-id="collection-name-input"
+                        placeholder="Add a new Collection..."
+                        value="${name}"
+                        class="flex-1 px-4 py-2 text-base lg:text-lg border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        ${isLoading ? 'disabled' : ''}
+                    />
+                    <button
+                        type="submit"
+                        data-id="submit-button"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px] flex items-center justify-center"
+                        ${isLoading ? 'disabled' : ''}
+                    >
+                        ${isLoading ? /*html*/`
+                            <svg data-id="loading-spinner" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        ` : 'Create'}
+                    </button>
+                </form>
+            </li>
+        `;
+    }
+
+    private userMessage(): string {
+        const validationError = this.model.getCreationFormValidationError();
+        if (!validationError) {
+            return /*html*/`
+                <div style="display: none;">
+                    <p data-id="user-message"></p>
+                </div>
+            `;
+        }
+
+        return /*html*/`
+            <div class="px-8 py-4 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-800">
+                <p class="text-base text-red-600 dark:text-red-400" data-id="user-message">${validationError}</p>
+            </div>
         `;
     }
 }

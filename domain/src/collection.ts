@@ -393,8 +393,68 @@ export class Collection implements CollectionInstance {
      * Get all images in this Collection with optional filtering
      */
     async getImages(options?: QueryOptions): Promise<ImageMetadata[]> {
-        console.log(`args: options: ${options}`);
-        throw new PendingImplementationError('Collection.getImages');
+        try {
+            if (options?.status) {
+                this.validateImageStatus(options.status);
+            }
+
+            const database = this.getDatabase();
+
+            try {
+                let query = 'SELECT * FROM images';
+                const params: string[] = [];
+
+                if (options?.status) {
+                    query += ' WHERE status = ?';
+                    params.push(options.status);
+                }
+
+                query += ' ORDER BY created ASC';
+
+                const rows = database
+                    .prepare(query)
+                    .all(...params) as {
+                        id: string;
+                        collection: string;
+                        name: string;
+                        extension: string;
+                        mime: string;
+                        size: number;
+                        hash: string;
+                        width: number;
+                        height: number;
+                        aspect: number;
+                        status: string;
+                        created: string;
+                        updated: string;
+                    }[];
+
+                const images: ImageMetadata[] = rows.map(row => ({
+                    id: row.id,
+                    collection: row.collection,
+                    name: row.name,
+                    extension: row.extension as Extension,
+                    mime: row.mime as Mime,
+                    size: row.size,
+                    hash: row.hash,
+                    width: row.width,
+                    height: row.height,
+                    aspect: row.aspect,
+                    status: row.status as 'INBOX' | 'COLLECTION' | 'ARCHIVE',
+                    created: new Date(row.created),
+                    updated: new Date(row.updated)
+                }));
+
+                return images;
+            } finally {
+                database.close();
+            }
+        } catch (error: unknown) {
+            if (error instanceof Error && error.message === 'Invalid status value') {
+                throw new ImageRetrievalError(this.name, undefined, new Error(`Invalid status filter: "${options?.status}"`));
+            }
+            throw new ImageRetrievalError(this.name, undefined, error);
+        }
     }
 
     /**

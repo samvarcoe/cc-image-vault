@@ -48,8 +48,11 @@ export class ImageAdditionError extends Error {
 }
 
 export class ImageRetrievalError extends Error {
-  constructor(collectionName: string, imageId: string, public cause: unknown) {
-    super(`Unable to retrieve image: "${imageId}" from Collection: "${collectionName}"`);
+  constructor(collectionName: string, imageId: string | undefined, public cause: unknown) {
+    const message = imageId
+      ? `Unable to retrieve image: "${imageId}" from Collection: "${collectionName}"`
+      : `Unable to retrieve images from Collection "${collectionName}"`;
+    super(message);
     this.name = 'ImageRetrievalError';
   }
 }

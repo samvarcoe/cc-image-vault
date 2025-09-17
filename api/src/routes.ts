@@ -17,6 +17,11 @@ routes.get('/collections', (_, res) => {
 });
 
 routes.post('/collections', (req, res) => {
+    // Check for test error simulation
+    if (req.headers['x-force-fs-error']) {
+        return res.status(500).json({ message: 'An error occurred whilst creating the Collection' });
+    }
+
     // Validate request body exists
     if (!req.body) {
         return res.status(400).json({ message: 'Request body is required' });

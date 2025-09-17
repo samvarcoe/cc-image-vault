@@ -20,15 +20,15 @@ test.describe('Client - Home Page - Viewing Collections', () => {
         await ui.homePage.visit();
 
         // And each collection card shows the collection name
-        await ui.homePage.collectionCard().shouldHaveCount(3);
-        await ui.homePage.collectionCard('vacation-photos').title.shouldHaveText('vacation-photos');
-        await ui.homePage.collectionCard('family-events').title.shouldHaveText('family-events');
-        await ui.homePage.collectionCard('work-projects').title.shouldHaveText('work-projects');
+        await ui.homePage.collectionsList.collection().shouldHaveCount(3);
+        await ui.homePage.collectionsList.collection('vacation-photos').title.shouldHaveText('vacation-photos');
+        await ui.homePage.collectionsList.collection('family-events').title.shouldHaveText('family-events');
+        await ui.homePage.collectionsList.collection('work-projects').title.shouldHaveText('work-projects');
 
         // And each collection card links to the collection's main page
-        await ui.homePage.collectionCard('vacation-photos').link.shouldHaveHref('/collection/vacation-photos');
-        await ui.homePage.collectionCard('family-events').link.shouldHaveHref('/collection/family-events');
-        await ui.homePage.collectionCard('work-projects').link.shouldHaveHref('/collection/work-projects');
+        await ui.homePage.collectionsList.collection('vacation-photos').link.shouldHaveHref('/collection/vacation-photos');
+        await ui.homePage.collectionsList.collection('family-events').link.shouldHaveHref('/collection/family-events');
+        await ui.homePage.collectionsList.collection('work-projects').link.shouldHaveHref('/collection/work-projects');
 
         // Verify no errors occurred during the interaction
         await ui.shouldHaveNoConsoleErrors();
@@ -42,7 +42,7 @@ test.describe('Client - Home Page - Viewing Collections', () => {
 
         await ui.homePage.visit();
 
-        await ui.homePage.collectionCard('vacation-photos').link.click();
+        await ui.homePage.collectionsList.collection('vacation-photos').link.click();
 
         await ui.shouldHaveUrl('/collection/vacation-photos');
     });
@@ -53,7 +53,7 @@ test.describe('Client - Home Page - Viewing Collections', () => {
         // When the user visits the home page
         await ui.homePage.visit();
 
-        await ui.homePage.userMessage.shouldHaveText("No Collections found, create one to get started")
+        await ui.homePage.collectionsList.shouldContainText('No Collections found, create one to get started');
 
         // Verify no errors occurred during the interaction
         await ui.shouldHaveNoConsoleErrors();
@@ -67,12 +67,12 @@ test.describe('Client - Home Page - Viewing Collections', () => {
         // When there is an error retrieving the collections list
         // Simulate filesystem failure by setting a special header
         await page.setExtraHTTPHeaders({
-            'X-Test-Force-FS-Error': 'true'
+            'x-force-fs-error': 'true'
         });
 
         await ui.homePage.visit();
 
-        await ui.homePage.userMessage.shouldHaveText("Unable to load collections");
+        await ui.homePage.userMessage.shouldHaveText("Unable to list Collections");
 
         await ui.shouldHaveNoConsoleErrors();
     });
