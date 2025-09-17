@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { ImageVault } from '../../ui-model/image-vault';
+import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 
 test.describe('Client - Home Page - Viewing Collections', () => {

@@ -199,4 +199,11 @@ export class Element {
         const actual = await this.locator.getAttribute('value');
         expect(actual, `${this.name} does not have a value of "${expected}"`).toEqual(expected);
     };
+
+    shouldHaveAttribute = async (key: string, value: string) => {
+        const actual = await this.locator.getAttribute(key);
+        expect(actual, `${this.name} has no attribute: "${key}"`).toBeTruthy();
+        expect(actual, `${this.name} does not "${key}" equal to "${value}"`).toEqual(value);
+        console.log(`${this.name} has "${key}" equal to "${value}"`);
+    }
 }

@@ -34,21 +34,21 @@ const createTestImage = (options: ImageFixtureOptions): Promise<Buffer> => {
     const randomColor2 = Math.floor(Math.random() * 256);
     const randomColor3 = Math.floor(Math.random() * 256);
 
-const svg = `
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-            <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:rgb(${randomColor1},100,150);stop-opacity:1" />
-                <stop offset="50%" style="stop-color:rgb(100,${randomColor2},200);stop-opacity:1" />
-                <stop offset="100%" style="stop-color:rgb(150,200,${randomColor3});stop-opacity:1" />
-            </linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#bg)"/>
-        <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.min(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
-        <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.max(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
-        <text x="${width / 2}" y="${height / 2}" text-anchor="middle" font-family="Arial" font-size="16" fill="#010101ff">${name}</text>
-        <text x="${width / 2}" y="${(height / 2) + 24}" text-anchor="middle" font-family="Arial" font-size="16" fill="#000000ff">${width}x${height}</text>
-      </svg>
+    const svg = `
+        <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:rgb(${randomColor1},100,150);stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:rgb(100,${randomColor2},200);stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:rgb(150,200,${randomColor3});stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#bg)"/>
+            <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.min(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
+            <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.max(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
+            <text x="${width / 2}" y="${height / 2}" text-anchor="middle" font-family="Arial" font-size="16" fill="#010101ff">${name}</text>
+            <text x="${width / 2}" y="${(height / 2) + 24}" text-anchor="middle" font-family="Arial" font-size="16" fill="#000000ff">${width}x${height}</text>
+        </svg>
     `;
 
     const sharpInstance = sharp(Buffer.from(svg));
@@ -96,6 +96,7 @@ export const getImageFixture = async (options: Partial<ImageFixtureOptions> = {}
         throw new Error(`Failed to create or access cached image at ${filePath}: ${(error as Error).message}`);
     }      
 }
+
 
 /**
  * Create a corrupted image file for testing error handling
