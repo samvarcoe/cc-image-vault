@@ -19,6 +19,7 @@ interface ImageFixture {
     width: number;
     height: number;
     extension: string;
+    buffer: Buffer;
 }
 
 const getCacheKey = (options: ImageFixtureOptions): string => {
@@ -83,14 +84,15 @@ export const getImageFixture = async (options: Partial<ImageFixtureOptions> = {}
     const size = await fs.stat(filePath).then((x) => x.size).catch(() => null);
 
     if (filePath && size) {
-        return { filePath, filename, size, width, height, extension };
+        const buffer = await fs.readFile(filePath);
+        return { filePath, filename, size, width, height, extension, buffer };
     }
 
     try {
-        const imageBuffer = await createTestImage({ id, width, height, extension });
-        const size = imageBuffer.length;
-        await fs.writeFile(filePath, imageBuffer);
-        return { filePath, filename, size, width, height, extension };
+        const buffer = await createTestImage({ id, width, height, extension });
+        const size = buffer.length;
+        await fs.writeFile(filePath, buffer);
+        return { filePath, filename, size, width, height, extension, buffer };
         
     } catch (error: unknown) {
         throw new Error(`Failed to create or access cached image at ${filePath}: ${(error as Error).message}`);

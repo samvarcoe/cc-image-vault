@@ -24,7 +24,7 @@ test.describe('Client - Collection Page - Viewing Images', () => {
         for(let i = 0; i < collectionImages.length; i++) {
             const image = collectionImages[i]!
             const thumbnailHeight = Math.round(400 * image.aspect);
-            const path = `/private/${collection.name}/images/thumbnails/${image.id}.${image.extension}`
+            const path = `/api/images/${collection.name}/${image.id}/thumbnail`;
 
             await ui.collectionPage.imageGrid.image(image.id).shouldBeDisplayed();
             await ui.collectionPage.imageGrid.image(image.id).shouldHaveAttribute('loading', 'lazy');
