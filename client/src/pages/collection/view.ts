@@ -1,6 +1,5 @@
 import { View } from '../../mvc.js';
 import CollectionPageModel from './model.js';
-import type { ImageMetadata } from '@/domain';
 
 export default class CollectionPageView extends View<CollectionPageModel> {
     constructor(protected model: CollectionPageModel) {

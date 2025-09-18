@@ -6,7 +6,6 @@ import { Collection } from '../../../../src/collection';
 import { ImageUtils } from '../../../utils/image-utils';
 import { captureAssertableAsyncError } from '../../../utils';
 import { ImageRetrievalError } from '../../../../errors';
-import { ImageStatus } from '../../../../types';
 
 import { getImageFixture } from '@/utils/fixtures/image-fixtures';
 

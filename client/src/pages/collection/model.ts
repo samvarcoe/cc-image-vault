@@ -1,5 +1,4 @@
 import { Model } from '../../mvc.js';
-import type { ImageMetadata } from '@/domain';
 
 export interface CollectionPageData {
     name?: string;

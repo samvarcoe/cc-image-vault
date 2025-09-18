@@ -1,4 +1,3 @@
-import type { CollectionInstance, Extension, ImageMetadata, ImageUpdate, Mime, QueryOptions } from '../types';
 import path from 'path';
 import { CONFIG } from '../../config';
 import { validateCollectionName } from './collection-utils'
@@ -8,7 +7,7 @@ import sharp from 'sharp';
 import crypto from 'crypto';
 import { randomUUID } from 'crypto';
 import Database from 'better-sqlite3';
-import { 
+import {
     CollectionClearError,
     CollectionCreateError,
     CollectionDeleteError,
@@ -19,8 +18,7 @@ import {
     ImageDeletionError,
     ImageRetrievalError,
     ImageNotFoundError,
-    ImageUpdateError,
-    PendingImplementationError
+    ImageUpdateError
 } from '../errors';
 
 /**
@@ -479,8 +477,24 @@ export class Collection implements CollectionInstance {
     }
 
     async getThumbnailData(imageId: string): Promise<Buffer> {
-        console.log(`args: imageIds: ${imageId}`);
-        throw new PendingImplementationError('Collection.getThumbnailData');
+        try {
+            this.validateImageId(imageId);
+
+            const imageMetadata = await this.getImage(imageId);
+
+            const collectionPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, this.name);
+            const thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${imageId}.${imageMetadata.extension}`);
+
+            const thumbnailData = await fsOps.readFile(thumbnailPath);
+
+            return thumbnailData;
+        } catch (error: unknown) {
+            // If it's already an ImageRetrievalError from getImage(), unwrap and re-wrap to preserve the original cause
+            if (error instanceof ImageRetrievalError && error.cause) {
+                throw new ImageRetrievalError(this.name, imageId, error.cause);
+            }
+            throw new ImageRetrievalError(this.name, imageId, error);
+        }
     }
 
     private validateImageStatus(status: string): void {

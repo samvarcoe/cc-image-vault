@@ -8,7 +8,6 @@ const _ = chaiMatchPattern.getLodashModule();
 
 import { DirectoryFixtures } from "@/utils";
 import { CONFIG } from "@/config";
-import { ImageMetadata } from "../../types";
 
 export class ImageUtils {
     static getImagePath = (collectionName: string, imageName: string, type: 'original' | 'thumbnail' = 'original'): string => {

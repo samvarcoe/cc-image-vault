@@ -6,5 +6,3 @@ export {
     ImageNotFoundError,
     PendingImplementationError
 } from './errors';
-
-export type * from './types';

@@ -1,10 +1,10 @@
-export type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE'
+type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE'
 
-export type ImageUpdate = {
+type ImageUpdate = {
   status: ImageStatus
 }
 
-export interface QueryOptions {
+interface QueryOptions {
   status?: ImageStatus;
 }
 
@@ -12,7 +12,7 @@ type Extension = 'jpg' | 'png' | 'webp'
 
 type Mime = 'image/jpeg' | 'image/png' | 'image/webp'
 
-export type ImageMetadata = {
+type ImageMetadata = {
   id: string;
   collection: string;
   name: string;
