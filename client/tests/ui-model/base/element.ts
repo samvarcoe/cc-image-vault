@@ -205,5 +205,28 @@ export class Element {
         expect(actual, `${this.name} has no attribute: "${key}"`).toBeTruthy();
         expect(actual, `${this.name} does not "${key}" equal to "${value}"`).toEqual(value);
         console.log(`${this.name} has "${key}" equal to "${value}"`);
-    }
-}
+    
+    };
+
+    shouldBeFullyVisible = async () => {
+        expect(await this.locator.isVisible(), `${this.name} is not visible in the viewport`).toBe(true);
+
+        const viewport = this.page.viewportSize();
+
+        const box = await this.locator.boundingBox();
+
+        if (!box || !viewport) {
+            throw new Error(`Not possible to determine if ${this.name} is visible within the viewport`);
+        }
+
+        const isInViewport =
+            box.x >= 0 &&
+            box.x + box.width <= viewport.width &&
+            box.y >= 0 &&
+            box.y + box.height <= viewport.height;
+
+        expect(isInViewport, `${this.name} is not fully visible in the viewport`).toBe(true);
+
+        console.log(`${this.name} is fully visible within the viewport`);
+    };
+};

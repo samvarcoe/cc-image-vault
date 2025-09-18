@@ -1,8 +1,31 @@
 import { Collection } from "@/domain";
 import { getImageFixture } from "./image-fixtures";
+import { existsSync, cpSync } from "fs";
+import { CONFIG } from "@/config";
+
+const CACHE_DIR = 'utils/fixtures/collections';
 
 export const createCollectionFixture = async (name: string): Promise<Collection> => {
+    const cachedCollectionDirectory = `${CACHE_DIR}/${name}`;
+    const activeCollectionDirectory = `${CONFIG.COLLECTIONS_DIRECTORY}/${name}`;
+
+    if (existsSync(cachedCollectionDirectory)) {
+         try {
+            cpSync(cachedCollectionDirectory, activeCollectionDirectory, { recursive: true });
+
+            const collection = Collection.load(name);
+
+            console.log(`Collection fixture: "${name}" retrieved from cache`);
+            return collection;
+
+         } catch {
+            console.error('Failed to load collection fixture from cache');
+         }
+    }
+
     try {
+        console.log(`Creating Collection fixture "${name}" from scratch`);
+
         const collection = Collection.create(name);
 
         const width = { min: 600, max: 1800 };
@@ -27,10 +50,12 @@ export const createCollectionFixture = async (name: string): Promise<Collection>
             await collection.updateImage(archiveImageMetaData.id, {status: "ARCHIVE"});
         }
 
+        cpSync(activeCollectionDirectory, cachedCollectionDirectory, { recursive: true });
+
         return collection;
 
     } catch (error: unknown) {
-        console.error("Error populating collection fixture:", error);
+        console.error("Error creating Collection fixture:", error);
 
         throw error;
     }

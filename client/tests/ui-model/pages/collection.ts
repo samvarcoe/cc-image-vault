@@ -17,6 +17,10 @@ export class CollectionPage extends PageObject {
         return this.component(ImageGrid, 'Image Grid', '[data-id="image-grid"]');
     }
 
+    get popover(): Popover {
+        return this.component(Popover, 'Fullscreen Popover', '[data-id="fullscreen-popover"]');
+    }
+
     async visitCollection(collectionName: string): Promise<void> {
         const collectionUrl = `/collection/${collectionName}`;
         await this.page.goto(collectionUrl);
@@ -49,3 +53,17 @@ class ImageCard extends Element {
         return this.child(Element, 'Image', 'img');
     }
 }
+
+class Popover extends Element {
+    get overlay(): Element {
+        return this.child(Element, 'Popover Overlay', '[data-id="popover-overlay"]');
+    }
+
+    get image(): Element {
+        return this.child(Element, 'Popover Image', '[data-id="popover-image"]');
+    }
+
+    get errorMessage(): Element {
+        return this.child(Element, 'Popover Error Message', '[data-id="popover-error-message"]');
+    }
+};
