@@ -28,17 +28,17 @@ class ImageGrid extends Element {
 
     image(imageId?: string): ImageCard {
         return imageId
-        ? this.child(ImageCard, 'Image', '[data-id^="image-card-"]')
-        : this.child(ImageCard, `Image: "${imageId}"`, `[data-id="image-card-${imageId}"]`);
+        ? this.child(ImageCard, `Image: "${imageId}"`, `[data-id="image-card-${imageId}"]`)
+        : this.child(ImageCard, 'Image', '[data-id^="image-card-"]');
     };
 
     async shouldHaveColumnCount(count: number): Promise<void> {
-        const gridTemplateColumns = await this.locator.evaluate(el =>
-            window.getComputedStyle(el).gridTemplateColumns
+        const columnCountStyle = await this.locator.evaluate(el =>
+            window.getComputedStyle(el).columnCount
         );
 
-        const columnCount = gridTemplateColumns.split(' ').filter((val: string) => val !== '').length;
-        expect(columnCount, `Image grid has ${columnCount} columns instead of ${count} on desktop viewport`).toBe(count);
+        const columnCount = columnCountStyle === 'auto' ? 1 : parseInt(columnCountStyle);
+        expect(columnCount, `Image grid has ${columnCount} columns instead of ${count}`).toBe(count);
 
         console.log(`✓ Image grid displays in ${count}-column layout`);
     }

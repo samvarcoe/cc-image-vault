@@ -46,7 +46,8 @@ interface CollectionInstance {
     updateImage(imageId: string, status: ImageUpdate): Promise<ImageMetadata>;
     deleteImage(imageId: string): Promise<void>;
 
+    getImageData(imageId: string): Promise<Buffer>;
+    getThumbnailData(imageId: string): Promise<Buffer>;
+
     getImages(options?: QueryOptions): Promise<ImageMetadata[]>;
-    updateImages(updates: Record<string, Partial<ImageUpdate>>): Promise<ImageMetadata[]>;
-    deleteImages(imageIds: string[]): Promise<void>;
 }

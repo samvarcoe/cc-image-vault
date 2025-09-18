@@ -457,20 +457,14 @@ export class Collection implements CollectionInstance {
         }
     }
 
-    /**
-     * Update multiple images at once
-     */
-    async updateImages(updates: Record<string, Partial<ImageUpdate>>): Promise<ImageMetadata[]> {
-        console.log(`args: updates: ${updates}`);
-        throw new PendingImplementationError('Collection.updateImages');
+    async getImageData(imageId: string): Promise<Buffer> {
+        console.log(`args: imageIds: ${imageId}`);
+        throw new PendingImplementationError('Collection.getImageData')
     }
 
-    /**
-     * Delete multiple images at once
-     */
-    async deleteImages(imageIds: string[]): Promise<void> {
-        console.log(`args: imageIds: ${imageIds}`);
-        throw new PendingImplementationError('Collection.deleteImages');
+    async getThumbnailData(imageId: string): Promise<Buffer> {
+        console.log(`args: imageIds: ${imageId}`);
+        throw new PendingImplementationError('Collection.getThumbnailData');
     }
 
     private validateImageStatus(status: string): void {
