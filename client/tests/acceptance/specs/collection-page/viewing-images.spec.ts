@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+import { corruptCollectionDB } from '@/utils';
 
 test.describe('Client - Collection Page - Viewing Images', () => {
 
@@ -113,20 +114,16 @@ test.describe('Client - Collection Page - Viewing Images', () => {
         await ui.shouldHaveNoFailedRequests();
     });
 
-    test.skip('Error occurs when retrieving collection images', async ({ page }) => {
+    test('Error occurs when retrieving collection images', async ({ page }) => {
         const ui = new ImageVault(page);
 
         // Given a collection exists with name "TestCollection"
-        await createCollectionFixture('TestCollection');
-
-        // Simulate a server error for image retrieval
-        await page.setExtraHTTPHeaders({
-            'x-force-fs-error': 'true'
-        });
+        const collection = Collection.create('ErrorCollection');
+        corruptCollectionDB(collection);
 
         // When the user visits the collection page "/collection/TestCollection"
         // And there is an error retrieving the images
-        await ui.collectionPage.visitCollection('TestCollection');
+        await ui.collectionPage.visitCollection(collection.name);
 
         // Then the page displays the message "Error retrieving images"
         await ui.collectionPage.errorMessage.shouldHaveText('Error retrieving images');
@@ -153,9 +150,7 @@ test.describe('Client - Collection Page - Viewing Images', () => {
         const response = await responsePromise;
 
         // Then the page returns a 404 status
-        expect(response.status(), {
-            message: `Collection page returned ${response.status()} status instead of 404 for non-existent collection`
-        }).toBe(404);
+        expect(response.status(), `Collection page returned ${response.status()} status instead of 404 for non-existent collection`).toBe(404);
 
         // And no images are displayed
         await ui.collectionPage.imageGrid.shouldNotBeDisplayed();

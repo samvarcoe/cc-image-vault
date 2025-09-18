@@ -14,8 +14,7 @@ Feature: Domain - Collections - Loading
     Scenario: User attempts to load a non-existent Collection
         Given the Collections directory exists
         When the user loads a Collection that does not exist
-        Then the system throws "CollectionLoadError: Unable to load Collection \"<name>\""
-        And the error cause is: "Error: No Collection exists with name: \"<name>\""
+        Then the system throws "CollectionNotFoundError: No Collection exists with name: \"<name>\""
 
     Scenario: An internal error occurs when loading a Collection
         Given a Collection exists

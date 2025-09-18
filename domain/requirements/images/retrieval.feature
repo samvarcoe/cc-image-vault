@@ -16,8 +16,7 @@ Feature: Domain - Images - Retrieval
     Scenario: User attempts to retrieve a non-existent image
         Given a Collection exists with name: [name]
         When the user attempts to retrieve an image with an [imageID] that does not exist
-        Then the system throws "ImageRetrievalError: Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""
-        And the error cause is: "ImageNotFoundError: Image not found with ID: \"[imageId]\""
+        Then the system throws "ImageNotFoundError: Image not found with ID: \"[imageId]\""
 
     Scenario: User attempts to retrieve an image using an invalid ID
         Given a Collection exists with name: [name]

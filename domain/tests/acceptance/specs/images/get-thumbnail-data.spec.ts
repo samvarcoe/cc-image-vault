@@ -40,10 +40,8 @@ suite('Domain - Images - Get Thumbnail Data', () => {
         const error = await captureAssertableAsyncError(() => collection.getThumbnailData(nonExistentImageId));
 
         error
-            .shouldHaveType(ImageRetrievalError)
-            .shouldHaveMessage(`Unable to retrieve image: "${nonExistentImageId}" from Collection: "${testCollectionName}"`)
-            .shouldHaveCause(ImageNotFoundError)
-            .shouldHaveCauseMessage(`Image not found with ID: "${nonExistentImageId}"`);
+            .shouldHaveType(ImageNotFoundError)
+            .shouldHaveMessage(`Image not found with ID: "${nonExistentImageId}"`);
     });
 
     test('User attempts to retrieve thumbnail data using an invalid ID', async () => {

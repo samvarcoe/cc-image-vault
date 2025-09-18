@@ -91,7 +91,10 @@ export class Collection implements CollectionInstance {
             return new Collection(name);
 
         } catch (error: unknown) {
-            throw new CollectionLoadError(name, error)
+            if (error instanceof CollectionNotFoundError) {
+                throw error;
+            }
+            throw new CollectionLoadError(name, error);
         }
     }
 
@@ -275,6 +278,10 @@ export class Collection implements CollectionInstance {
                 database.close();
             }
         } catch (error: unknown) {
+            if (error instanceof ImageNotFoundError) {
+                throw error;
+            };
+
             throw new ImageRetrievalError(this.name, imageId, error);
         }
     }
@@ -309,6 +316,10 @@ export class Collection implements CollectionInstance {
                 database.close();
             }
         } catch (error: unknown) {
+            if (error instanceof ImageNotFoundError) {
+                throw error;
+            };
+
             throw new ImageUpdateError(this.name, imageId, error);
         }
     }
@@ -378,10 +389,9 @@ export class Collection implements CollectionInstance {
             }
             
         } catch (error: unknown) {
-            // Handle specific error cases for proper error wrapping
-            if (error instanceof ImageRetrievalError && error.cause instanceof ImageNotFoundError) {
-                throw new ImageDeletionError(this.name, imageId, error.cause);
-            }
+            if (error instanceof ImageNotFoundError) {
+                throw error;
+            };
             
             throw new ImageDeletionError(this.name, imageId, error);
         }
@@ -448,9 +458,6 @@ export class Collection implements CollectionInstance {
                 database.close();
             }
         } catch (error: unknown) {
-            if (error instanceof Error && error.message === 'Invalid status value') {
-                throw new ImageRetrievalError(this.name, undefined, new Error(`Invalid status filter: "${options?.status}"`));
-            }
             throw new ImageRetrievalError(this.name, undefined, error);
         }
     }
@@ -468,10 +475,10 @@ export class Collection implements CollectionInstance {
 
             return imageData;
         } catch (error: unknown) {
-            // If it's already an ImageRetrievalError from getImage(), unwrap and re-wrap to preserve the original cause
-            if (error instanceof ImageRetrievalError && error.cause) {
-                throw new ImageRetrievalError(this.name, imageId, error.cause);
-            }
+            if (error instanceof ImageNotFoundError) {
+                throw error;
+            };
+            
             throw new ImageRetrievalError(this.name, imageId, error);
         }
     }
@@ -489,10 +496,10 @@ export class Collection implements CollectionInstance {
 
             return thumbnailData;
         } catch (error: unknown) {
-            // If it's already an ImageRetrievalError from getImage(), unwrap and re-wrap to preserve the original cause
-            if (error instanceof ImageRetrievalError && error.cause) {
-                throw new ImageRetrievalError(this.name, imageId, error.cause);
-            }
+            if (error instanceof ImageNotFoundError) {
+                throw error;
+            };
+            
             throw new ImageRetrievalError(this.name, imageId, error);
         }
     }
@@ -500,7 +507,7 @@ export class Collection implements CollectionInstance {
     private validateImageStatus(status: string): void {
         const validStatuses = ['INBOX', 'COLLECTION', 'ARCHIVE'];
         if (!validStatuses.includes(status)) {
-            throw new Error('Invalid status value');
+            throw new Error('Invalid status');
         }
     }
 

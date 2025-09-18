@@ -21,8 +21,7 @@ Feature: Domain - Images - Delete
     Scenario: User attempts to delete a non-existent image
         Given a Collection exists with name: [name]
         When the user attempts to delete an image with a valid imageId: [imageId] that does not exist
-        Then the system throws "ImageDeletionError: Unable to delete image: \"[imageId]\" from Collection: \"[name]\""
-        And the error cause is: "ImageNotFoundError: Image not found with ID: \"[imageId]\""
+        Then the system throws "ImageNotFoundError: Image not found with ID: \"[imageId]\""
 
     Scenario: User attempts to delete an image using an invalid image ID
         Given a Collection exists with name: [name]

@@ -2,7 +2,6 @@ import { test, expect, Page } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 
-
 async function pauseRoute(page: Page, urlPattern: string | RegExp, method?: string) {
     let resume: () => void;
     const ready = new Promise<void>(resolve => { resume = resolve; });

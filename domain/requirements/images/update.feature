@@ -19,8 +19,7 @@ Feature: Domain - Images - Update
     Scenario: User attempts to update the status of a non-existent image
         Given a Collection exists with name: [name]
         When the user attempts to update the status of an image with a valid imageId: [imageId] that does not exist
-        Then the system throws "ImageUpdateError: Unable to update image: \"[imageID]\" in Collection: \"[name]\""
-        And the error cause is: "ImageNotFoundError: Image not found with ID: \"[imageId]\""
+        Then the system throws "ImageNotFoundError: Image not found with ID: \"[imageId]\""
 
     Scenario: User attempts to update the status of an image using an invalid image ID
         Given a Collection exists with name: [name]

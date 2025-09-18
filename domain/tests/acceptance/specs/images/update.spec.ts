@@ -45,10 +45,8 @@ suite('Domain - Images - Update', () => {
         });
         
         error
-            .shouldHaveType(ImageUpdateError)
-            .shouldHaveMessage(`Unable to update image: "${nonExistentImageId}" in Collection: "${testCollectionName}"`)
-            .shouldHaveCause(ImageNotFoundError)
-            .shouldHaveCauseMessage(`Image not found with ID: "${nonExistentImageId}"`);
+            .shouldHaveType(ImageNotFoundError)
+            .shouldHaveMessage(`Image not found with ID: "${nonExistentImageId}"`);
         
         console.log(`✓ Non-existent image update properly rejected with error chain`);
     });
@@ -64,6 +62,7 @@ suite('Domain - Images - Update', () => {
         error
             .shouldHaveType(ImageUpdateError)
             .shouldHaveMessage(`Unable to update image: "${invalidImageId}" in Collection: "${testCollectionName}"`)
+            .shouldHaveCause(Error)
             .shouldHaveCauseMessage('Invalid imageID');
         
         console.log(`✓ Invalid image ID properly rejected for security`);
@@ -85,7 +84,8 @@ suite('Domain - Images - Update', () => {
         error
             .shouldHaveType(ImageUpdateError)
             .shouldHaveMessage(`Unable to update image: "${originalMetadata.id}" in Collection: "${testCollectionName}"`)
-            .shouldHaveCauseMessage('Invalid status value');
+            .shouldHaveCause(Error)
+            .shouldHaveCauseMessage('Invalid status');
         
         console.log(`✓ Invalid status value properly rejected`);
     });

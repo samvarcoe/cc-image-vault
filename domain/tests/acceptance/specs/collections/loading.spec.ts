@@ -22,10 +22,8 @@ suite('Domain - Collections - Loading', () => {
     test('User attempts to load a non-existent Collection', async () => {
         console.log('Validating that the correct Error is thrown when attempting to load a Collection that doesn\'t exist');
         captureAssertableError(() => Collection.load(non_existent_collection))
-            .shouldHaveType(CollectionLoadError)
-            .shouldHaveMessage(`Unable to load Collection: "${non_existent_collection}"`)
-            .shouldHaveCause(CollectionNotFoundError)
-            .shouldHaveCauseMessage(`No Collection found with name: "${non_existent_collection}"`);
+            .shouldHaveType(CollectionNotFoundError)
+            .shouldHaveMessage(`No Collection found with name: "${non_existent_collection}"`);
 
         console.log(`✓ Specific Error thrown for non-existent Collection`);
     });

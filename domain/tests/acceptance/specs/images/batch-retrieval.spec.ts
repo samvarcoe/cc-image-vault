@@ -144,7 +144,7 @@ suite('Domain - Images - Retrieve Batch', () => {
             .shouldHaveType(ImageRetrievalError)
             .shouldHaveMessage(`Unable to retrieve images from Collection "${testCollectionName}"`)
             .shouldHaveCause(Error)
-            .shouldHaveCauseMessage(`Invalid status filter: "${invalidStatus}"`);
+            .shouldHaveCauseMessage('Invalid status');
     });
 
     test('An internal error occurs when retrieving images', async () => {

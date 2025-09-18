@@ -49,8 +49,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
         const collectionName = this.model.getCollectionName();
         return /*html*/`
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-semibold text-slate-900 dark:text-white mb-2">${collectionName}</h2>
-                <p class="text-slate-600 dark:text-slate-400">Collection Images</p>
+                <h1 class="text-3xl font-semibold text-slate-900 dark:text-white mb-2">${collectionName}</h1>
             </div>
         `;
     }
@@ -112,50 +111,6 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                     class="w-full h-auto block"
                 />
             </div>
-        `;
-    }
-
-    render(): string {
-        const slug = this.slug;
-        const title = this.title();
-        const content = this.renderContent();
-        const modelData = this.model.serialize();
-
-        return /*html*/`
-            <!DOCTYPE html>
-            <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title> ${title} </title>
-                    <link rel="preload" href="/style.css" as="style">
-                    <link rel="stylesheet" href="/style.css">
-                </head>
-                <body>
-                    <div id="content"> ${content} </div>
-
-                    <script type='module' src='/js/mvc.js'></script>
-                    <script type='module' src='/js/pages/${slug}/model.js'></script>
-                    <script type='module' src='/js/pages/${slug}/view.js'></script>
-                    <script type='module' src='/js/pages/${slug}/controller.js'></script>
-
-                    <script type="module">
-                        import Model from '/js/pages/${slug}/model.js';
-                        import View from '/js/pages/${slug}/view.js';
-                        import Controller from '/js/pages/${slug}/controller.js';
-
-                        try {
-                            const initialData = JSON.parse('${modelData}');
-                            const model = new Model(initialData);
-                            const view = new View(model, '${slug}');
-                            const controller = new Controller(model, view);
-
-                        } catch (error) {
-                            console.error('Failed to bootstrap page:', error);
-                        }
-                    </script>
-                </body>
-            </html>
         `;
     }
 }

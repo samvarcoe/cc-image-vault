@@ -16,8 +16,7 @@ Feature: Domain - Images - Get Thumbnail Data
     Scenario: User attempts to retrieve thumbnail data for a non-existent image
         Given a Collection exists with name: [name]
         When the user attempts to retrieve thumbnail data with an [imageID] that does not exist
-        Then the system throws "ImageRetrievalError: Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""
-        And the error cause is: "ImageNotFoundError: Image not found with ID: \"[imageId]\""
+        Then the system throws "ImageNotFoundError: Image not found with ID: \"[imageId]\""
 
     Scenario: User attempts to retrieve thumbnail data using an invalid ID
         Given a Collection exists with name: [name]

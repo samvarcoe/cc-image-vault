@@ -4,7 +4,7 @@ import sinon from 'sinon';
 import { Collection } from '../../../../src/collection';
 import { ImageUtils } from '../../../utils/image-utils';
 import { captureAssertableAsyncError } from '../../../utils';
-import { ImageDeletionError, ImageNotFoundError, ImageRetrievalError } from '../../../../errors';
+import { ImageDeletionError, ImageNotFoundError } from '../../../../errors';
 
 import { getImageFixture } from '@/utils/fixtures/image-fixtures';
 
@@ -35,10 +35,8 @@ suite('Domain - Images - Delete', () => {
         console.log('Validating that subsequent retrieval attempts throw ImageNotFoundError');
         const error = await captureAssertableAsyncError(() => collection.getImage(addedMetadata.id));
         error
-            .shouldHaveType(ImageRetrievalError)
-            .shouldHaveMessage(`Unable to retrieve image: "${addedMetadata.id}" from Collection: "${testCollectionName}"`)
-            .shouldHaveCause(ImageNotFoundError)
-            .shouldHaveCauseMessage(`Image not found with ID: "${addedMetadata.id}"`);
+            .shouldHaveType(ImageNotFoundError)
+            .shouldHaveMessage(`Image not found with ID: "${addedMetadata.id}"`);
             
         console.log(`✓ Image ${addedMetadata.id} successfully deleted from Collection "${testCollectionName}"`);
     });
@@ -51,10 +49,8 @@ suite('Domain - Images - Delete', () => {
         const error = await captureAssertableAsyncError(() => collection.deleteImage(nonExistentImageId));
         
         error
-            .shouldHaveType(ImageDeletionError)
-            .shouldHaveMessage(`Unable to delete image: "${nonExistentImageId}" from Collection: "${testCollectionName}"`)
-            .shouldHaveCause(ImageNotFoundError)
-            .shouldHaveCauseMessage(`Image not found with ID: "${nonExistentImageId}"`);
+            .shouldHaveType(ImageNotFoundError)
+            .shouldHaveMessage(`Image not found with ID: "${nonExistentImageId}"`);
     });
 
     test('User attempts to delete an image using an invalid image ID', async () => {

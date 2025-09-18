@@ -42,7 +42,7 @@ Feature: Domain - Images - Retrieve Batch
         Given a Collection exists with name: [name]
         When the user attempts to retrieve images with an invalid status: [invalidStatus]
         Then the system throws "ImageRetrievalError: Unable to retrieve images from Collection \"[name]\""
-        And the error cause is: "Error: Invalid status filter: \"[invalidStatus]\""
+        And the error cause is: "Error: Invalid status"
 
     Scenario: An internal error occurs when retrieving images
         Given a Collection exists with name: [name]
