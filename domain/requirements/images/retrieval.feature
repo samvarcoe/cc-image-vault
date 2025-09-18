@@ -16,13 +16,13 @@ Feature: Domain - Images - Retrieval
     Scenario: User attempts to retrieve a non-existent image
         Given a Collection exists with name: [name]
         When the user attempts to retrieve an image with an [imageID] that does not exist
-        Then the system throws "Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""
+        Then the system throws "ImageRetrievalError: Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""
         And the error cause is: "ImageNotFoundError: Image not found with ID: \"[imageId]\""
 
     Scenario: User attempts to retrieve an image using an invalid ID
         Given a Collection exists with name: [name]
         When the user attempts to retrieve an image with an invalid ID containing unsafe characters
-        Then the system throws "Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""
+        Then the system throws "ImageRetrievalError: Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""
         And the error cause is: "Error: Invalid image ID"
 
     Scenario: An internal error occurs when retrieving an image
@@ -30,4 +30,4 @@ Feature: Domain - Images - Retrieval
         And an image exists in the Collection
         When the user attempts to retrieve the image using the correct ID: [imageID]
         But there is an internal error
-        Then the system throws "Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""
+        Then the system throws "ImageRetrievalError: Unable to retrieve image: \"[imageID]\" from Collection: \"[name]\""

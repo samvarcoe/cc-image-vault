@@ -458,8 +458,24 @@ export class Collection implements CollectionInstance {
     }
 
     async getImageData(imageId: string): Promise<Buffer> {
-        console.log(`args: imageIds: ${imageId}`);
-        throw new PendingImplementationError('Collection.getImageData')
+        try {
+            this.validateImageId(imageId);
+
+            const imageMetadata = await this.getImage(imageId);
+
+            const collectionPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, this.name);
+            const originalPath = path.join(collectionPath, 'images', 'original', `${imageId}.${imageMetadata.extension}`);
+
+            const imageData = await fsOps.readFile(originalPath);
+
+            return imageData;
+        } catch (error: unknown) {
+            // If it's already an ImageRetrievalError from getImage(), unwrap and re-wrap to preserve the original cause
+            if (error instanceof ImageRetrievalError && error.cause) {
+                throw new ImageRetrievalError(this.name, imageId, error.cause);
+            }
+            throw new ImageRetrievalError(this.name, imageId, error);
+        }
     }
 
     async getThumbnailData(imageId: string): Promise<Buffer> {
@@ -529,7 +545,7 @@ export class Collection implements CollectionInstance {
         const pattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
         if(!pattern.test(imageID)) {
             throw new Error('Invalid imageID');
-        } 
+        }
 
     }
 
