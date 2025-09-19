@@ -55,10 +55,6 @@ class ImageCard extends Element {
 }
 
 class Popover extends Element {
-    get overlay(): Element {
-        return this.child(Element, 'Popover Overlay', '[data-id="popover-overlay"]');
-    }
-
     get image(): Element {
         return this.child(Element, 'Popover Image', '[data-id="popover-image"]');
     }

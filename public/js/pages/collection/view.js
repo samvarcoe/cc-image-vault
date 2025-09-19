@@ -10,10 +10,12 @@ export default class CollectionPageView extends View {
     }
     renderContent() {
         return `
+            ${this.popover()}
             <div class="min-h-full">
                 ${this.header()}
                 ${this.main()}
             </div>
+
         `;
     }
     header() {
@@ -85,7 +87,7 @@ export default class CollectionPageView extends View {
         const imageWidth = 400;
         const imageHeight = Math.round(imageWidth / image.aspect);
         return `
-            <div class="bg-white rounded-lg overflow-hidden shadow-sm mb-4 break-inside-avoid" data-id="image-card-${image.id}">
+            <div class="bg-white rounded-lg overflow-hidden shadow-sm mb-4 break-inside-avoid cursor-pointer hover:shadow-md transition-shadow" data-id="image-card-${image.id}" data-image-id="${image.id}">
                 <img
                     src="${thumbnailUrl}"
                     alt="Image ${image.id}"
@@ -94,6 +96,40 @@ export default class CollectionPageView extends View {
                     height="${imageHeight}"
                     class="w-full h-auto block"
                 />
+            </div>
+        `;
+    }
+    popover() {
+        if (!this.model.isPopoverVisible()) {
+            return '';
+        }
+        const selectedImage = this.model.getSelectedImage();
+        const popoverError = this.model.getPopoverError();
+        const collectionName = this.model.getCollectionName();
+        if (!selectedImage) {
+            return '';
+        }
+        const originalImageUrl = `/api/images/${collectionName}/${selectedImage.id}`;
+        return `
+            <div data-id="fullscreen-popover" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/80  backdrop-blur-lg">
+                ${popoverError ?
+            `
+                        <div class="text-white text-lg font-medium text-center" data-id="popover-error-message">
+                            ${popoverError}
+                        </div>
+                    ` :
+            `
+                        <div class="w-full h-full flex items-center justify-center p-4">
+                            <img
+                                src="${originalImageUrl}"
+                                alt="Full size image ${selectedImage.id}"
+                                class="max-w-full max-h-full object-contain"
+                                width="${selectedImage.width}"
+                                height="${selectedImage.height}"
+                                data-id="popover-image"
+                            />
+                        </div>
+                    `}
             </div>
         `;
     }
