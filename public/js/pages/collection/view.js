@@ -66,9 +66,10 @@ export default class CollectionPageView extends View {
         `;
     }
     emptyState() {
+        const currentStatus = this.model.getCurrentStatus();
         return `
             <div class="text-center py-12">
-                <p class="text-lg text-slate-600 dark:text-slate-400" data-id="empty-message">This collection has no images with "COLLECTION" status</p>
+                <p class="text-lg text-slate-600 dark:text-slate-400" data-id="empty-message">This Collection has no images with "${currentStatus}" status</p>
             </div>
         `;
     }

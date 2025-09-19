@@ -23,19 +23,33 @@ routes.get('/', async (_, res) => {
     }
 });
 
-routes.get('/collection/:collectionName', async (req, res) => {
+routes.get('/collection/:name', async (req, res) => {
     try {
-        const { collectionName } = req.params;
+        const { name } = req.params;
+        const { status } = req.query;
 
-        const collection = Collection.load(collectionName);
+        // Redirect to default status if none provided
+        if (!status) {
+            return res.redirect(`/collection/${name}?status=COLLECTION`);
+        }
+
+        // Validate status parameter
+        const validStatuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
+        const imageStatus = status as ImageStatus;
+        if (!validStatuses.includes(imageStatus)) {
+            return res.redirect(`/collection/${name}?status=COLLECTION`);
+        }
+
+        const collection = Collection.load(name);
 
         const model = new CollectionPageModel({
-            name: collectionName,
-            images: await collection.getImages({ status: 'COLLECTION' })
+            name,
+            status: imageStatus,
+            images: await collection.getImages({ status: imageStatus })
         });
 
         const view = new CollectionPageView(model);
-         
+
         return res.send(view.render());
 
     } catch (error: unknown) {
@@ -45,7 +59,8 @@ routes.get('/collection/:collectionName', async (req, res) => {
         }
 
         const model = new CollectionPageModel({
-            name: req.params.collectionName,
+            name: req.params.name,
+            status: (req.query.status as ImageStatus) || 'COLLECTION',
             error: 'Error retrieving images'
         });
 

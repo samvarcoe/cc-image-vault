@@ -1,7 +1,7 @@
 import { Model } from '../../mvc.js';
 export default class CollectionPageModel extends Model {
     constructor(initialData = {}) {
-        super(Object.assign({ name: '', images: [], error: '', loading: false, popover: {
+        super(Object.assign({ name: '', status: 'COLLECTION', images: [], error: '', loading: false, popover: {
                 visible: false,
                 selectedImageId: undefined,
                 error: undefined
@@ -9,6 +9,9 @@ export default class CollectionPageModel extends Model {
     }
     getCollectionName() {
         return this.data.name || '';
+    }
+    getCurrentStatus() {
+        return this.data.status || 'COLLECTION';
     }
     getImages() {
         return this.data.images || [];

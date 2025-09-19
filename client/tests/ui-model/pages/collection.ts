@@ -21,11 +21,11 @@ export class CollectionPage extends PageObject {
         return this.component(Popover, 'Fullscreen Popover', '[data-id="fullscreen-popover"]');
     }
 
-    async visitCollection(collectionName: string): Promise<void> {
-        const collectionUrl = `/collection/${collectionName}`;
-        await this.page.goto(collectionUrl);
+    async visit(collectionName: string, status?: ImageStatus): Promise<void> {
+        const searchParams = status ? `?status=${status}` : '';
+        await this.page.goto(`${this.url}/${collectionName}${searchParams}`);
         await this.page.waitForLoadState('networkidle');
-    }
+    };
 }
 
 class ImageGrid extends Element {

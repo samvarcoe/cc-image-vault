@@ -9,13 +9,6 @@ export abstract class PageObject {
         this.page = page;
     }
 
-    async visit(timeout = 2000): Promise<void> {
-        console.log(`Navigating to ${this.constructor.name}: ${this.url}`);
-        await this.page.goto(this.url);
-        await this.page.waitForLoadState('load', { timeout });;
-        await this.shouldBeOnPage();
-    }
-
     protected element = (name: string, selector: string): Element => {
         return new Element(name, selector, this.page);
     };

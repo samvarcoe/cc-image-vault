@@ -4,6 +4,13 @@ import { Element } from '../base/element';
 export class HomePage extends PageObject {
     protected url = '/';
 
+    async visit(timeout = 2000): Promise<void> {
+        console.log(`Navigating to ${this.constructor.name}: ${this.url}`);
+        await this.page.goto(this.url);
+        await this.page.waitForLoadState('load', { timeout });;
+        await this.shouldBeOnPage();
+    }
+
     get userMessage(): Element {
         return this.element('User Message', '[data-id="user-message"]');
     }

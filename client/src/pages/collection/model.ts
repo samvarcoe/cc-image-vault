@@ -2,6 +2,7 @@ import { Model } from '../../mvc.js';
 
 export interface CollectionPageData {
     name?: string;
+    status?: ImageStatus;
     images?: ImageMetadata[];
     error?: string;
     loading?: boolean;
@@ -17,6 +18,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     constructor(initialData: Partial<CollectionPageData> = {}) {
         super({
             name: '',
+            status: 'COLLECTION',
             images: [],
             error: '',
             loading: false,
@@ -31,6 +33,10 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
 
     getCollectionName(): string {
         return this.data.name || '';
+    }
+
+    getCurrentStatus(): ImageStatus {
+        return this.data.status || 'COLLECTION';
     }
 
     getImages(): ImageMetadata[] {
