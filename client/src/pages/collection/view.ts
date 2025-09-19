@@ -132,7 +132,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
         const originalImageUrl = `/api/images/${collectionName}/${selectedImage.id}`;
 
         return /*html*/`
-            <div data-id="fullscreen-popover" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/80  backdrop-blur-lg">
+            <div data-id="fullscreen-popover" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/70  backdrop-blur-lg">
                 ${popoverError ?
                     /*html*/`
                         <div class="text-white text-lg font-medium text-center" data-id="popover-error-message">
