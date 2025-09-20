@@ -75,7 +75,7 @@ export class APIModel {
       };
 
 
-      console.log(`Making a ${method} request to "${url.toString()}"`);
+      LOGGER.log(`Making a ${method} request to "${url.toString()}"`);
 
       const response = await fetch(url, init);
 

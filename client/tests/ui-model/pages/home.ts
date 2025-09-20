@@ -5,10 +5,14 @@ export class HomePage extends PageObject {
     protected url = '/';
 
     async visit(timeout = 2000): Promise<void> {
-        console.log(`Navigating to ${this.constructor.name}: ${this.url}`);
+        LOGGER.log(`Navigating to ${this.constructor.name}: ${this.url}`);
         await this.page.goto(this.url);
         await this.page.waitForLoadState('load', { timeout });;
         await this.shouldBeOnPage();
+    }
+
+    get header(): Element {
+        return this.element('Header Menu', '[data-id="header-menu"]');
     }
 
     get userMessage(): Element {
@@ -18,7 +22,7 @@ export class HomePage extends PageObject {
     get collectionsList(): CollectionsList {
         return this.component(CollectionsList, 'Collections List', '[data-id="collections-list"]');
     }
-    
+
 }
 
 class CollectionsList extends Element {

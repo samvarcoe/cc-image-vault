@@ -35,7 +35,7 @@ export abstract class UI {
 
             if (msg.type() === 'error') {
                 this.consoleErrors.push(messageText);
-                console.log(`Console Error on ${this.constructor.name}: ${msg.text()}`);
+                LOGGER.log(`Console Error on ${this.constructor.name}: ${msg.text()}`);
                 
             } else if (msg.type() === 'warning') {
                 this.consoleWarnings.push(messageText);
@@ -73,7 +73,7 @@ export abstract class UI {
             // Track failed requests (4xx, 5xx status codes)
             if (response.status() >= 400) {
                 this.failedRequests.push(event);
-                console.log(`Failed Request on ${this.constructor.name}: ${response.status()} ${response.url()}`);
+                LOGGER.log(`Failed Request on ${this.constructor.name}: ${response.status()} ${response.url()}`);
             }
         });
 
@@ -88,7 +88,7 @@ export abstract class UI {
             };
             this.networkEvents.push(event);
             this.failedRequests.push(event);
-            console.log(`Request Failed on ${this.constructor.name}: ${request.url()} - ${event.error}`);
+            LOGGER.log(`Request Failed on ${this.constructor.name}: ${request.url()} - ${event.error}`);
         });
     }
 
@@ -142,7 +142,7 @@ export abstract class UI {
         const currentUrl = this.getCurrentUrl();
         const currentPath = new URL(currentUrl).pathname;
         expect(currentPath, `The browser is not at url: ${expectedUrl}`).toBe(expectedUrl);
-        console.log(`✓ The browser is at url: "${expectedUrl}"`);
+        LOGGER.log(`✓ The browser is at url: "${expectedUrl}"`);
     }
 
     async shouldHaveNoApiErrors(): Promise<void> {
@@ -154,7 +154,7 @@ export abstract class UI {
         message: `Found ${failedApiRequests.length} failed API requests instead of 0 during operation` 
         }).toBe(0);
 
-        console.log('✓ No API request failures during operation');
+        LOGGER.log('✓ No API request failures during operation');
     }
 
     async shouldHaveNoConsoleErrors(): Promise<void> {
@@ -164,7 +164,7 @@ export abstract class UI {
         message: `Found ${consoleErrors.length} unexpected console errors: ${consoleErrors.join(', ')}` 
         }).toBe(0);
         
-        console.log('✓ No unexpected console errors');
+        LOGGER.log('✓ No unexpected console errors');
     }
 
     async shouldHaveNoFailedRequests(): Promise<void> {
@@ -174,6 +174,6 @@ export abstract class UI {
         message: `Found ${failedRequests.length} failed network requests instead of 0` 
         }).toBe(0);
         
-        console.log('✓ No failed network requests');
+        LOGGER.log('✓ No failed network requests');
     }
 }

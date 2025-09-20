@@ -8,7 +8,6 @@ import { captureAssertableAsyncError } from '../../../utils';
 import { ImageRetrievalError, ImageNotFoundError } from '../../../../errors';
 
 import { getImageFixture } from '@/utils/fixtures/image-fixtures';
-import { CONFIG } from '@/config';
 import sharp from 'sharp';
 
 const testCollectionName = 'test-get-thumbnail-data';
@@ -29,14 +28,14 @@ suite('Domain - Images - Get Thumbnail Data', () => {
         const thumbnailData = await collection.getThumbnailData(metadata.id);
 
         expect(Buffer.compare(thumbnailData, thumbnailBuffer), 'The thumbnail data returned does not match the thumbnail Buffer').to.equal(0);
-        console.log('✓ Retrieved thumbnail data matches thumbnail Buffer');
+        LOGGER.log('✓ Retrieved thumbnail data matches thumbnail Buffer');
     });
 
     test('User attempts to retrieve thumbnail data for a non-existent image', async () => {
         const collection = Collection.create(testCollectionName);
         const nonExistentImageId = crypto.randomUUID();
 
-        console.log('Validating that the correct Error is thrown when attempting to retrieve thumbnail data for non-existent image');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to retrieve thumbnail data for non-existent image');
         const error = await captureAssertableAsyncError(() => collection.getThumbnailData(nonExistentImageId));
 
         error
@@ -48,7 +47,7 @@ suite('Domain - Images - Get Thumbnail Data', () => {
         const collection = Collection.create(testCollectionName);
         const invalidImageId = 'invalid<>id'; // Contains unsafe characters
 
-        console.log('Validating that the correct Error is thrown when attempting to retrieve thumbnail data with invalid ID');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to retrieve thumbnail data with invalid ID');
         const error = await captureAssertableAsyncError(() => collection.getThumbnailData(invalidImageId));
 
         error
@@ -68,7 +67,7 @@ suite('Domain - Images - Get Thumbnail Data', () => {
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));
 
-        console.log('Validating that the correct Error is thrown when internal error occurs during thumbnail data retrieval');
+        LOGGER.log('Validating that the correct Error is thrown when internal error occurs during thumbnail data retrieval');
         const error = await captureAssertableAsyncError(() => collection.getThumbnailData(metadata.id));
 
         error

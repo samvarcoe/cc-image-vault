@@ -16,7 +16,6 @@ import {
 
 import { DirectoryFixtures } from '@/utils';
 import { fsOps } from '../../../../src/fs-operations';
-import { CONFIG } from '@/config';
 
 const testCollectionName = 'test-image-collection';
 
@@ -109,7 +108,7 @@ suite('Domain - Images - Addition', () => {
         const collection = Collection.create(testCollectionName);
         const nonExistentPath = './blah/blah/blah.jpg';
 
-        console.log('Validating that the correct Error is thrown when attempting to add non-existent image file');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to add non-existent image file');
         const error = await captureAssertableAsyncError(() => collection.addImage(nonExistentPath));
 
         error
@@ -128,7 +127,7 @@ suite('Domain - Images - Addition', () => {
         // Add image first time
         await collection.addImage(imageFixture.filePath);
 
-        console.log('Validating that the correct Error is thrown when attempting to add duplicate image');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to add duplicate image');
         const error = await captureAssertableAsyncError(() => collection.addImage(imageFixture.filePath));
 
         error
@@ -141,14 +140,14 @@ suite('Domain - Images - Addition', () => {
         const originalDir = path.join(CONFIG.COLLECTIONS_DIRECTORY, testCollectionName, 'images', 'original');
         const originalFiles = await DirectoryFixtures.listFiles(originalDir);
         expect(originalFiles.length, 'Additional image files created after duplicate attempt').equals(1);
-        console.log('✓ No additional image files created after duplicate attempt');
+        LOGGER.log('✓ No additional image files created after duplicate attempt');
     });
 
     test('User attempts to add an image with unsupported format', async () => {
         const collection = Collection.create(testCollectionName);
         const unsupportedFilePath = await getUnsupportedFileFixture();
 
-        console.log('Validating that the correct Error is thrown when attempting to add unsupported file type');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to add unsupported file type');
         const error = await captureAssertableAsyncError(() => collection.addImage(unsupportedFilePath));
 
         error
@@ -164,7 +163,7 @@ suite('Domain - Images - Addition', () => {
         const collection = Collection.create(testCollectionName);
         const corruptedFilePath = await getCorruptedImageFixture('jpg');
 
-        console.log('Validating that the correct Error is thrown when attempting to add corrupted image');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to add corrupted image');
         const error = await captureAssertableAsyncError(() => collection.addImage(corruptedFilePath));
 
         error
@@ -180,7 +179,7 @@ suite('Domain - Images - Addition', () => {
         const collection = Collection.create(testCollectionName);
         const unsafeFilePath = './some/path/javascript:alert(1).jpg';
 
-        console.log('Validating that the correct Error is thrown when attempting to add image with unsafe filename');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to add image with unsafe filename');
         const error = await captureAssertableAsyncError(() => collection.addImage(unsafeFilePath));
 
         error
@@ -197,7 +196,7 @@ suite('Domain - Images - Addition', () => {
         const longName = 'a'.repeat(260); // Exceeds 256 character limit
         const longFilePath = `./some/path/${longName}.jpg`;
 
-        console.log('Validating that the correct Error is thrown when attempting to add image with long filename');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to add image with long filename');
         const error = await captureAssertableAsyncError(() => collection.addImage(longFilePath));
 
         error
@@ -216,7 +215,7 @@ suite('Domain - Images - Addition', () => {
         // Mock filesystem operation to simulate internal error
         sinon.stub(fsOps, 'writeFile').throws(new Error('Filesystem unavailable'));
 
-        console.log('Validating that the correct Error is thrown when internal error occurs during image addition');
+        LOGGER.log('Validating that the correct Error is thrown when internal error occurs during image addition');
         const error = await captureAssertableAsyncError(() => collection.addImage(imageFixture.filePath));
 
         error

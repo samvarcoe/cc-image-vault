@@ -7,7 +7,6 @@ import chaiMatchPattern from 'chai-match-pattern';
 const _ = chaiMatchPattern.getLodashModule();
 
 import { DirectoryFixtures } from "@/utils";
-import { CONFIG } from "@/config";
 
 export class ImageUtils {
     static getImagePath = (collectionName: string, imageName: string, type: 'original' | 'thumbnail' = 'original'): string => {
@@ -31,7 +30,7 @@ export class ImageUtils {
             exists = false;
         }
         expect(exists, `${type} image file for: "${imageName}" does not exist at "${imagePath}"`).true;
-        console.log(`✓ ${type} image file for: "${imageName}" exists at "${imagePath}"`);
+        LOGGER.log(`✓ ${type} image file for: "${imageName}" exists at "${imagePath}"`);
     };
 
     static assertImageFileDoesNotExist = async (collectionName: string, imageName: string, type: 'original' | 'thumbnail' = 'original'): Promise<void> => {
@@ -47,7 +46,7 @@ export class ImageUtils {
         }
 
         expect(exists, `${type} image file for: "${imageName}" should not exist at "${imagePath}"`).false;
-        console.log(`✓ ${type} image file for: "${imageName}" does not exist at "${imagePath}"`);
+        LOGGER.log(`✓ ${type} image file for: "${imageName}" does not exist at "${imagePath}"`);
     };
 
     static assertNoImageFilesCreated = async (collectionName: string): Promise<void> => {
@@ -59,7 +58,7 @@ export class ImageUtils {
         
         expect(originalFiles, `Original image files were created in Collection "${collectionName}" after error`).deep.equals([]);
         expect(thumbnailFiles, `Thumbnail files were created in Collection "${collectionName}" after error`).deep.equals([]);
-        console.log(`✓ No image files were created in Collection "${collectionName}"`);
+        LOGGER.log(`✓ No image files were created in Collection "${collectionName}"`);
     };
 
     static assertImageMetadata = (metadata: ImageMetadata, expected: Partial<ImageMetadata>): void => {
@@ -80,11 +79,11 @@ export class ImageUtils {
         };
 
         expect(metadata, 'The Image MetaData did not match the expected values').to.matchPattern(pattern);
-        console.log(`✓ Image metadata validated for image ${metadata.id}`);
+        LOGGER.log(`✓ Image metadata validated for image ${metadata.id}`);
     };
 
     static assertImageStatus = (metadata: ImageMetadata, expectedStatus: string): void => {
         expect(metadata.status, `Image ${metadata.id} status after addition to Collection "${metadata.collection}"`).equals(expectedStatus);
-        console.log(`✓ Image ${metadata.id} has expected status "${expectedStatus}"`);
+        LOGGER.log(`✓ Image ${metadata.id} has expected status "${expectedStatus}"`);
     };
 }

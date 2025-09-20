@@ -21,14 +21,14 @@ suite('Domain - Images - Get Image Data', () => {
         const imageData = await collection.getImageData(metadata.id);
 
         expect(Buffer.compare(imageData, image.buffer), 'The image data returned does not match the original Buffer').to.equal(0);
-        console.log('✓ Retrieved image data matches the original Buffer');
+        LOGGER.log('✓ Retrieved image data matches the original Buffer');
     });
 
     test('User attempts to retrieve image data for a non-existent image', async () => {
         const collection = Collection.create(testCollectionName);
         const nonExistentImageId = crypto.randomUUID();
 
-        console.log('Validating that the correct Error is thrown when attempting to retrieve data for non-existent image');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to retrieve data for non-existent image');
         const error = await captureAssertableAsyncError(() => collection.getImageData(nonExistentImageId));
 
         error
@@ -40,7 +40,7 @@ suite('Domain - Images - Get Image Data', () => {
         const collection = Collection.create(testCollectionName);
         const invalidImageId = 'invalid<>id'; // Contains unsafe characters
 
-        console.log('Validating that the correct Error is thrown when attempting to retrieve image data with invalid ID');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to retrieve image data with invalid ID');
         const error = await captureAssertableAsyncError(() => collection.getImageData(invalidImageId));
 
         error
@@ -60,7 +60,7 @@ suite('Domain - Images - Get Image Data', () => {
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));
 
-        console.log('Validating that the correct Error is thrown when internal error occurs during image data retrieval');
+        LOGGER.log('Validating that the correct Error is thrown when internal error occurs during image data retrieval');
         const error = await captureAssertableAsyncError(() => collection.getImageData(metadata.id));
 
         error

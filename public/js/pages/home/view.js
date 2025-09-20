@@ -10,22 +10,8 @@ export default class HomePageView extends View {
     renderContent() {
         return `
             <div class="min-h-full">
-                ${this.header()}
                 ${this.main()}
             </div>
-        `;
-    }
-    header() {
-        return `
-            <header class="bg-white shadow-sm border-b border-slate-200 dark:bg-slate-800 dark:border-slate-700">
-                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-16 items-center justify-between">
-                        <div class="flex items-center">
-                            <h1 class="text-xl font-semibold text-slate-900 dark:text-white">Image Vault</h1>
-                        </div>
-                    </div>
-                </div>
-            </header>
         `;
     }
     main() {

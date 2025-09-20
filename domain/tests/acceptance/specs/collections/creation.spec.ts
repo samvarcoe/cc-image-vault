@@ -3,7 +3,6 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { fsOps } from '../../../../src/fs-operations';
 
-import { CONFIG } from '@/config';
 import { Collection } from '../../../../src/collection';
 import { DirectoryFixtures } from '@/utils/fixtures/directory-fixtures';
 import { CollectionUtils } from '../../../utils/collection-utils';
@@ -26,7 +25,7 @@ suite('Domain - Collections - Creation', () => {
     test('User attempts to create a Collection with duplicate name', async () => {
        Collection.create(existing_collection); 
 
-        console.log('Validating that the correct Error is thrown when attempting to create a Collection with a duplicate name');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to create a Collection with a duplicate name');
         captureAssertableError(() => Collection.create(existing_collection))
             .shouldHaveType(CollectionCreateError)
             .shouldHaveMessage(`Unable to create Collection: "${existing_collection}"`)
@@ -36,11 +35,11 @@ suite('Domain - Collections - Creation', () => {
         const collections = await DirectoryFixtures.listDirectoryNames(CONFIG.COLLECTIONS_DIRECTORY);
 
         expect(collections, `The existing Collection list has changed`).deep.equals([existing_collection])
-        console.log(`✓ Duplicate Collection creation prevented for "${existing_collection}"`);
+        LOGGER.log(`✓ Duplicate Collection creation prevented for "${existing_collection}"`);
     });
 
     test('User attempts to create a Collection with invalid name', async () => {
-        console.log('Validating that the correct Error is thrown when attempting to create a Collection with an invalid name');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to create a Collection with an invalid name');
         captureAssertableError(() => Collection.create(invalid_name))
             .shouldHaveType(CollectionCreateError)
             .shouldHaveMessage(`Unable to create Collection: "${invalid_name}"`)

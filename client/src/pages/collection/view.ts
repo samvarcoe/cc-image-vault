@@ -23,16 +23,46 @@ export default class CollectionPageView extends View<CollectionPageModel> {
     }
 
     private header(): string {
+        const collectionName = this.model.getCollectionName();
+        const currentStatus = this.model.getCurrentStatus();
+
         return /*html*/`
-            <header class="bg-white shadow-sm border-b border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+            <header data-id="header-menu" class="sticky top-0 z-40 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-800 dark:border-slate-700">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-16 items-center justify-between">
-                        <div class="flex items-center">
-                            <h1 class="text-xl font-semibold text-slate-900 dark:text-white">Image Vault</h1>
+                    <div class="flex h-14 items-center">
+                        <div class="flex-1">
+                            <a href="/" data-id="image-vault-link" class="text-xl font-semibold text-slate-900 dark:text-white hover:text-slate-700 dark:hover:text-slate-300">
+                                Image Vault
+                            </a>
                         </div>
+                        <div data-id="status-toggle" class="flex gap-2">
+                            ${this.statusButton('INBOX', collectionName, currentStatus)}
+                            ${this.statusButton('COLLECTION', collectionName, currentStatus)}
+                            ${this.statusButton('ARCHIVE', collectionName, currentStatus)}
+                        </div>
+                        <div class="flex-1"></div>
                     </div>
                 </div>
             </header>
+        `;
+    }
+
+    private statusButton(status: ImageStatus, collectionName: string, currentStatus: ImageStatus): string {
+        const isSelected = status === currentStatus;
+        const baseClasses = 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors';
+        const stateClasses = isSelected
+            ? 'bg-slate-700 text-white dark:bg-slate-600'
+            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600';
+
+        return /*html*/`
+            <a
+                href="/collection/${collectionName}?status=${status}"
+                data-id="status-button-${status}"
+                aria-pressed="${isSelected}"
+                class="${baseClasses} ${stateClasses}"
+            >
+                ${status}
+            </a>
         `;
     }
 

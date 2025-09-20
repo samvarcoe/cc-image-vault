@@ -183,6 +183,6 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         await page.keyboard.press('Escape');
         await ui.collectionPage.popover.shouldNotBeDisplayed();
 
-        console.log('✓ Popover handles image load failure gracefully');
+        LOGGER.log('✓ Popover handles image load failure gracefully');
     });
 });

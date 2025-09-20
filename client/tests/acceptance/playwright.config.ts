@@ -1,11 +1,11 @@
 import { defineConfig } from '@playwright/test';
-import { CONFIG } from '@/config';
+import '@/config';
 
 export default defineConfig({
   testDir: './specs',
   workers: 1,
   reporter: [
-    ['list']
+    ['line']
   ],
   use: {
     baseURL: CONFIG.UI_BASE_URL,

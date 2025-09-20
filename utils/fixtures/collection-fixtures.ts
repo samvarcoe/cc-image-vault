@@ -1,7 +1,6 @@
 import { Collection } from "@/domain";
 import { getImageFixture } from "./image-fixtures";
 import { existsSync, cpSync } from "fs";
-import { CONFIG } from "@/config";
 
 const CACHE_DIR = 'utils/fixtures/collections';
 
@@ -15,7 +14,7 @@ export const createCollectionFixture = async (name: string): Promise<Collection>
 
             const collection = Collection.load(name);
 
-            console.log(`Collection fixture: "${name}" retrieved from cache`);
+            LOGGER.log(`Collection fixture: "${name}" retrieved from cache`);
             return collection;
 
          } catch {
@@ -24,7 +23,7 @@ export const createCollectionFixture = async (name: string): Promise<Collection>
     }
 
     try {
-        console.log(`Creating Collection fixture "${name}" from scratch`);
+        LOGGER.log(`Creating Collection fixture "${name}" from scratch`);
 
         const collection = Collection.create(name);
 

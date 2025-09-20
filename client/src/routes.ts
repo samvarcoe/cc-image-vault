@@ -9,7 +9,13 @@ import CollectionPageView from './pages/collection/view';
 export const routes = express.Router();
 
 routes.get('/', async (_, res) => {
-    try {
+    try {          
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
+
         const collections = Collection.list();
         const model = new HomePageModel({ collections });
         const view = new HomePageView(model);

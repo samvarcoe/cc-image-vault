@@ -38,14 +38,14 @@ suite('Domain - Images - Retrieval', () => {
             updated: addedMetadata.updated
         });
         
-        console.log(`✓ Retrieved image metadata matches expected values for ID: ${addedMetadata.id}`);
+        LOGGER.log(`✓ Retrieved image metadata matches expected values for ID: ${addedMetadata.id}`);
     });
 
     test('User attempts to retrieve a non-existent image', async () => {
         const collection = Collection.create(testCollectionName);
         const nonExistentImageId = crypto.randomUUID();
         
-        console.log('Validating that the correct Error is thrown when attempting to retrieve non-existent image');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to retrieve non-existent image');
         const error = await captureAssertableAsyncError(() => collection.getImage(nonExistentImageId));
         
         error
@@ -57,7 +57,7 @@ suite('Domain - Images - Retrieval', () => {
         const collection = Collection.create(testCollectionName);
         const invalidImageId = 'invalid<>id'; // Contains unsafe characters
         
-        console.log('Validating that the correct Error is thrown when attempting to retrieve image with invalid ID');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to retrieve image with invalid ID');
         const error = await captureAssertableAsyncError(() => collection.getImage(invalidImageId));
         
         error
@@ -77,7 +77,7 @@ suite('Domain - Images - Retrieval', () => {
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));
 
-        console.log('Validating that the correct Error is thrown when internal error occurs during image retrieval');
+        LOGGER.log('Validating that the correct Error is thrown when internal error occurs during image retrieval');
         const error = await captureAssertableAsyncError(() => collection.getImage(addedMetadata.id));
         
         error

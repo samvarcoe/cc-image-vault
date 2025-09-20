@@ -75,32 +75,32 @@ async function main(): Promise<void> {
     try {
         const { directoryPath, collectionName } = await parseArguments();
 
-        console.log(`Populating collection "${collectionName}" with images from "${directoryPath}"`);
-        console.log('');
+        LOGGER.log(`Populating collection "${collectionName}" with images from "${directoryPath}"`);
+        LOGGER.log('');
 
         // Validate directory exists
         await validateDirectory(directoryPath);
 
         // Find all image files
-        console.log('Scanning for images...');
+        LOGGER.log('Scanning for images...');
         const imageFiles = await findImageFiles(directoryPath);
 
         if (imageFiles.length === 0) {
-            console.log('No supported image files found in directory');
-            console.log(`Supported formats: ${SUPPORTED_EXTENSIONS.join(', ')}`);
+            LOGGER.log('No supported image files found in directory');
+            LOGGER.log(`Supported formats: ${SUPPORTED_EXTENSIONS.join(', ')}`);
             return;
         }
 
-        console.log(`Found ${imageFiles.length} image(s):\n`);
+        LOGGER.log(`Found ${imageFiles.length} image(s):\n`);
 
         // Create collection
-        console.log(`Creating collection "${collectionName}"...`);
+        LOGGER.log(`Creating collection "${collectionName}"...`);
         const collection = Collection.create(collectionName);
-        console.log('Collection created successfully');
-        console.log('');
+        LOGGER.log('Collection created successfully');
+        LOGGER.log('');
 
         // Add images to collection
-        console.log('Adding images to collection...');
+        LOGGER.log('Adding images to collection...');
         let successCount = 0;
         let errorCount = 0;
 
@@ -109,27 +109,27 @@ async function main(): Promise<void> {
             const fileName = path.basename(filePath);
 
             try {
-                console.log(`  [${i + 1}/${imageFiles.length}] Adding ${fileName}...`);
+                LOGGER.log(`  [${i + 1}/${imageFiles.length}] Adding ${fileName}...`);
                 const metadata = await collection.addImage(filePath);
                 await collection.updateImage(metadata.id, { status: "COLLECTION"});
-                console.log(`    ✓ Added as ${metadata.id} (${metadata.width}x${metadata.height})`);
+                LOGGER.log(`    ✓ Added as ${metadata.id} (${metadata.width}x${metadata.height})`);
                 successCount++;
             } catch (error) {
-                console.log(`    ✗ Failed: ${(error as Error).message}`);
+                LOGGER.log(`    ✗ Failed: ${(error as Error).message}`);
                 errorCount++;
             }
         }
 
-        console.log('');
-        console.log('Summary:');
-        console.log(`  Collection: ${collectionName}`);
-        console.log(`  Images processed: ${imageFiles.length}`);
-        console.log(`  Successfully added: ${successCount}`);
-        console.log(`  Errors: ${errorCount}`);
+        LOGGER.log('');
+        LOGGER.log('Summary:');
+        LOGGER.log(`  Collection: ${collectionName}`);
+        LOGGER.log(`  Images processed: ${imageFiles.length}`);
+        LOGGER.log(`  Successfully added: ${successCount}`);
+        LOGGER.log(`  Errors: ${errorCount}`);
 
         if (successCount > 0) {
-            console.log('');
-            console.log('Collection populated successfully!');
+            LOGGER.log('');
+            LOGGER.log('Collection populated successfully!');
         }
 
     } catch (error) {

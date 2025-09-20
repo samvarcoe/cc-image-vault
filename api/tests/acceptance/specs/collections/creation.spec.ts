@@ -1,7 +1,7 @@
 import { suite, test } from 'mocha';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { CONFIG } from '@/config';
+
 import { Collection } from '@/domain';
 import { fsOps } from '@/domain/src/fs-operations';
 

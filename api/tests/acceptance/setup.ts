@@ -1,3 +1,4 @@
+import '@/config';
 import { Fixtures } from "@/utils";
 import { use as chaiUse, config as chaiConfig } from "chai";
 import sinon from "sinon";

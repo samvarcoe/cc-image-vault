@@ -1,5 +1,4 @@
 import path from 'path';
-import { CONFIG } from '../../config';
 import { validateCollectionName } from './collection-utils'
 import { initializeCollectionDatabase } from './database';
 import { fsOps } from './fs-operations';

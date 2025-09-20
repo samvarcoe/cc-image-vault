@@ -1,7 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import compression from 'compression';
 
-import { CONFIG } from './config';
+import '@/config';
+
 import { routes as apiRoutes } from './api/src/routes';
 import { fsOps } from './domain/src/fs-operations';
 import { routes as pageRoutes } from './client/src/routes';

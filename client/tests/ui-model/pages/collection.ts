@@ -5,6 +5,10 @@ import { Element } from '../base/element';
 export class CollectionPage extends PageObject {
     protected url = '/collection';
 
+    get header(): Header {
+        return this.component(Header, 'Header Menu', '[data-id="header-menu"]');
+    }
+
     get errorMessage(): Element {
         return this.element('Error Message', '[data-id="error-message"]');
     }
@@ -44,7 +48,7 @@ class ImageGrid extends Element {
         const columnCount = columnCountStyle === 'auto' ? 1 : parseInt(columnCountStyle);
         expect(columnCount, `Image grid has ${columnCount} columns instead of ${count}`).toBe(count);
 
-        console.log(`✓ Image grid displays in ${count}-column layout`);
+        LOGGER.log(`✓ Image grid displays in ${count}-column layout`);
     }
 }
 
@@ -54,6 +58,44 @@ class ImageCard extends Element {
     }
 }
 
+class Header extends Element {
+    get imageVaultLink(): Element {
+        return this.child(Element, 'Image Vault Link', '[data-id="image-vault-link"]');
+    }
+
+    get statusToggle(): StatusToggle {
+        return this.child(StatusToggle, 'Status Toggle', '[data-id="status-toggle"]');
+    }
+
+    async getBoundingBox() {
+        return await this.locator.boundingBox();
+    }
+
+    async getZIndex(): Promise<number> {
+        const zIndex = await this.locator.evaluate(el =>
+            window.getComputedStyle(el).zIndex
+        );
+        return zIndex === 'auto' ? 0 : parseInt(zIndex);
+    }
+}
+
+class StatusToggle extends Element {
+    get collectionButton(): StatusButton {
+        return this.child(StatusButton, 'Collection Button', '[data-id="status-button-COLLECTION"]');
+    }
+
+    get inboxButton(): StatusButton {
+        return this.child(StatusButton, 'Inbox Button', '[data-id="status-button-INBOX"]');
+    }
+
+    get archiveButton(): StatusButton {
+        return this.child(StatusButton, 'Archive Button', '[data-id="status-button-ARCHIVE"]');
+    }
+}
+
+class StatusButton extends Element {
+}
+
 class Popover extends Element {
     get image(): Element {
         return this.child(Element, 'Popover Image', '[data-id="popover-image"]');
@@ -61,5 +103,12 @@ class Popover extends Element {
 
     get errorMessage(): Element {
         return this.child(Element, 'Popover Error Message', '[data-id="popover-error-message"]');
+    }
+
+    async getZIndex(): Promise<number> {
+        const zIndex = await this.locator.evaluate(el =>
+            window.getComputedStyle(el).zIndex
+        );
+        return zIndex === 'auto' ? 0 : parseInt(zIndex);
     }
 };

@@ -254,6 +254,6 @@ test.describe('Client - Collection Page - Viewing Images', () => {
         // And no images are displayed
         await ui.collectionPage.imageGrid.shouldNotBeDisplayed();
 
-        console.log('✓ Non-existent collection returns 404 status');
+        LOGGER.log('✓ Non-existent collection returns 404 status');
     });
 });

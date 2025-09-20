@@ -32,20 +32,20 @@ suite('Domain - Images - Delete', () => {
         await ImageUtils.assertImageFileDoesNotExist(testCollectionName, `${addedMetadata.id}.jpg`, 'thumbnail');
         
         // Verify subsequent attempts to retrieve the image throw "ImageNotFoundError"
-        console.log('Validating that subsequent retrieval attempts throw ImageNotFoundError');
+        LOGGER.log('Validating that subsequent retrieval attempts throw ImageNotFoundError');
         const error = await captureAssertableAsyncError(() => collection.getImage(addedMetadata.id));
         error
             .shouldHaveType(ImageNotFoundError)
             .shouldHaveMessage(`Image not found with ID: "${addedMetadata.id}"`);
             
-        console.log(`✓ Image ${addedMetadata.id} successfully deleted from Collection "${testCollectionName}"`);
+        LOGGER.log(`✓ Image ${addedMetadata.id} successfully deleted from Collection "${testCollectionName}"`);
     });
 
     test('User attempts to delete a non-existent image', async () => {
         const collection = Collection.create(testCollectionName);
         const nonExistentImageId = crypto.randomUUID();
         
-        console.log('Validating that the correct Error is thrown when attempting to delete non-existent image');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to delete non-existent image');
         const error = await captureAssertableAsyncError(() => collection.deleteImage(nonExistentImageId));
         
         error
@@ -57,7 +57,7 @@ suite('Domain - Images - Delete', () => {
         const collection = Collection.create(testCollectionName);
         const invalidImageId = 'invalid<>id'; // Contains unsafe characters
         
-        console.log('Validating that the correct Error is thrown when attempting to delete image with invalid ID');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to delete image with invalid ID');
         const error = await captureAssertableAsyncError(() => collection.deleteImage(invalidImageId));
         
         error
@@ -81,7 +81,7 @@ suite('Domain - Images - Delete', () => {
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));
 
-        console.log('Validating that the correct Error is thrown when internal error occurs during image deletion');
+        LOGGER.log('Validating that the correct Error is thrown when internal error occurs during image deletion');
         const error = await captureAssertableAsyncError(() => collection.deleteImage(addedMetadata.id));
         
         error
@@ -92,6 +92,6 @@ suite('Domain - Images - Delete', () => {
         await ImageUtils.assertImageFileExists(testCollectionName, `${addedMetadata.id}.jpg`, 'original');
         await ImageUtils.assertImageFileExists(testCollectionName, `${addedMetadata.id}.jpg`, 'thumbnail');
         
-        console.log(`✓ Collection "${testCollectionName}" remains unchanged after internal error`);
+        LOGGER.log(`✓ Collection "${testCollectionName}" remains unchanged after internal error`);
     });
 });

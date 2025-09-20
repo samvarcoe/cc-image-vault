@@ -1,4 +1,4 @@
-import { CONFIG } from "@/config";
+import "@/config";
 import { Fixtures, DirectoryFixtures } from "@/utils";
 import { use as chaiUse, config as chaiConfig } from "chai";
 import sinon from "sinon";

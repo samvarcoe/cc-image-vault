@@ -1,7 +1,6 @@
 import { suite, test } from 'mocha';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { CONFIG } from '@/config';
 import { Collection } from '@/domain';
 import { getImageFixture } from '@/utils';
 

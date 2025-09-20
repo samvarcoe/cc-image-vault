@@ -24,18 +24,18 @@ suite('Domain - Collections - Listing', () => {
             collection2,
             collection3
         ]);
-        console.log(`✓ Collection list returned the correct Collections`);
+        LOGGER.log(`✓ Collection list returned the correct Collections`);
     });
 
     test('User requests list of existing Collections and no Collections exist', async () => {
         expect(Collection.list(), 'The Collection list is not an empty array').deep.equals([]);
-        console.log('✓ Collection list returned an empty array');
+        LOGGER.log('✓ Collection list returned an empty array');
     });
 
     test('An internal error occurs when listing Collections', async () => {
         sinon.stub(fsOps, 'readdirSync').throws(new Error('Filesystem error'));
 
-        console.log('Validating that the correct Error is thrown when An internal error occurs when listing Collections');
+        LOGGER.log('Validating that the correct Error is thrown when An internal error occurs when listing Collections');
         captureAssertableError(() => Collection.list())
             .shouldHaveType(CollectionListError)
             .shouldHaveMessage('Unable to list Collections')

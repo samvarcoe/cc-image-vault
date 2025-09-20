@@ -62,7 +62,7 @@ suite('Domain - Images - Retrieve Batch', () => {
             status: 'ARCHIVE'
         });
 
-        console.log(`✓ Retrieved ${retrievedImages.length} images with all different statuses`);
+        LOGGER.log(`✓ Retrieved ${retrievedImages.length} images with all different statuses`);
     });
 
     test('User retrieves images filtered by INBOX status', async () => {
@@ -97,7 +97,7 @@ suite('Domain - Images - Retrieve Batch', () => {
         expect(imageIds).to.include(addedMetadata3.id);
         expect(imageIds).to.not.include(addedMetadata2.id);
 
-        console.log(`✓ Retrieved ${retrievedImages.length} images with INBOX status filter`);
+        LOGGER.log(`✓ Retrieved ${retrievedImages.length} images with INBOX status filter`);
     });
 
     test('User retrieves images from empty Collection', async () => {
@@ -110,7 +110,7 @@ suite('Domain - Images - Retrieve Batch', () => {
         expect(retrievedImages).to.be.an('array');
         expect(retrievedImages).to.have.length(0);
 
-        console.log(`✓ Retrieved empty array from empty Collection`);
+        LOGGER.log(`✓ Retrieved empty array from empty Collection`);
     });
 
     test('User retrieves images with status filter that matches no images', async () => {
@@ -130,14 +130,14 @@ suite('Domain - Images - Retrieve Batch', () => {
         expect(retrievedImages).to.be.an('array');
         expect(retrievedImages).to.have.length(0);
 
-        console.log(`✓ Retrieved empty array when status filter matches no images`);
+        LOGGER.log(`✓ Retrieved empty array when status filter matches no images`);
     });
 
     test('User attempts to retrieve images with invalid status filter', async () => {
         const collection = Collection.create(testCollectionName);
         const invalidStatus = 'INVALID_STATUS';
 
-        console.log('Validating that the correct Error is thrown when attempting to retrieve images with invalid status filter');
+        LOGGER.log('Validating that the correct Error is thrown when attempting to retrieve images with invalid status filter');
         const error = await captureAssertableAsyncError(() => collection.getImages({ status: invalidStatus as ImageStatus }));
 
         error
@@ -157,7 +157,7 @@ suite('Domain - Images - Retrieve Batch', () => {
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));
 
-        console.log('Validating that the correct Error is thrown when internal error occurs during batch image retrieval');
+        LOGGER.log('Validating that the correct Error is thrown when internal error occurs during batch image retrieval');
         const error = await captureAssertableAsyncError(() => collection.getImages());
 
         error

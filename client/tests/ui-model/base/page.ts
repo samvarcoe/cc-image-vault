@@ -26,20 +26,20 @@ export abstract class PageObject {
     }
 
     async shouldBeOnPage(timeout = 2000): Promise<void> {
-        console.log(`Verifying that the current page is: "${this.constructor.name}"`);
+        LOGGER.log(`Verifying that the current page is: "${this.constructor.name}"`);
 
         const failureMessage = `Current page is not: "${this.constructor.name}"\n\tExpected URL pattern: ${this.url}\n\tCurrent URL: ${this.page.url()}`;
         await expect(this.page, { message: failureMessage }).toHaveURL(new RegExp(this.url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), { timeout });
 
-        console.log(`Current page is: "${this.constructor.name}"`);
+        LOGGER.log(`Current page is: "${this.constructor.name}"`);
     }
     
     async shouldHaveTitle(expectedTitle: string, timeout = 2000): Promise<void> {
-        console.log(`Verifying that the page title is: "${expectedTitle}"`);
+        LOGGER.log(`Verifying that the page title is: "${expectedTitle}"`);
 
         const failureMessage = `Current page title is not: "${expectedTitle}"\n\tExpected title: "${expectedTitle}"\n\tCurrent title: "${await this.getTitle()}"`;
         await expect(this.page, { message: failureMessage }).toHaveTitle(expectedTitle, { timeout });
 
-        console.log(`Page title is: "${expectedTitle}"`);
+        LOGGER.log(`Page title is: "${expectedTitle}"`);
     }
 }

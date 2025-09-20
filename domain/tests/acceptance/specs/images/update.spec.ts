@@ -33,7 +33,7 @@ suite('Domain - Images - Update', () => {
         const retrievedMetadata = await collection.getImage(originalMetadata.id);
         ImageUtils.assertImageStatus(retrievedMetadata, 'COLLECTION');
         
-        console.log(`✓ Image ${originalMetadata.id} status successfully updated from INBOX to COLLECTION`);
+        LOGGER.log(`✓ Image ${originalMetadata.id} status successfully updated from INBOX to COLLECTION`);
     });
 
     test('User attempts to update the status of a non-existent image', async () => {
@@ -48,7 +48,7 @@ suite('Domain - Images - Update', () => {
             .shouldHaveType(ImageNotFoundError)
             .shouldHaveMessage(`Image not found with ID: "${nonExistentImageId}"`);
         
-        console.log(`✓ Non-existent image update properly rejected with error chain`);
+        LOGGER.log(`✓ Non-existent image update properly rejected with error chain`);
     });
 
     test('User attempts to update the status of an image using an invalid image ID', async () => {
@@ -65,7 +65,7 @@ suite('Domain - Images - Update', () => {
             .shouldHaveCause(Error)
             .shouldHaveCauseMessage('Invalid imageID');
         
-        console.log(`✓ Invalid image ID properly rejected for security`);
+        LOGGER.log(`✓ Invalid image ID properly rejected for security`);
     });
 
     test('User attempts to update the status of an image using an invalid status value', async () => {
@@ -87,7 +87,7 @@ suite('Domain - Images - Update', () => {
             .shouldHaveCause(Error)
             .shouldHaveCauseMessage('Invalid status');
         
-        console.log(`✓ Invalid status value properly rejected`);
+        LOGGER.log(`✓ Invalid status value properly rejected`);
     });
 
     test('An internal error occurs when the user attempts to update the status of an image', async () => {
@@ -108,6 +108,6 @@ suite('Domain - Images - Update', () => {
             .shouldHaveType(ImageUpdateError)
             .shouldHaveMessage(`Unable to update image: "${originalMetadata.id}" in Collection: "${testCollectionName}"`);
         
-        console.log(`✓ Internal errors properly wrapped in ImageUpdateError`);
+        LOGGER.log(`✓ Internal errors properly wrapped in ImageUpdateError`);
     });
 });
