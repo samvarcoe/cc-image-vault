@@ -1,44 +1,56 @@
-import { Controller } from '../../mvc.js';
-export default class CollectionPageController extends Controller {
+export default class CollectionPageController {
     constructor(model, view) {
-        super(model, view);
-        this.bindEventHandlers();
+        this.model = model;
+        this.view = view;
+        this.lastFocusedElement = null;
+        this.init();
     }
-    bindEventHandlers() {
-        document.addEventListener('click', this.handleClick.bind(this));
-        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+    init() {
+        this.attachEventListeners();
     }
-    handleClick(event) {
-        const target = event.target;
-        const action = target.dataset.action;
-        if (action === 'open-popover') {
-            const imageId = target.dataset.imageId;
-            if (imageId) {
-                this.handleThumbnailClick(imageId);
+    attachEventListeners() {
+        document.addEventListener('click', (event) => {
+            const imageCard = event.target.closest('[data-image-id]');
+            if (imageCard) {
+                const imageId = imageCard.dataset.imageId;
+                if (imageId) {
+                    this.openPopover(imageId, imageCard);
+                }
             }
-        }
-        else if (action === 'close-popover') {
-            this.handlePopoverClose();
-        }
+        });
+        document.addEventListener('click', (event) => {
+            const popover = event.target.closest('[data-id="fullscreen-popover"]');
+            if (popover) {
+                this.closePopover();
+            }
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && this.model.isPopoverVisible()) {
+                this.closePopover();
+            }
+        });
+        document.addEventListener('error', (event) => {
+            const popoverImage = event.target;
+            if (popoverImage && popoverImage.closest('[data-id="popover-image"]')) {
+                this.handleImageLoadError();
+            }
+        }, true);
     }
-    handleKeyDown(event) {
-        if (event.key === 'Escape' && this.model.isPopoverOpen()) {
-            this.handleEscKeyPress(event);
-        }
-    }
-    handleThumbnailClick(imageId) {
+    openPopover(imageId, clickedElement) {
+        this.lastFocusedElement = clickedElement;
         this.model.openPopover(imageId);
         this.view.update();
     }
-    handlePopoverClose() {
+    closePopover() {
         this.model.closePopover();
         this.view.update();
+        if (this.lastFocusedElement) {
+            this.lastFocusedElement.focus();
+            this.lastFocusedElement = null;
+        }
     }
-    handleEscKeyPress(event) {
-        event.preventDefault();
-        this.handlePopoverClose();
-    }
-    handleBackdropClick() {
-        this.handlePopoverClose();
+    handleImageLoadError() {
+        this.model.setPopoverError('Unable to load full image');
+        this.view.update();
     }
 }

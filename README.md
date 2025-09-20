@@ -6,100 +6,6 @@ Users have accumulated large collections of images across multiple directories t
 ## Solution Overview
 A simple application that lets users upload their images and sort them into "collections". Bulk editing functionality is provided to quickly classify images and archive/restore/delete them as desired. Functionality for viewing and exploring the collections is also provided to allow users to use and enjoy them.
 
-## Architecture Overview
-
-### File Structure
-```bash
-collections/
-├── collection-id-1/
-│   ├── collection.db
-│   └── images/
-│       ├── original/     # UUID-named files with original extensions
-│       └── thumbnails/   # UUID-named, 400px web-optimized
-└── collection-id-2/
-    ├── collection.db
-    └── images/
-        ├── original/
-        └── thumbnails/
-```
-
-### Collection Isolation
-- Each collection is completely self-contained within its directory
-- Uses separate SQLite database per collection for clean isolation and testability
-- No cross-collection operations except potential future image transfer functionality
-- Collections can be easily backed up, restored, or used as test fixtures
-
-### Collection Registry
-Collections are discovered by scanning the collections directory on request, eliminating the need for a global registry database while maintaining flexibility.
-
-## Image Management
-
-### Image Status Workflow
-Images follow a clear status progression:
-- **Upload → INBOX** (always)
-- **INBOX → COLLECTION** (user approval)
-- **INBOX → ARCHIVE** (user rejection)
-- **COLLECTION → ARCHIVE** (user changes mind)
-- **ARCHIVE → COLLECTION** (user restores)
-- **ARCHIVE → DELETE** (permanent removal)
-
-### Image Processing
-- **Thumbnail Generation**: Created on upload, 400px web-optimized, preserving aspect ratio
-- **Duplicate Detection**: Full SHA256 hash calculated on upload prevents duplicates within collection
-- **File Naming**: UUID-based filenames with original names preserved in metadata
-- **Upload Processing**: Asynchronous processing with file-based queue for persistence
-
-## Interfaces
-
-```ts
-type ImageStatus = 'INBOX' | 'COLLECTION' | 'ARCHIVE';
-
-// Image metadata interface
-interface ImageMetadata {
-  id: string;
-  originalName: string;
-  fileHash: string;
-  status: ImageStatus;
-  size: number,
-  dimensions: {
-    width: number,
-    height: number
-  },
-  aspectRatio: number,
-  extension: number,
-  mimeType: string,
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Query options for image retrieval
-export interface QueryOptions {
-  status?: ImageStatus;
-  orderBy?: 'created_at' | 'updated_at';
-  orderDirection?: 'ASC' | 'DESC';
-}
-
-// Main Collection interface
-export interface ICollection {
-  // Collection lifecycle methods
-  static create(id: string, path: string): Promise<Collection>;
-  static load(path: string): Promise<Collection>;
-  
-  // Image management methods
-  addImage(filePath: string): Promise<ImageMetadata>;
-  updateImageStatus(imageId: string, newStatus: ImageStatus): Promise<ImageMetadata>;
-  deleteImage(imageId: string): Promise<boolean>;
-  
-  // Image retrieval methods
-  getImages(options?: QueryOptions): Promise<ImageMetadata[]>;
-  getImage(imageId: string): Promise<ImageMetadata>;
-  
-  // Collection properties
-  readonly id: string;
-  readonly basePath: string;
-}
-```
-
 ## Pages
 
 ### Navigation Structure
@@ -134,7 +40,7 @@ export interface ICollection {
 
 ### Collections
 ```typescript
-GET    /api/collections                   // Returns list of all collections
+GET    /api/collections                   // Returns list of collection names ✅
 POST   /api/collections                   // Creates new collection
 GET    /api/collections/:id               // Returns collection metadata  
 DELETE /api/collections/:id               // Deletes entire collection
@@ -163,35 +69,6 @@ DELETE /api/collections/:id/images/bulk   // Bulk delete operations
 }
 ```
 
-## Database Schema (Per Collection)
-
-```sql
-CREATE TABLE images (
-  id TEXT PRIMARY KEY,                                                                  -- UUID for filename
-  original_name TEXT NOT NULL,                                                          -- preserved original filename
-  file_hash TEXT UNIQUE NOT NULL,                                                       -- SHA256 for duplicate detection within collection
-  status TEXT CHECK(status IN ('INBOX', 'COLLECTION', 'ARCHIVE')) DEFAULT 'INBOX',
-  size INTEGER NOT NULL,                                                                -- file size in bytes
-  width INTEGER NOT NULL,
-  height INTEGER NOT NULL,
-  aspect_ratio REAL NOT NULL,
-  extension TEXT NOT NULL,                                                               -- original file extension
-  mime_type TEXT NOT NULL,                                                               -- for proper content serving
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_status ON images(status);
-CREATE INDEX idx_updated_at ON images(updated_at);
-
--- Future extensibility tables
-CREATE TABLE image_tags (
-  image_id TEXT,
-  tag TEXT,
-  FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE
-);
-```
-
 ## Technical Implementation
 
 ### Technology Stack
@@ -202,23 +79,23 @@ CREATE TABLE image_tags (
 - **Database**: SQLite per collection
 - **Language**: TypeScript
 
-### File Processing
-- **Supported Formats**: JPG, JPEG, WebP, PNG
+### File Processing ✅
+- **Supported Formats**: JPG, JPEG, WebP, PNG (jpeg normalized to jpg)
 - **File Size Limit**: 25MB maximum per image
 - **Collection Limit**: No maximum images per collection
-- **Validation**: Client and server-side format and corruption validation
-- **Error Handling**: Status codes for failed uploads with specific error types
+- **Validation**: Format, integrity, filename safety, and duplicate detection
+- **Security**: XSS-safe filename validation, 256-char limit
+- **Error Handling**: Comprehensive error types with atomic cleanup
 
-### Upload Workflow
+### Upload Workflow ✅
 1. Client drag-and-drop multiple files (including directory contents)
 2. Client-side validation for format and size
-3. Server receives upload and validates
-4. Returns success/error response
-5. Files placed in queue for processing
-6. Server calculates SHA256 hash for duplicate detection
-7. Server generates 400px thumbnail preserving aspect ratio
-8. Server moves files to collection directory
-9. Server stores metadata in collection's SQLite database
+3. Server receives upload and validates (format, integrity, safety, duplicates)
+4. Server calculates SHA256 hash for duplicate detection
+5. Server generates 400px thumbnail preserving aspect ratio using Sharp
+6. Server stores original and thumbnail in collection directory structure
+7. Server stores complete metadata in collection's SQLite database
+8. Returns success/error response with specific error types
 
 ### Future Extensibility Considerations
 - Database schema includes tables for future image tagging functionality

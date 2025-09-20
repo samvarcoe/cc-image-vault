@@ -1,3 +1,8 @@
-export { Collection } from './src/collection'; 
-
-export type * from './types';
+export { Collection } from './src/collection';
+export {
+    CollectionCreateError,
+    CollectionLoadError,
+    CollectionNotFoundError,
+    ImageNotFoundError,
+    PendingImplementationError
+} from './errors';

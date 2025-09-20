@@ -1,175 +1,154 @@
 import { View } from '../../mvc.js';
-import HomePageModel, { ErrorState } from './model.js';
+import HomePageModel from './model.js';
 
 export default class HomePageView extends View<HomePageModel> {
-  constructor(protected model: HomePageModel) {
-    super(model, 'home');
-  }
-
-  title(): string {
-    return 'Image Vault - Home';
-  }
-
-  renderContent(): string {
-    const collections = this.model.getSortedCollections();
-    const hasCollections = this.model.hasCollections();
-
-    return /*html*/`
-      <div class="home-page">
-        <header class="page-header">
-          <h1>Image Vault</h1>
-          <p>Organize and manage your image collections</p>
-        </header>
-
-        <main class="main-content">
-          ${hasCollections ? this.renderCollectionsList(collections) : this.renderEmptyState()}
-          ${this.renderCreateCollectionForm()}
-        </main>
-
-        ${this.renderConfirmationDialog()}
-      </div>
-    `;
-  }
-
-  private renderCollectionsList(collections: string[]): string {
-    return /*html*/`
-      <section class="collections-section">
-        <h2>Your Collections</h2>
-        <div data-testid="collections-list" class="collections-list">
-          ${collections.map(collectionId => this.renderCollectionItem(collectionId)).join('')}
-        </div>
-      </section>
-    `;
-  }
-
-  private renderCollectionItem(collectionId: string): string {
-    const loadingState = this.model.getLoadingState();
-    const isDeleting = loadingState.deletingCollection === collectionId;
-    
-    return /*html*/`
-      <div data-testid="collection-item-${collectionId}" class="collection-item">
-        <a data-testid="collection-link-${collectionId}" href="/collection/${collectionId}" class="collection-link">
-          <h3>${collectionId}</h3>
-        </a>
-        <button 
-          data-testid="delete-button-${collectionId}" 
-          data-id="delete-collection" 
-          data-collection-id="${collectionId}"
-          class="delete-button ${isDeleting ? 'loading' : ''}"
-          ${isDeleting ? 'disabled' : ''}
-        >
-          ${isDeleting ? 'Deleting...' : 'Delete'}
-        </button>
-      </div>
-    `;
-  }
-
-  private renderEmptyState(): string {
-    return /*html*/`
-      <div data-testid="empty-state" class="empty-state">
-        <h2>No Collections Yet</h2>
-        <p>Create your first collection to get started organizing your images.</p>
-      </div>
-    `;
-  }
-
-  private renderCreateCollectionForm(): string {
-    const formState = this.model.getFormState();
-    const errorState = this.model.getErrorState();
-    const loadingState = this.model.getLoadingState();
-    
-    return /*html*/`
-      <section class="create-collection-section">
-        <h2>Create New Collection</h2>
-        <form data-testid="create-collection-form" data-id="create-collection-form" class="create-collection-form">
-          <div class="form-group">
-            <label for="collection-id">Collection ID:</label>
-            <input 
-              data-testid="collection-id-input" 
-              data-id="collection-id-input"
-              type="text" 
-              id="collection-id" 
-              name="collectionId"
-              value="${formState.collectionId}"
-              placeholder="Enter collection name (letters, numbers, and hyphens only)"
-              pattern="[a-zA-Z0-9\\-]+"
-              ${formState.isSubmitting || loadingState.creatingCollection ? 'disabled' : ''}
-              required
-            />
-            ${this.renderFormErrors(errorState)}
-          </div>
-          <button 
-            data-testid="create-button" 
-            data-id="create-collection-submit"
-            type="submit" 
-            class="create-button ${loadingState.creatingCollection ? 'loading' : ''}"
-            ${!formState.isValid || formState.isSubmitting || loadingState.creatingCollection ? 'disabled' : ''}
-          >
-            ${loadingState.creatingCollection ? 'Creating...' : 'Create Collection'}
-          </button>
-        </form>
-      </section>
-    `;
-  }
-
-  private renderConfirmationDialog(): string {
-    const loadingState = this.model.getLoadingState();
-    const collectionToDelete = loadingState.deletingCollection;
-    const isVisible = collectionToDelete !== null;
-    
-    return /*html*/`
-      <div data-testid="confirmation-dialog" class="confirmation-dialog" style="display: ${isVisible ? 'flex' : 'none'};">
-        <div class="dialog-overlay" data-id="cancel-deletion"></div>
-        <div class="dialog-content">
-          <h3 data-testid="dialog-title">Confirm Deletion</h3>
-          <p data-testid="warning-message">
-            Are you sure you want to delete the collection "<span data-testid="collection-id-display" class="collection-id">${collectionToDelete || ''}</span>"?
-            This action cannot be undone and will permanently remove all images in this collection.
-          </p>
-          <div class="dialog-buttons">
-            <button 
-              data-testid="cancel-button" 
-              data-id="cancel-deletion" 
-              class="cancel-button"
-            >
-              Cancel
-            </button>
-            <button 
-              data-testid="confirm-button" 
-              data-id="confirm-deletion" 
-              class="confirm-button danger"
-            >
-              Delete Collection
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  private renderFormErrors(errorState: ErrorState): string {
-    let errors = '';
-    
-    if (errorState.validation) {
-      errors += /*html*/`<div data-testid="validation-error" class="validation-error">${errorState.validation}</div>`;
+    constructor(protected model: HomePageModel) {
+        super(model, 'home');
     }
-    
-    if (errorState.duplicate) {
-      errors += /*html*/`
-        <div data-testid="duplicate-id-error" class="duplicate-id-error">
-          A collection with this ID already exists. Please choose a different name.
-        </div>
-      `;
+
+    title(): string {
+        return 'Image Vault - Home';
     }
-    
-    if (errorState.server) {
-      errors += /*html*/`
-        <div data-testid="server-error" class="server-error">
-          ${errorState.server}
-        </div>
-      `;
+
+    renderContent(): string {
+        return /*html*/`
+            <div class="min-h-full">
+                ${this.main()}
+            </div>
+        `;
     }
-    
-    return errors;
-  }
+
+    private main(): string {
+        return /*html*/`
+            <main class="bg-slate-50 dark:bg-slate-900 min-h-screen">
+                <div class="flex items-center justify-center min-h-[calc(100vh-4rem)] px-4 py-12 sm:px-6 lg:px-8">
+                    <div class="w-full max-w-2xl lg:max-w-4xl">
+                        ${this.pageHeader()}
+                        ${this.mainContentContainer()}
+                    </div>
+                </div>
+            </main>
+        `;
+    }
+
+    private pageHeader(): string {
+        return /*html*/`
+            <div class="text-center mb-12">
+                <h2 class="text-3xl lg:text-4xl font-semibold text-slate-900 dark:text-white mb-4">Collections</h2>
+                <p class="text-base lg:text-lg text-slate-600 dark:text-slate-400">Your image collections</p>
+            </div>
+        `;
+    }
+
+    private mainContentContainer(): string {
+        return /*html*/`
+            <div class="bg-white shadow-lg ring-1 ring-slate-200 rounded-xl dark:bg-slate-800 dark:ring-slate-700">
+                ${this.containerContent()}
+            </div>
+        `;
+    }
+
+    private containerContent(): string {
+        if (this.model.hasError()) {
+            return this.errorMessage();
+        }
+
+        return this.collectionsList();
+    }
+
+    private errorMessage(): string {
+        return /*html*/`
+            <div class="px-8 py-20 text-center">
+                <p class="text-base lg:text-lg text-slate-600 dark:text-slate-400" data-id="user-message">${this.model.getErrorMessage()}</p>
+            </div>
+        `;
+    }
+
+    private emptyMessage(): string {
+        return /*html*/`
+            <p class="px-8 py-12 text-center text-base lg:text-lg text-slate-600 dark:text-slate-400" data-id="empty-collections-message">No Collections found, create one to get started</p>
+        `;
+    }
+
+    private collectionsList(): string {
+        const collectionsHtml = this.model.getCollections()
+            .map((name) => this.collectionCard(name))
+            .join('');
+
+        const userMessage = this.userMessage();
+
+        return /*html*/`
+            <ul role="list" class="divide-y divide-slate-200 dark:divide-slate-700" data-id="collections-list">
+                ${this.model.getCollections().length === 0 ? this.emptyMessage() : collectionsHtml}
+                ${this.creationForm()}
+            </ul>
+            ${userMessage}
+        `;
+    }
+
+    private collectionCard(name: string): string {
+        return /*html*/`
+            <li class="relative px-8 py-6 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors duration-150" data-id="collection-card-${name}">
+                <div class="min-w-0">
+                    <p class="text-base lg:text-lg font-medium text-slate-900 dark:text-white">
+                        <a href="/collection/${name}" class="block" data-id="collection-link">
+                            <span class="absolute inset-0"></span>
+                            <span data-id="collection-title">${name}</span>
+                        </a>
+                    </p>
+                </div>
+            </li>
+        `;
+    }
+
+    private creationForm(): string {
+        const isLoading = this.model.isCreationFormLoading();
+        const name = this.model.getCreationFormName();
+
+        return /*html*/`
+            <li class="relative px-8 py-6" data-id="creation-form">
+                <form class="flex gap-4 items-center" data-id="creation-form-element">
+                    <input
+                        type="text"
+                        name="name"
+                        data-id="collection-name-input"
+                        placeholder="Add a new Collection..."
+                        value="${name}"
+                        class="flex-1 px-4 py-2 text-base lg:text-lg border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder:text-slate-500 dark:placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+                        ${isLoading ? 'disabled' : ''}
+                    />
+                    <button
+                        type="submit"
+                        data-id="submit-button"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px] flex items-center justify-center"
+                        ${isLoading ? 'disabled' : ''}
+                    >
+                        ${isLoading ? /*html*/`
+                            <svg data-id="loading-spinner" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        ` : 'Create'}
+                    </button>
+                </form>
+            </li>
+        `;
+    }
+
+    private userMessage(): string {
+        const validationError = this.model.getCreationFormValidationError();
+        if (!validationError) {
+            return /*html*/`
+                <div style="display: none;">
+                    <p data-id="user-message"></p>
+                </div>
+            `;
+        }
+
+        return /*html*/`
+            <div class="px-8 py-4 bg-red-50 dark:bg-red-900/20 border-t border-red-100 dark:border-red-800">
+                <p class="text-base text-red-600 dark:text-red-400" data-id="user-message">${validationError}</p>
+            </div>
+        `;
+    }
 }

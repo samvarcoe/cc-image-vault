@@ -1,27 +1,68 @@
 import { Model } from '../../mvc.js';
 export default class CollectionPageModel extends Model {
-    constructor(data = {}) {
-        super(Object.assign({ collectionId: undefined, statusFilter: 'COLLECTION', images: [], popoverImageId: null }, data));
+    constructor(initialData = {}) {
+        super(Object.assign({ name: '', status: 'COLLECTION', images: [], error: '', loading: false, popover: {
+                visible: false,
+                selectedImageId: undefined,
+                error: undefined
+            } }, initialData));
     }
-    getCollectionId() {
-        return this.data.collectionId;
+    getCollectionName() {
+        return this.data.name || '';
+    }
+    getCurrentStatus() {
+        return this.data.status || 'COLLECTION';
     }
     getImages() {
         return this.data.images || [];
     }
-    getStatusFilter() {
-        return this.data.statusFilter;
+    hasImages() {
+        return (this.data.images || []).length > 0;
     }
-    isPopoverOpen() {
-        return this.data.popoverImageId !== null && this.data.popoverImageId !== undefined;
+    hasError() {
+        return !!this.data.error;
     }
-    getPopoverImageId() {
-        return this.data.popoverImageId || null;
+    getErrorMessage() {
+        return this.data.error || '';
+    }
+    isLoading() {
+        return this.data.loading || false;
+    }
+    isPopoverVisible() {
+        var _a;
+        return ((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.visible) || false;
+    }
+    getSelectedImageId() {
+        var _a;
+        return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId;
+    }
+    getSelectedImage() {
+        const selectedId = this.getSelectedImageId();
+        if (!selectedId)
+            return undefined;
+        return this.getImages().find(img => img.id === selectedId);
+    }
+    getPopoverError() {
+        var _a;
+        return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.error;
     }
     openPopover(imageId) {
-        this.data.popoverImageId = imageId;
+        this.data.popover = {
+            visible: true,
+            selectedImageId: imageId,
+            error: undefined
+        };
     }
     closePopover() {
-        this.data.popoverImageId = null;
+        this.data.popover = {
+            visible: false,
+            selectedImageId: undefined,
+            error: undefined
+        };
+    }
+    setPopoverError(message) {
+        if (this.data.popover) {
+            this.data.popover.error = message;
+        }
     }
 }

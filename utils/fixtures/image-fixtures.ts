@@ -1,274 +1,136 @@
+import { createHash } from 'crypto';
 import { promises as fs } from 'fs';
-import { tmpdir } from 'os';
 import path from 'path';
 import sharp from 'sharp';
-import { Fixtures } from './base-fixtures';
-import { DirectoryFixtures } from './directory-fixtures';
 
-export interface ImageFile {
-  filePath: string;
-  originalName: string;
-  size: number;
-  dimensions: { width: number; height: number };
-  mimeType: string;
-  extension: string;
+const CACHE_DIR = 'utils/fixtures/images';
+
+interface ImageFixtureOptions {
+    id: string;
+    width: number;
+    height: number;
+    extension: 'jpg' | 'jpeg' | 'png' | 'webp';
 }
 
-export interface ImageFixture {
-  filePath: string;
-  name: string;
-  size: number;
-  width: number; 
-  height: number;
-  mimeType: string;
-  extension: string;
+interface ImageFixture {
+    filePath: string;
+    filename: string;
+    size: number;
+    width: number;
+    height: number;
+    extension: string;
+    buffer: Buffer;
 }
 
-// const createImage = (options: ImageFile): Buffer => {
-  
-// }
+const getCacheKey = (options: ImageFixtureOptions): string => {
+    const content = `${options.id}-${options.width}x${options.height}.${options.extension}`;
+    const hash = createHash('md5').update(content).digest('hex');
+    return `_${hash}.(-)`
+}
 
-/**
- * Image fixtures for creating realistic test images with actual visual content
- */
-export class ImageFixtures extends Fixtures<ImageFile> {
-  static async create(options: {
-    width?: number;
-    height?: number;
-    quality?: number;
-    originalName?: string;
-    extension?: 'jpeg' | 'png' | 'webp';
-    includeVisualContent?: boolean;
-    simulateCorruption?: boolean;
-  } = {}): Promise<ImageFile> {
+const createTestImage = (options: ImageFixtureOptions): Promise<Buffer> => {
+    const { id: name, width, height, extension } = options;
 
-    const {
-      width = 600,
-      height = 800,
-      quality = 80,
-      originalName = `test-photo-${Date.now()}`,
-      extension = 'jpeg',
-      includeVisualContent = true, // TODO: implement visual content generation
-      simulateCorruption = false
-    } = options;
-
-    // Temporarily suppress unused variable warning for future implementation
-    void includeVisualContent;
-
-    const tempDirState = await DirectoryFixtures.createTemporary({ prefix: 'image-fixture-' });
-    const tempDir = tempDirState.path;
-    const filePath = path.join(tempDir, `${originalName}.${extension}`);
-
-    let imageBuffer: Buffer;
-
-    // if (includeVisualContent && !simulateCorruption) {
-    //   // Create a colorful test pattern with gradients and shapes
-    //   imageBuffer = await this.createTestPattern(width, height, extension, quality);
-    // } else if (simulateCorruption) {
-    if (simulateCorruption) {
-      // Create corrupt image data
-      imageBuffer = await this.createCorruptImage(extension);
-    }
-    
-    else {
-      // Create minimal valid image
-      imageBuffer = await this.createMinimalImage(width, height, extension, quality);
-    }
-
-    await fs.writeFile(filePath, imageBuffer);
-
-    const stats = await fs.stat(filePath);
-    const mimeType = this.getMimeType(extension);
-
-    const imageFile: ImageFile = {
-      filePath,
-      originalName,
-      size: stats.size,
-      dimensions: { width, height },
-      mimeType,
-      extension
-    };
-
-    // Note: cleanup is handled by DirectoryFixtures.createTemporary()
-
-    return imageFile;
-  }
-
-  /**
-   * Creates a batch of test images with different characteristics
-   */
-  static async createBatch(options: {
-    count?: number;
-    formats?: Array<'jpeg' | 'png' | 'webp'>;
-    sizes?: Array<{ width: number; height: number }>;
-    includeCorrupt?: boolean;
-  } = {}): Promise<ImageFile[]> {
-
-    const {
-      count = 3,
-      formats = ['jpeg', 'png', 'webp'],
-      sizes = [
-        { width: 400, height: 300 },
-        { width: 800, height: 600 },
-        { width: 1200, height: 800 }
-      ],
-      includeCorrupt = false
-    } = options;
-
-    const images: ImageFile[] = [];
-
-    for (let i = 0; i < count; i++) {
-      const format = formats[i % formats.length];
-      const size = sizes[i % sizes.length];
-      const shouldCorrupt = includeCorrupt && i === count - 1;
-
-      if (!size) {
-        throw new Error(`Unable to get size at index ${i % sizes.length}`);
-      }
-
-      const image = await this.create({
-        width: size.width,
-        height: size.height,
-        originalName: `test-photo-${i + 1}`,
-        extension: format,
-        simulateCorruption: shouldCorrupt
-      });
-
-      images.push(image);
-    }
-
-    return images;
-  }
-
-  /**
-   * Creates duplicate images (same visual content, different files)
-   */
-  static async createDuplicates(options: {
-    originalImage?: ImageFile;
-    count?: number;
-    differentNames?: boolean;
-  } = {}): Promise<ImageFile[]> {
-
-    const { count = 2, differentNames = true } = options;
-    let { originalImage } = options;
-
-    // Create original if not provided
-    if (!originalImage) {
-      originalImage = await this.create({
-        originalName: 'original-photo',
-        width: 600,
-        height: 400
-      });
-    }
-
-    const duplicates: ImageFile[] = [originalImage];
-
-    for (let i = 1; i < count; i++) {
-      const duplicateName = differentNames 
-        ? `duplicate-${i}-photo.jpg`
-        : originalImage.originalName;
-
-      // Copy the original file to create exact duplicate
-      const tempDirState = await DirectoryFixtures.createTemporary({ prefix: 'duplicate-fixture-' });
-      const duplicatePath = path.join(tempDirState.path, duplicateName);
-      
-      await fs.copyFile(originalImage.filePath, duplicatePath);
-
-      const stats = await fs.stat(duplicatePath);
-
-      const duplicate: ImageFile = {
-        filePath: duplicatePath,
-        originalName: duplicateName,
-        size: stats.size,
-        dimensions: originalImage.dimensions,
-        mimeType: originalImage.mimeType,
-        extension: originalImage.extension
-      };
-
-      // Note: cleanup is handled by DirectoryFixtures.createTemporary()
-      duplicates.push(duplicate);
-    }
-
-    return duplicates;
-  }
-
-  private static async createTestPattern(width: number, height: number, format: 'jpeg' | 'png' | 'webp', quality: number): Promise<Buffer> {
-    // Create unique content by adding timestamp and random elements to ensure different hashes
-    const uniqueId = Date.now() + Math.random();
     const randomColor1 = Math.floor(Math.random() * 256);
     const randomColor2 = Math.floor(Math.random() * 256);
     const randomColor3 = Math.floor(Math.random() * 256);
-    
+
     const svg = `
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:rgb(${randomColor1},100,150);stop-opacity:1" />
-            <stop offset="50%" style="stop-color:rgb(100,${randomColor2},200);stop-opacity:1" />
-            <stop offset="100%" style="stop-color:rgb(150,200,${randomColor3});stop-opacity:1" />
-          </linearGradient>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#bg)"/>
-        <circle cx="${width/4}" cy="${height/4}" r="${Math.min(width, height)/8}" fill="#fff" opacity="0.8"/>
-        <rect x="${width/2}" y="${height/2}" width="${width/4}" height="${height/4}" fill="#333" opacity="0.6"/>
-        <text x="${width/2}" y="${height-40}" text-anchor="middle" font-family="Arial" font-size="16" fill="#333">Test Image ${width}x${height}</text>
-        <text x="${width/2}" y="${height-20}" text-anchor="middle" font-family="Arial" font-size="12" fill="#666">ID: ${uniqueId}</text>
-      </svg>
+        <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:rgb(${randomColor1},100,150);stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:rgb(100,${randomColor2},200);stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:rgb(150,200,${randomColor3});stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#bg)"/>
+            <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.min(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
+            <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.max(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
+            <text x="${width / 2}" y="${height / 2}" text-anchor="middle" font-family="Arial" font-size="16" fill="#010101ff">${name}</text>
+            <text x="${width / 2}" y="${(height / 2) + 24}" text-anchor="middle" font-family="Arial" font-size="16" fill="#000000ff">${width}x${height}</text>
+        </svg>
     `;
 
     const sharpInstance = sharp(Buffer.from(svg));
 
-    switch (format) {
-      case 'jpeg':
-        return sharpInstance.jpeg({ quality }).toBuffer();
-      case 'png':
-        return sharpInstance.png().toBuffer();
-      case 'webp':
-        return sharpInstance.webp({ quality }).toBuffer();
-      default:
-        throw new Error(`Unsupported format: ${format}`);
+    switch (extension) {
+        case 'jpg':
+            return sharpInstance.jpeg({ quality: 80 }).toBuffer();
+        case 'jpeg':
+            return sharpInstance.jpeg({ quality: 80 }).toBuffer();
+        case 'png':
+            return sharpInstance.png().toBuffer();
+        case 'webp':
+            return sharpInstance.webp({ quality: 80 }).toBuffer();
+        default:
+            throw new Error(`Unsupported extension: ${extension}`);
     }
-  }
+}
 
-  private static async createMinimalImage(width: number, height: number, format: 'jpeg' | 'png' | 'webp', quality: number): Promise<Buffer> {
-    // Create unique solid color minimal image with random variation
-    const randomR = Math.floor(Math.random() * 100) + 100; // 100-199
-    const randomG = Math.floor(Math.random() * 100) + 100; // 100-199  
-    const randomB = Math.floor(Math.random() * 100) + 100; // 100-199
+/**
+ * Image fixtures for creating realistic test images with actual visual content
+ */
+export const getImageFixture = async (options: Partial<ImageFixtureOptions> = {}): Promise<ImageFixture> => {
+    const {
+        id = `test-image-${Date.now()}`,
+        width = 600,
+        height = 400,
+        extension = 'jpeg'
+    } = options;
+
+    const filename = getCacheKey({ id, width, height, extension });
+    const filePath = `${CACHE_DIR}/${filename}.${extension}`
+    const size = await fs.stat(filePath).then((x) => x.size).catch(() => null);
+
+    if (filePath && size) {
+        const buffer = await fs.readFile(filePath);
+        return { filePath, filename, size, width, height, extension, buffer };
+    }
+
+    try {
+        const buffer = await createTestImage({ id, width, height, extension });
+        const size = buffer.length;
+        await fs.writeFile(filePath, buffer);
+        return { filePath, filename, size, width, height, extension, buffer };
+        
+    } catch (error: unknown) {
+        throw new Error(`Failed to create or access cached image at ${filePath}: ${(error as Error).message}`);
+    }      
+}
+
+
+/**
+ * Create a corrupted image file for testing error handling
+ */
+export const getCorruptedImageFixture = async (extension: 'jpg' | 'jpeg' | 'png' | 'webp' = 'jpg'): Promise<string> => {
+    const corruptedFileName = `corrupted-image.${extension}`;
+    const filePath = path.join(CACHE_DIR, corruptedFileName);
     
-    const sharpInstance = sharp({
-      create: {
-        width,
-        height,
-        channels: 3,
-        background: { r: randomR, g: randomG, b: randomB }
-      }
-    });
-
-    switch (format) {
-      case 'jpeg':
-        return sharpInstance.jpeg({ quality }).toBuffer();
-      case 'png':
-        return sharpInstance.png().toBuffer();
-      case 'webp':
-        return sharpInstance.webp({ quality }).toBuffer();
-      default:
-        throw new Error(`Unsupported format: ${format}`);
+    // Create corrupted image data (invalid header)
+    const corruptedData = Buffer.from('this is not a valid image file', 'utf-8');
+    
+    try {
+        await fs.writeFile(filePath, corruptedData);
+        return filePath;
+    } catch (error: unknown) {
+        throw new Error(`Failed to create corrupted image at ${filePath}: ${(error as Error).message}`);
     }
-  }
+}
 
-  private static async createCorruptImage(format: 'jpeg' | 'png' | 'webp'): Promise<Buffer> {
-    // Create invalid image data that will fail processing
-    const corruptData = Buffer.from('INVALID_IMAGE_DATA_' + format.toUpperCase());
-    return corruptData;
-  }
-
-  private static getMimeType(format: 'jpeg' | 'png' | 'webp'): string {
-    const mimeTypes = {
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'webp': 'image/webp'
-    };
-    return mimeTypes[format];
-  }
+/**
+ * Create a file with unsupported extension for testing
+ */
+export const getUnsupportedFileFixture = async (): Promise<string> => {
+    const unsupportedFileName = 'test-file.txt';
+    const filePath = path.join(CACHE_DIR, unsupportedFileName);
+    
+    const textData = Buffer.from('This is a text file, not an image', 'utf-8');
+    
+    try {
+        await fs.writeFile(filePath, textData);
+        return filePath;
+    } catch (error: unknown) {
+        throw new Error(`Failed to create unsupported file at ${filePath}: ${(error as Error).message}`);
+    }
 }

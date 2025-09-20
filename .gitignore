@@ -8,3 +8,9 @@ private
 .playwright-mcp
 .certs
 test-results
+utils/fixtures/images/
+utils/fixtures/collections/
+test.ts
+# stryker temp files
+.stryker-tmp
+client/src/mockups/

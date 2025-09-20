@@ -1,11 +1,11 @@
 import { defineConfig } from '@playwright/test';
-import { CONFIG } from '@/config';
+import '@/config';
 
 export default defineConfig({
   testDir: './specs',
   workers: 1,
   reporter: [
-    ['list']
+    ['line']
   ],
   use: {
     baseURL: CONFIG.UI_BASE_URL,
@@ -15,6 +15,7 @@ export default defineConfig({
     connectOptions: {
       wsEndpoint: 'ws://playwright-server:8080',  // Connect to the remote playwright server
     },
+    actionTimeout: 1000
   },
   projects: [
     {
@@ -23,4 +24,8 @@ export default defineConfig({
     },
   ],
   outputDir: '../../../output/client-test-artifacts',
+  expect: {
+    // Maximum time expect() should wait for the condition to be met.
+    timeout: 1000,
+  }
 });

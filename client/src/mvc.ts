@@ -71,8 +71,8 @@ export abstract class View<M extends Model<unknown>> {
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">  
                     <title> ${title} </title>
-                    <link rel="preload" href="/css/${slug}.css" as="style">
-                    <link rel="stylesheet" href="/css/${slug}.css">
+                    <link rel="preload" href="/style.css" as="style">
+                    <link rel="stylesheet" href="/style.css">
                 </head>
                 <body>
                     <div id="content"> ${content} </div>
@@ -106,6 +106,3 @@ export abstract class View<M extends Model<unknown>> {
 export abstract class Controller<M extends Model<unknown>, V extends View<M>> {
     constructor(protected model: M, protected view: V) {}
 }
-
-
-

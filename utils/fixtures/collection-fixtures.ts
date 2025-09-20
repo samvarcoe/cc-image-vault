@@ -1,186 +1,61 @@
-import { promises as fs } from 'fs';
-import { tmpdir } from 'os';
-import path from 'path';
-import { Collection } from '@/domain';
-import { ImageStatus } from '../../domain/types';
-import { Fixtures } from './base-fixtures';
-import { ImageFixtures } from './image-fixtures';
-import { DirectoryFixtures } from './directory-fixtures';
-import { CONFIG } from '../../config';
-import FakeTimers from '@sinonjs/fake-timers';
+import { Collection } from "@/domain";
+import { getImageFixture } from "./image-fixtures";
+import { existsSync, cpSync } from "fs";
 
-/**
- * Collection fixtures for creating collections with pre-populated images
- */
-export class CollectionFixtures extends Fixtures<Collection> {
-  static async clearDirectory(): Promise<void> {
-    await DirectoryFixtures.clearContents(CONFIG.COLLECTIONS_DIRECTORY);
-  };
-  
-  static async create(options: {
-    collectionId?: string;
-    useTmpDir?: boolean;
-    imageCounts?: {
-      inbox: number;
-      collection: number;
-      archive: number;
-    };
-    imageFormats?: Array<'jpeg' | 'png' | 'webp'>;
-  } = {}): Promise<Collection> {
+const CACHE_DIR = 'utils/fixtures/collections';
 
-    const {
-      collectionId = `test-collection-${Date.now()}`,
-      useTmpDir = false,
-      imageCounts = { inbox: 0, collection: 0, archive: 0 },
-      imageFormats = ['jpeg', 'png', 'webp']
-    } = options;
+export const createCollectionFixture = async (name: string): Promise<Collection> => {
+    const cachedCollectionDirectory = `${CACHE_DIR}/${name}`;
+    const activeCollectionDirectory = `${CONFIG.COLLECTIONS_DIRECTORY}/${name}`;
 
-    const basePath = useTmpDir ? 
-      (await DirectoryFixtures.createTemporary({ prefix: 'collection-fixture-' })).path : 
-      CONFIG.COLLECTIONS_DIRECTORY;
-    
-    const collectionPath = path.join(basePath, collectionId);
+    if (existsSync(cachedCollectionDirectory)) {
+         try {
+            cpSync(cachedCollectionDirectory, activeCollectionDirectory, { recursive: true });
 
-    console.log(`Creating collection fixture: ${collectionId} at ${collectionPath}`);
+            const collection = Collection.load(name);
 
-    const collection = useTmpDir ? await Collection.create(collectionId, basePath) : await Collection.create(collectionId);
+            LOGGER.log(`Collection fixture: "${name}" retrieved from cache`);
+            return collection;
 
-    // sizes and aspect ratios should vary for testing
-    // vary between a max amd min width/height transitioning from landscape to portrait
-
-    const maxWidth = 640;
-    const minWidth = 320;
-    const maxHeight = 640;
-    const minHeight = 320;
-
-    const variedWidth = (i: number, total: number) => Math.round(minWidth + (i/total) * (maxWidth - minWidth));
-    const variedHeight = (i: number, total: number) => Math.round(maxHeight - (i/total) * (maxHeight - minHeight));
-
-    for (let i = 0; i < imageCounts.inbox ; i++) {
-      const imageFile = await ImageFixtures.create({
-        originalName: `inbox-photo-${i + 1}`,
-        extension: imageFormats[i % imageFormats.length],
-        width: variedWidth(i, imageCounts.inbox),
-        height: variedHeight(i, imageCounts.inbox)
-      });
-
-      await collection.addImage(imageFile.filePath);
+         } catch {
+            console.error('Failed to load collection fixture from cache');
+         }
     }
-
-    for (let i = 0; i < imageCounts.collection ; i++) {
-      const imageFile = await ImageFixtures.create({
-        originalName: `collection-photo-${i + 1}`,
-        extension: imageFormats[i % imageFormats.length],
-        width: variedWidth(i, imageCounts.collection),
-        height: variedHeight(i, imageCounts.collection)
-      });
-
-      const imageMetadata = await collection.addImage(imageFile.filePath);
-      await collection.updateImageStatus(imageMetadata.id, 'COLLECTION');
-    }
-
-    for (let i = 0; i < imageCounts.archive ; i++) {
-      const imageFile = await ImageFixtures.create({
-        originalName: `archive-photo-${i + 1}`,
-        extension: imageFormats[i % imageFormats.length],
-        width: variedWidth(i, imageCounts.archive),
-        height: variedHeight(i, imageCounts.archive)
-      });
-
-      const imageMetadata = await collection.addImage(imageFile.filePath);
-      await collection.updateImageStatus(imageMetadata.id, 'ARCHIVE');
-    };
-
-    const cleanup = async () => {
-      await fs.rm(collectionPath, { recursive: true, force: true })
-        .catch(() => { console.warn(`Failed to remove collection directory at ${collectionPath}` );});
-    };
-
-    this.addCleanup(cleanup);
-
-    console.log(`✓ Collection fixture created`);
-    return collection;
-  }
-
-  /**
-   * Creates a collection with images having staggered creation times for ordering tests
-   * Uses fake timers to ensure actual database timestamp differences
-   */
-  static async createWithVariedImageCreationTimes(options: {
-    collectionId?: string;
-    basePath?: string;
-    imageCount?: number;
-    statusDistribution?: { status: ImageStatus; count: number }[];
-    timeSpreadMinutes?: number;
-  } = {}): Promise<Collection> {
-
-    const {
-      collectionId = `time-varied-collection-${Date.now()}`,
-      basePath: customBasePath,
-      imageCount = 6,
-      statusDistribution = [
-        { status: 'INBOX', count: 2 },
-        { status: 'COLLECTION', count: 2 },
-        { status: 'ARCHIVE', count: 2 }
-      ],
-      timeSpreadMinutes = 30
-    } = options;
-
-    // Setup fake timers to control time progression
-    const baseTime = Date.now();
-    const clock = FakeTimers.install({
-      now: baseTime,
-      toFake: ['Date'] // Only fake Date-related methods
-    });
-
-    const basePath = customBasePath || 
-      (await DirectoryFixtures.createTemporary({ prefix: 'time-collection-fixture-' })).path;
-    let collection: Collection;
 
     try {
-      collection = customBasePath ? await Collection.create(collectionId, basePath) : await Collection.create(collectionId);
+        LOGGER.log(`Creating Collection fixture "${name}" from scratch`);
 
-      // Calculate time increment for even distribution
-      const timeIncrement = (timeSpreadMinutes * 60 * 1000) / imageCount;
-      
-      let imageIndex = 0;
-      for (const { status, count } of statusDistribution) {
+        const collection = Collection.create(name);
+
+        const width = { min: 600, max: 1800 };
+        const height = { min: 600, max: 1200 }
+
+        const count = 12;
+
+        const x = (i: number, count: number) => Math.round(width.min + (i/count) * (width.max - width.min));
+        const y = (i: number, count: number) => Math.round(height.max - (i/count) * (height.max - height.min));
+
         for (let i = 0; i < count; i++) {
-          // Advance time to the target timestamp for this image
-          if (imageIndex > 0) {
-            clock.tick(timeIncrement);
-          }
-          
-          const imageFile = await ImageFixtures.create({
-            originalName: `${status.toLowerCase()}-photo-${i + 1}`,
-          });
+            const inboxImage = await getImageFixture({id: `inbox-${i}`, width: x(i, count), height: y(i, count)});
+            const collectionImage = await getImageFixture({id: `collection-${i}`, width: x(i, count), height: y(i, count)});
+            const archiveImage = await getImageFixture({id: `archive-${i}`, width: x(i, count), height: y(i, count)});
 
-          // Add image to collection - this will use the fake time
-          const imageMetadata = await collection.addImage(imageFile.filePath);
-          
-          // Update status if not INBOX (this also updates updated_at timestamp)
-          if (status !== 'INBOX') {
-            await collection.updateImageStatus(imageMetadata.id, status);
-          }
+            await collection.addImage(inboxImage.filePath);
 
-          imageIndex++;
+            const collectionImageMetaData = await collection.addImage(collectionImage.filePath);
+            await collection.updateImage(collectionImageMetaData.id, {status: "COLLECTION"});
+
+            const archiveImageMetaData = await collection.addImage(archiveImage.filePath);
+            await collection.updateImage(archiveImageMetaData.id, {status: "ARCHIVE"});
         }
-      }
 
-    } finally {
-      // Always restore real timers
-      clock.uninstall();
+        cpSync(activeCollectionDirectory, cachedCollectionDirectory, { recursive: true });
+
+        return collection;
+
+    } catch (error: unknown) {
+        console.error("Error creating Collection fixture:", error);
+
+        throw error;
     }
-
-    const cleanup = async () => {
-      try {
-        await fs.rm(basePath, { recursive: true, force: true });
-      } catch {
-        // Non-fatal cleanup error
-      }
-    };
-
-    this.addCleanup(cleanup);
-    return collection;
-  }
 }

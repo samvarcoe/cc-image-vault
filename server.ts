@@ -1,16 +1,28 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import compression from 'compression';
 
-import { CONFIG } from './config';
+import '@/config';
+
 import { routes as apiRoutes } from './api/src/routes';
+import { fsOps } from './domain/src/fs-operations';
 import { routes as pageRoutes } from './client/src/routes';
 
-express()
+const forceFSError = (req: Request, res: Response, next: NextFunction) => {
+    if (CONFIG.MODE === 'DEV' && req.headers['x-force-fs-error']) {
+        fsOps.setFailure(true, req.headers['x-force-fs-error'] as string);
+        res.on('finish', () => fsOps.setFailure(false));
+    }
+    next();
+};
+
+const app = express()
     .use(express.static('public'))
     .use(express.json())
     .use(compression())
+    .use(forceFSError)
     .use('/', pageRoutes)
-    .use('/api', apiRoutes)
-    .listen(CONFIG.PORT, () => {
-        console.log(`Image Vault API server running on http://localhost:${CONFIG.PORT}`);
-    });
+    .use('/api', apiRoutes);
+
+app.listen(CONFIG.PORT, () => {
+    console.log(`Image Vault running on http://localhost:${CONFIG.PORT}`);
+});

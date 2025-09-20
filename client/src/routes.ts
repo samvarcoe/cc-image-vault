@@ -1,59 +1,77 @@
 import express from 'express';
-import path from 'path';
+import { Collection, CollectionNotFoundError } from '@/domain';
 
-import { CONFIG } from '@/config';
-import { Collection } from '@/domain';
-import CollectionPageModel from './pages/collection/model';
-import CollectionPageView from './pages/collection/view';
 import HomePageModel from './pages/home/model';
 import HomePageView from './pages/home/view';
+import CollectionPageModel from './pages/collection/model';
+import CollectionPageView from './pages/collection/view';
 
 export const routes = express.Router();
 
-const validateStatus = (status: string): status is 'INBOX' | 'COLLECTION' | 'ARCHIVE' => {
-  return ['INBOX', 'COLLECTION', 'ARCHIVE'].includes(status);
-}
+routes.get('/', async (_, res) => {
+    try {          
+        res.set({
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        });
 
-routes.get('/', async (req, res) => {
-  try {
-    const collections = await Collection.list();
-    const model = new HomePageModel({collections});
-    const view = new HomePageView(model);
-    res.send(view.render());
-  } catch (error: unknown) {
-    console.error('Error rendering home page:', error);
-    res.status(500).send('Internal Server Error');
-  }
+        const collections = Collection.list();
+        const model = new HomePageModel({ collections });
+        const view = new HomePageView(model);
+        res.send(view.render());
+
+    } catch (error: unknown ){
+        const message = (error as Error).message || 'Unable to list collections'
+        const model = new HomePageModel({ error: message});
+        const view = new HomePageView(model);
+        res.send(view.render());
+    }
 });
 
-routes.get('/collection/:id', async (req, res) => {
-  const { id } = req.params;
-  const status = req.query.status as string;
-  const statusFilter: ImageStatus = validateStatus(status) ? status : 'COLLECTION';
+routes.get('/collection/:name', async (req, res) => {
+    try {
+        const { name } = req.params;
+        const { status } = req.query;
 
-  try {
-    if (!await Collection.exists(id)) {
-      const model = new CollectionPageModel();
-      const view = new CollectionPageView(model);
-      return res.status(404).send(view.render());
+        // Redirect to default status if none provided
+        if (!status) {
+            return res.redirect(`/collection/${name}?status=COLLECTION`);
+        }
+
+        // Validate status parameter
+        const validStatuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
+        const imageStatus = status as ImageStatus;
+        if (!validStatuses.includes(imageStatus)) {
+            return res.redirect(`/collection/${name}?status=COLLECTION`);
+        }
+
+        const collection = Collection.load(name);
+
+        const model = new CollectionPageModel({
+            name,
+            status: imageStatus,
+            images: await collection.getImages({ status: imageStatus })
+        });
+
+        const view = new CollectionPageView(model);
+
+        return res.send(view.render());
+
+    } catch (error: unknown) {
+
+        if (error instanceof CollectionNotFoundError) {
+            return res.status(404).send('Collection not found');
+        }
+
+        const model = new CollectionPageModel({
+            name: req.params.name,
+            status: (req.query.status as ImageStatus) || 'COLLECTION',
+            error: 'Error retrieving images'
+        });
+
+        const view = new CollectionPageView(model);
+
+        return res.send(view.render());
     }
-    
-    const collectionPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, id);
-    const collection = await Collection.load(collectionPath);
-    const images = await collection.getImages({ status: statusFilter });
-    await collection.close();
-    
-    const model = new CollectionPageModel({
-      collectionId: id,
-      statusFilter,
-      images,
-    });
-
-    const view = new CollectionPageView(model);
-
-    return res.send(view.render());
-  } catch (error: unknown) {
-    console.error('Error rendering collection page:', error);
-    return res.status(500).send('Internal Server Error');
-  }
 });

@@ -1,0 +1,7 @@
+{
+  "ui": "bdd",
+  "require": ["tsx", "api/tests/acceptance/setup.ts"],
+  "spec": ["api/tests/acceptance/specs/**/*.spec.ts"],
+  "parallel": false,
+  "reporter": "min"
+}

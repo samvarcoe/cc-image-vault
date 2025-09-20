@@ -1,55 +1,76 @@
-import { Controller } from '../../mvc.js';
 import CollectionPageModel from './model.js';
 import CollectionPageView from './view.js';
 
-export default class CollectionPageController extends Controller<CollectionPageModel, CollectionPageView> {
-  constructor(model: CollectionPageModel, view: CollectionPageView) {
-    super(model, view);
-    this.bindEventHandlers();
-  }
+export default class CollectionPageController {
+    private lastFocusedElement: HTMLElement | null = null;
 
-  private bindEventHandlers(): void {
-    document.addEventListener('click', this.handleClick.bind(this));
-    document.addEventListener('keydown', this.handleKeyDown.bind(this));
-  }
-
-  private handleClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    const action = target.dataset.action;
-
-    if (action === 'open-popover') {
-      const imageId = target.dataset.imageId;
-      if (imageId) {
-        this.handleThumbnailClick(imageId);
-      }
-    } else if (action === 'close-popover') {
-      this.handlePopoverClose();
+    constructor(
+        private model: CollectionPageModel,
+        private view: CollectionPageView
+    ) {
+        this.init();
     }
-  }
 
-  private handleKeyDown(event: KeyboardEvent): void {
-    if (event.key === 'Escape' && this.model.isPopoverOpen()) {
-      this.handleEscKeyPress(event);
+    private init(): void {
+        this.attachEventListeners();
     }
-  }
 
-  handleThumbnailClick(imageId: string): void {
-    this.model.openPopover(imageId);
-    this.view.update();
-  }
+    private attachEventListeners(): void {
+        // Handle image card clicks to open popover
+        document.addEventListener('click', (event) => {
+            const imageCard = (event.target as Element).closest('[data-image-id]') as HTMLElement;
+            if (imageCard) {
+                const imageId = imageCard.dataset.imageId;
+                if (imageId) {
+                    this.openPopover(imageId, imageCard);
+                }
+            }
+        });
 
-  handlePopoverClose(): void {
-    this.model.closePopover();
-    this.view.update();
-  }
+        // Handle popover clicks to close popover (but not on the image)
+        document.addEventListener('click', (event) => {
+            const popover = (event.target as Element).closest('[data-id="fullscreen-popover"]');
+            // Close if clicking on popover but not on the image itself
+            if (popover) {
+                this.closePopover();
+            }
+        });
 
-  handleEscKeyPress(event: KeyboardEvent): void {
-    event.preventDefault();
-    this.handlePopoverClose();
-  }
+        // Handle escape key to close popover
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && this.model.isPopoverVisible()) {
+                this.closePopover();
+            }
+        });
 
-  handleBackdropClick(): void {
-    // This is covered by the general click handler with data-action="close-popover"
-    this.handlePopoverClose();
-  }
+        // Handle image load errors in popover
+        document.addEventListener('error', (event) => {
+            const popoverImage = event.target as HTMLImageElement;
+            if (popoverImage && popoverImage.closest('[data-id="popover-image"]')) {
+                this.handleImageLoadError();
+            }
+        }, true);
+    }
+
+    private openPopover(imageId: string, clickedElement: HTMLElement): void {
+        this.lastFocusedElement = clickedElement;
+        this.model.openPopover(imageId);
+        this.view.update();
+    }
+
+    private closePopover(): void {
+        this.model.closePopover();
+        this.view.update();
+
+        // Restore focus to the clicked thumbnail
+        if (this.lastFocusedElement) {
+            this.lastFocusedElement.focus();
+            this.lastFocusedElement = null;
+        }
+    }
+
+    private handleImageLoadError(): void {
+        this.model.setPopoverError('Unable to load full image');
+        this.view.update();
+    }
 }

@@ -2,121 +2,163 @@ import { View } from '../../mvc.js';
 export default class CollectionPageView extends View {
     constructor(model) {
         super(model, 'collection');
+        this.model = model;
     }
     title() {
-        const collectionId = this.model.getCollectionId();
-        return collectionId
-            ? `Collection ${collectionId} - Image Vault`
-            : 'Collection Not Found - Image Vault';
+        const collectionName = this.model.getCollectionName();
+        return `Image Vault - ${collectionName}`;
     }
     renderContent() {
-        if (!this.model.getCollectionId()) {
-            return this.renderNotFoundPage();
+        return `
+            ${this.popover()}
+            <div class="min-h-full">
+                ${this.header()}
+                ${this.main()}
+            </div>
+
+        `;
+    }
+    header() {
+        const collectionName = this.model.getCollectionName();
+        const currentStatus = this.model.getCurrentStatus();
+        return `
+            <header data-id="header-menu" class="sticky top-0 z-40 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div class="flex h-14 items-center">
+                        <div class="flex-1">
+                            <a href="/" data-id="image-vault-link" class="text-xl font-semibold text-slate-900 dark:text-white hover:text-slate-700 dark:hover:text-slate-300">
+                                Image Vault
+                            </a>
+                        </div>
+                        <div data-id="status-toggle" class="flex gap-2">
+                            ${this.statusButton('INBOX', collectionName, currentStatus)}
+                            ${this.statusButton('COLLECTION', collectionName, currentStatus)}
+                            ${this.statusButton('ARCHIVE', collectionName, currentStatus)}
+                        </div>
+                        <div class="flex-1"></div>
+                    </div>
+                </div>
+            </header>
+        `;
+    }
+    statusButton(status, collectionName, currentStatus) {
+        const isSelected = status === currentStatus;
+        const baseClasses = 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors';
+        const stateClasses = isSelected
+            ? 'bg-slate-700 text-white dark:bg-slate-600'
+            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600';
+        return `
+            <a
+                href="/collection/${collectionName}?status=${status}"
+                data-id="status-button-${status}"
+                aria-pressed="${isSelected}"
+                class="${baseClasses} ${stateClasses}"
+            >
+                ${status}
+            </a>
+        `;
+    }
+    main() {
+        return `
+            <main class="bg-slate-50 dark:bg-slate-900 min-h-screen">
+                <div class="container mx-auto px-4 py-8">
+                    ${this.pageHeader()}
+                    ${this.content()}
+                </div>
+            </main>
+        `;
+    }
+    pageHeader() {
+        const collectionName = this.model.getCollectionName();
+        return `
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-semibold text-slate-900 dark:text-white mb-2">${collectionName}</h1>
+            </div>
+        `;
+    }
+    content() {
+        if (this.model.hasError()) {
+            return this.errorState();
         }
-        return this.renderCollectionPage();
+        if (!this.model.hasImages()) {
+            return this.emptyState();
+        }
+        return this.imageGrid();
     }
-    renderNotFoundPage() {
+    errorState() {
         return `
-      <div data-testid="main-content">
-        <h1>Collection Not Found</h1>
-        <div data-testid="not-found-message">
-          <p>The requested collection was not found.</p>
-        </div>
-      </div>
-    `;
+            <div class="text-center py-12">
+                <p class="text-lg text-slate-600 dark:text-slate-400" data-id="error-message">${this.model.getErrorMessage()}</p>
+            </div>
+        `;
     }
-    renderCollectionPage() {
+    emptyState() {
+        const currentStatus = this.model.getCurrentStatus();
         return `
-      <div data-testid="main-content" ${this.model.isPopoverOpen() ? 'class="popover-blur"' : ''}>
-        <main class="collection-content">
-          ${this.renderImageGrid()}
-        </main>
-      </div>
-      ${this.model.isPopoverOpen() ? this.renderPopover() : ''}
-    `;
+            <div class="text-center py-12">
+                <p class="text-lg text-slate-600 dark:text-slate-400" data-id="empty-message">This Collection has no images with "${currentStatus}" status</p>
+            </div>
+        `;
     }
-    renderImageGrid() {
-        const collectionId = this.model.getCollectionId();
+    imageGrid() {
         const images = this.model.getImages();
-        if (images.length === 0) {
-            return this.renderEmptyState();
-        }
-        const columns = [[], [], []];
-        images.forEach((image, index) => {
-            columns[index % 3].push(image);
-        });
+        const collectionName = this.model.getCollectionName();
+        const imageCards = images.map(image => this.imageCard(image, collectionName)).join('');
         return `
-      <div data-testid="image-grid" class="image-grid">
-        ${columns.map((columnImages) => `
-          <div class="image-column">
-            ${columnImages.map(image => this.renderImageItem(collectionId, image)).join('')}
-          </div>
-        `).join('')}
-      </div>
-    `;
+            <div class="columns-1 md:columns-2 lg:columns-3 gap-4 space-y-4" data-id="image-grid">
+                ${imageCards}
+            </div>
+        `;
     }
-    renderEmptyState() {
+    imageCard(image, collectionName) {
+        const thumbnailUrl = `/api/images/${collectionName}/${image.id}/thumbnail`;
+        const imageWidth = 400;
+        const imageHeight = Math.round(imageWidth / image.aspect);
         return `
-      <div class="empty-state">
-        <div data-testid="empty-state-message">This collection has no images with status: "${this.model.getStatusFilter()}"</div>
-      </div>
-    `;
+            <div class="bg-white rounded-lg overflow-hidden shadow-sm mb-4 break-inside-avoid cursor-pointer hover:shadow-md transition-shadow" data-id="image-card-${image.id}" data-image-id="${image.id}">
+                <img
+                    src="${thumbnailUrl}"
+                    alt="Image ${image.id}"
+                    loading="lazy"
+                    width="${imageWidth}"
+                    height="${imageHeight}"
+                    class="w-full h-auto block"
+                />
+            </div>
+        `;
     }
-    renderImageItem(collectionId, image) {
-        const isPopoverOpen = this.model.isPopoverOpen();
-        return `
-      <div
-        data-testid="image-item-${image.id}"
-        class="image-item"
-        width="480"
-        height="${Math.round(480 / image.aspectRatio)}"
-      >
-        <img 
-          data-testid="image-thumbnail-${image.id}"
-          src="/api/images/${collectionId}/${image.id}/thumbnail"
-          alt="${image.originalName}"
-          loading="lazy"
-          class="image-thumbnail"
-          width="480"
-          height="${Math.round(480 / image.aspectRatio)}"
-          style="${isPopoverOpen ? 'pointer-events: none;' : ''}"
-          data-image-id="${image.id}"
-          data-collection-id="${collectionId}"
-          data-action="open-popover"
-        />
-      </div>
-    `;
-    }
-    renderPopover() {
-        const popoverImageId = this.model.getPopoverImageId();
-        const collectionId = this.model.getCollectionId();
-        if (!popoverImageId) {
+    popover() {
+        if (!this.model.isPopoverVisible()) {
             return '';
         }
-        const image = this.model.getImages().find(img => img.id === popoverImageId);
-        if (!image) {
+        const selectedImage = this.model.getSelectedImage();
+        const popoverError = this.model.getPopoverError();
+        const collectionName = this.model.getCollectionName();
+        if (!selectedImage) {
             return '';
         }
+        const originalImageUrl = `/api/images/${collectionName}/${selectedImage.id}`;
         return `
-      ${this.renderPopoverBackdrop()}
-      <div data-testid="image-popover" class="image-popover">
-        <img 
-          src="/api/images/${collectionId}/${popoverImageId}"
-          alt="${image.originalName}"
-          class="popover-image"
-          data-natural-width="${image.dimensions.width}"
-          data-natural-height="${image.dimensions.height}"
-        />
-      </div>
-    `;
-    }
-    renderPopoverBackdrop() {
-        return `
-      <div 
-        data-testid="popover-backdrop" 
-        class="popover-backdrop"
-        data-action="close-popover"
-      ></div>
-    `;
+            <div data-id="fullscreen-popover" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/70  backdrop-blur-lg">
+                ${popoverError ?
+            `
+                        <div class="text-white text-lg font-medium text-center" data-id="popover-error-message">
+                            ${popoverError}
+                        </div>
+                    ` :
+            `
+                        <div class="w-full h-full flex items-center justify-center p-4">
+                            <img
+                                src="${originalImageUrl}"
+                                alt="Full size image ${selectedImage.id}"
+                                class="max-w-full max-h-full object-contain"
+                                width="${selectedImage.width}"
+                                height="${selectedImage.height}"
+                                data-id="popover-image"
+                            />
+                        </div>
+                    `}
+            </div>
+        `;
     }
 }

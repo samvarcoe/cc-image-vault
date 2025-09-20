@@ -22,7 +22,7 @@ export abstract class Fixtures<T = unknown> {
       throw new Error(`Fixture cleanup failed: ${errors.length} errors occurred during resource cleanup (${errorMessages})`);
     }
 
-    console.log(`✓ All ${this.cleanupFunctions.length} fixtures cleaned up successfully`);
+    LOGGER.log(`✓ All ${this.cleanupFunctions.length} fixtures cleaned up successfully`);
     this.cleanupFunctions = [];
   }
 
