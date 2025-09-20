@@ -32,11 +32,11 @@ test.describe('Client - Collection Page - Header Menu', () => {
         await ui.collectionPage.header.statusToggle.archiveButton.shouldBeDisplayed();
 
         // And the button corresponding to the current status shows as selected
-        await ui.collectionPage.header.statusToggle.collectionButton.shouldBeSelected();
+        await ui.collectionPage.header.statusToggle.collectionButton.shouldBePressed();
 
         // And the other buttons show as unselected
-        await ui.collectionPage.header.statusToggle.inboxButton.shouldNotBeSelected();
-        await ui.collectionPage.header.statusToggle.archiveButton.shouldNotBeSelected();
+        await ui.collectionPage.header.statusToggle.inboxButton.shouldNotBePressed();
+        await ui.collectionPage.header.statusToggle.archiveButton.shouldNotBePressed();
 
         // Verify no errors occurred
         await ui.shouldHaveNoConsoleErrors();
@@ -104,18 +104,18 @@ test.describe('Client - Collection Page - Header Menu', () => {
         expect(page.url()).toContain('status=INBOX');
 
         // And the correct button shows as selected
-        await ui.collectionPage.header.statusToggle.inboxButton.shouldBeSelected();
-        await ui.collectionPage.header.statusToggle.collectionButton.shouldNotBeSelected();
-        await ui.collectionPage.header.statusToggle.archiveButton.shouldNotBeSelected();
+        await ui.collectionPage.header.statusToggle.inboxButton.shouldBePressed();
+        await ui.collectionPage.header.statusToggle.collectionButton.shouldNotBePressed();
+        await ui.collectionPage.header.statusToggle.archiveButton.shouldNotBePressed();
 
         // Test clicking another status button
         await ui.collectionPage.header.statusToggle.archiveButton.click();
         expect(page.url()).toContain('status=ARCHIVE');
 
         // And the correct button shows as selected
-        await ui.collectionPage.header.statusToggle.archiveButton.shouldBeSelected();
-        await ui.collectionPage.header.statusToggle.collectionButton.shouldNotBeSelected();
-        await ui.collectionPage.header.statusToggle.inboxButton.shouldNotBeSelected();
+        await ui.collectionPage.header.statusToggle.archiveButton.shouldBePressed();
+        await ui.collectionPage.header.statusToggle.collectionButton.shouldNotBePressed();
+        await ui.collectionPage.header.statusToggle.inboxButton.shouldNotBePressed();
 
         // Verify no errors occurred
         await ui.shouldHaveNoConsoleErrors();

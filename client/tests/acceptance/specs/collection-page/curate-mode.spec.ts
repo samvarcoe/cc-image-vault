@@ -24,7 +24,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         // Then the "Curate" button displays in selected state
         expect(page.url()).toContain('curate=true');
         await ui.collectionPage.header.curateButton.shouldBeDisplayed();
-        await ui.collectionPage.header.curateButton.shouldBeSelected();
+        await ui.collectionPage.header.curateButton.shouldBePressed();
 
         // And the curation menu displays below the header
         await ui.collectionPage.curationMenu.shouldBeDisplayed();
@@ -48,7 +48,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         // Then the "Curate" button displays in unselected state
         expect(page.url()).toContain('curate=false');
         await ui.collectionPage.header.curateButton.shouldBeDisplayed();
-        await ui.collectionPage.header.curateButton.shouldNotBeSelected();
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
 
         // And the curation menu is not displayed
         await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
@@ -74,7 +74,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
         // And the "Curate" button displays in unselected state
         await ui.collectionPage.header.curateButton.shouldBeDisplayed();
-        await ui.collectionPage.header.curateButton.shouldNotBeSelected();
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
 
         // And the curation menu is not displayed
         await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
@@ -92,13 +92,13 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         await ui.collectionPage.visit('TestCollection');
 
         // And the page is not in curate mode
-        await ui.collectionPage.header.curateButton.shouldNotBeSelected();
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
 
         // When the user clicks the "Curate" button in the header
         await ui.collectionPage.header.curateButton.click();
 
         // Then the "Curate" button displays in selected state
-        await ui.collectionPage.header.curateButton.shouldBeSelected();
+        await ui.collectionPage.header.curateButton.shouldBePressed();
 
         // And the curation menu displays below the header
         await ui.collectionPage.curationMenu.shouldBeDisplayed();
@@ -120,13 +120,13 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         // And the page is in curate mode
         await page.goto('/collection/TestCollection?curate=true');
         await page.waitForLoadState('networkidle');
-        await ui.collectionPage.header.curateButton.shouldBeSelected();
+        await ui.collectionPage.header.curateButton.shouldBePressed();
 
         // When the user clicks the "Curate" button in the header
         await ui.collectionPage.header.curateButton.click();
 
         // Then the "Curate" button displays in unselected state
-        await ui.collectionPage.header.curateButton.shouldNotBeSelected();
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
 
         // And the curation menu is hidden
         await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
@@ -204,7 +204,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         expect(page.url()).toContain('curate=true');
 
         // And curate mode remains active
-        await ui.collectionPage.header.curateButton.shouldBeSelected();
+        await ui.collectionPage.header.curateButton.shouldBePressed();
         await ui.collectionPage.curationMenu.shouldBeDisplayed();
 
         // Verify no errors occurred
@@ -229,7 +229,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         expect(page.url()).toContain('curate=false');
 
         // And curate mode remains inactive
-        await ui.collectionPage.header.curateButton.shouldNotBeSelected();
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
         await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
 
         // Verify no errors occurred
@@ -255,7 +255,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         expect(page.url()).toContain('curate=true');
 
         // And curate mode remains active
-        await ui.collectionPage.header.curateButton.shouldBeSelected();
+        await ui.collectionPage.header.curateButton.shouldBePressed();
         await ui.collectionPage.curationMenu.shouldBeDisplayed();
 
         // Verify no errors occurred
@@ -281,7 +281,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         expect(page.url()).toContain('curate=false');
 
         // And curate mode remains inactive
-        await ui.collectionPage.header.curateButton.shouldNotBeSelected();
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
         await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
 
         // Verify no errors occurred
