@@ -32,26 +32,41 @@ routes.get('/', async (_, res) => {
 routes.get('/collection/:name', async (req, res) => {
     try {
         const { name } = req.params;
-        const { status } = req.query;
+        const { status, curate } = req.query;
 
-        // Redirect to default status if none provided
-        if (!status) {
-            return res.redirect(`/collection/${name}?status=COLLECTION`);
+        // Parse curate parameter - default to false if not provided
+        const curateMode = curate === 'true';
+        const curateParam = curate === undefined ? 'false' : curate;
+
+        // Build URL params
+        const urlParams = new URLSearchParams();
+
+        // Handle status parameter
+        const validStatuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
+        const imageStatus = (status as ImageStatus) || 'COLLECTION';
+        if (!validStatuses.includes(imageStatus)) {
+            urlParams.set('status', 'COLLECTION');
+        } else {
+            urlParams.set('status', imageStatus);
         }
 
-        // Validate status parameter
-        const validStatuses: ImageStatus[] = ['INBOX', 'COLLECTION', 'ARCHIVE'];
-        const imageStatus = status as ImageStatus;
-        if (!validStatuses.includes(imageStatus)) {
-            return res.redirect(`/collection/${name}?status=COLLECTION`);
+        // Add curate parameter
+        urlParams.set('curate', curateParam as string);
+
+        // Redirect if URL doesn't match expected format
+        const expectedQuery = urlParams.toString();
+        const currentQuery = new URLSearchParams(req.query as Record<string, string>).toString();
+        if (currentQuery !== expectedQuery) {
+            return res.redirect(`/collection/${name}?${expectedQuery}`);
         }
 
         const collection = Collection.load(name);
 
         const model = new CollectionPageModel({
             name,
-            status: imageStatus,
-            images: await collection.getImages({ status: imageStatus })
+            status: urlParams.get('status') as ImageStatus,
+            curate: curateMode,
+            images: await collection.getImages({ status: urlParams.get('status') as ImageStatus })
         });
 
         const view = new CollectionPageView(model);
@@ -67,6 +82,7 @@ routes.get('/collection/:name', async (req, res) => {
         const model = new CollectionPageModel({
             name: req.params.name,
             status: (req.query.status as ImageStatus) || 'COLLECTION',
+            curate: req.query.curate === 'true',
             error: 'Error retrieving images'
         });
 

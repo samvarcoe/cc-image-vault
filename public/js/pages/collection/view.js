@@ -13,6 +13,7 @@ export default class CollectionPageView extends View {
             ${this.popover()}
             <div class="min-h-full">
                 ${this.header()}
+                ${this.curationMenu()}
                 ${this.main()}
             </div>
 
@@ -35,7 +36,9 @@ export default class CollectionPageView extends View {
                             ${this.statusButton('COLLECTION', collectionName, currentStatus)}
                             ${this.statusButton('ARCHIVE', collectionName, currentStatus)}
                         </div>
-                        <div class="flex-1"></div>
+                        <div class="flex-1 flex justify-end">
+                            ${this.curateButton()}
+                        </div>
                     </div>
                 </div>
             </header>
@@ -47,15 +50,46 @@ export default class CollectionPageView extends View {
         const stateClasses = isSelected
             ? 'bg-slate-700 text-white dark:bg-slate-600'
             : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600';
+        const curateParam = this.model.isCurateMode() ? 'true' : 'false';
         return `
             <a
-                href="/collection/${collectionName}?status=${status}"
+                href="/collection/${collectionName}?status=${status}&curate=${curateParam}"
                 data-id="status-button-${status}"
                 aria-pressed="${isSelected}"
                 class="${baseClasses} ${stateClasses}"
             >
                 ${status}
             </a>
+        `;
+    }
+    curateButton() {
+        const isSelected = this.model.isCurateMode();
+        const baseClasses = 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer';
+        const stateClasses = isSelected
+            ? 'bg-blue-600 text-white hover:bg-blue-700'
+            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600';
+        return `
+            <button
+                data-id="curate-button"
+                aria-pressed="${isSelected}"
+                class="${baseClasses} ${stateClasses}"
+            >
+                Curate
+            </button>
+        `;
+    }
+    curationMenu() {
+        if (!this.model.isCurateMode()) {
+            return '';
+        }
+        return `
+            <div data-id="curation-menu" class="sticky top-14 z-30 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+                <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div class="flex h-14 items-center">
+                        <!-- Curation menu content will be added here in future iterations -->
+                    </div>
+                </div>
+            </div>
         `;
     }
     main() {

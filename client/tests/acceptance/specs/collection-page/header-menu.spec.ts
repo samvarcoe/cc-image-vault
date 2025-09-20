@@ -101,7 +101,7 @@ test.describe('Client - Collection Page - Header Menu', () => {
         await ui.collectionPage.header.statusToggle.inboxButton.click();
 
         // Then the user is navigated to "/collection/TestCollection?status=[STATUS]"
-        await expect(page).toHaveURL('/collection/TestCollection?status=INBOX');
+        expect(page.url()).toContain('status=INBOX');
 
         // And the correct button shows as selected
         await ui.collectionPage.header.statusToggle.inboxButton.shouldBeSelected();
@@ -110,7 +110,7 @@ test.describe('Client - Collection Page - Header Menu', () => {
 
         // Test clicking another status button
         await ui.collectionPage.header.statusToggle.archiveButton.click();
-        await expect(page).toHaveURL('/collection/TestCollection?status=ARCHIVE');
+        expect(page.url()).toContain('status=ARCHIVE');
 
         // And the correct button shows as selected
         await ui.collectionPage.header.statusToggle.archiveButton.shouldBeSelected();

@@ -30,7 +30,7 @@ export default defineConfig([
       "package-lock.json",  // Ignore auto-generated lockfile
       "./test.ts",
       ".tmp",
-      "*.md"
+      "**/*.md"
     ]
   }
 ]);

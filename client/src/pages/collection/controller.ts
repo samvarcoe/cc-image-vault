@@ -16,10 +16,18 @@ export default class CollectionPageController {
     }
 
     private attachEventListeners(): void {
-        // Handle image card clicks to open popover
+        // Handle curate button clicks
+        document.addEventListener('click', (event) => {
+            const curateButton = (event.target as Element).closest('[data-id="curate-button"]');
+            if (curateButton) {
+                this.toggleCurateMode();
+            }
+        });
+
+        // Handle image card clicks to open popover (only if not in curate mode)
         document.addEventListener('click', (event) => {
             const imageCard = (event.target as Element).closest('[data-image-id]') as HTMLElement;
-            if (imageCard) {
+            if (imageCard && !this.model.isCurateMode()) {
                 const imageId = imageCard.dataset.imageId;
                 if (imageId) {
                     this.openPopover(imageId, imageCard);
@@ -72,5 +80,20 @@ export default class CollectionPageController {
     private handleImageLoadError(): void {
         this.model.setPopoverError('Unable to load full image');
         this.view.update();
+    }
+
+    private toggleCurateMode(): void {
+        this.model.toggleCurateMode();
+        this.updateUrlParams();
+        this.view.update();
+    }
+
+    private updateUrlParams(): void {
+        const url = new URL(window.location.href);
+        const curateValue = this.model.isCurateMode() ? 'true' : 'false';
+        url.searchParams.set('curate', curateValue);
+
+        // Update the URL without reloading the page
+        window.history.pushState({}, '', url.toString());
     }
 }

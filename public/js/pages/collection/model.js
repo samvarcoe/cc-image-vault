@@ -1,7 +1,7 @@
 import { Model } from '../../mvc.js';
 export default class CollectionPageModel extends Model {
     constructor(initialData = {}) {
-        super(Object.assign({ name: '', status: 'COLLECTION', images: [], error: '', loading: false, popover: {
+        super(Object.assign({ name: '', status: 'COLLECTION', images: [], error: '', loading: false, curate: false, popover: {
                 visible: false,
                 selectedImageId: undefined,
                 error: undefined
@@ -64,5 +64,14 @@ export default class CollectionPageModel extends Model {
         if (this.data.popover) {
             this.data.popover.error = message;
         }
+    }
+    isCurateMode() {
+        return this.data.curate || false;
+    }
+    setCurateMode(curate) {
+        this.data.curate = curate;
+    }
+    toggleCurateMode() {
+        this.data.curate = !this.data.curate;
     }
 }
