@@ -4,108 +4,122 @@
 Users have accumulated large collections of images across multiple directories that contain many duplicates and unwanted or low quality items. Currently, there's no efficient way to sort through these images to identify which are worth keeping and it's difficult to find images the user is interested in. Organising the images is an awkward and time-consuming manual process and as a result, the images are rarely viewed, negating the point of collecting or storing them.
 
 ## Solution Overview
-A simple application that lets users upload their images and sort them into "collections". Bulk editing functionality is provided to quickly classify images and archive/restore/delete them as desired. Functionality for viewing and exploring the collections is also provided to allow users to use and enjoy them.
+A complete web application for image curation that enables users to upload, organize, and manage image collections. Features include drag-and-drop upload, comprehensive validation, duplicate detection, status-based filtering, and responsive viewing interfaces.
 
-## Pages
+## Application Architecture
+
+### Three-Layer Architecture
+The application follows a clean three-layer architecture with clear separation of concerns:
+
+- **Domain** (`domain/`): Business logic and data operations - see [Domain README](domain/README.md)
+- **API** (`api/`): HTTP interface and routing - see [API README](api/README.md)
+- **Client** (`client/`): Web interface and user interactions - see [Client README](client/README.md)
+
+### Module Communication
+- **UI → API**: HTTP requests for data and page rendering
+- **API → Domain**: Method calls for business logic execution
+- **Domain → API**: Return values and domain events
+- **API → UI**: HTTP responses with data or rendered HTML
 
 ### Navigation Structure
+```
+/ (Home)                                    ✅ Implemented
+├── /collection/:name?status=COLLECTION     ✅ Implemented
+│   ├── ?status=INBOX                       ✅ Implemented
+│   └── ?status=ARCHIVE                     ✅ Implemented
+├── /collection/:name/slideshow             ⏳ Pending
+└── /settings                               ⏳ Pending
+```
+
+## Technology Stack
+
+### Core Technologies
+- **Runtime**: Node.js 24 with TypeScript
+- **Web Framework**: Express with custom MVC implementation
+- **Database**: SQLite (one per collection)
+- **Image Processing**: Sharp library for thumbnails and metadata
+- **Frontend**: Server-side rendering with client-side hydration
+- **Styling**: Tailwind CSS v4
+- **Testing**: Mocha + Playwright with executable specifications
+
+### Data Architecture
+Each collection maintains its own isolated SQLite database with an images table containing metadata, validation, and status information. Original images and thumbnails are stored in organized directory structures with UUID-based naming for security and performance.
+
+For detailed schema and API specifications, see the module-specific documentation.
+
+## Development Workflow
+
+### Getting Started
 ```bash
-/ 
-├── /collection/:id
-│   ├── /collection/:id/inbox
-│   ├── /collection/:id/archive
-│   └── /collection/:id/slideshow
-└── /settings
+npm run dev              # Start all development processes (TypeScript, CSS, server)
+npm run tests:all        # Run all test suites across modules
+npm run lint             # Code linting and style checks
+npx tsc --noEmit         # Type checking without compilation
 ```
 
-### Home Page (/)
-- Displays the names of current collections with links to main collection pages
-- Shows collection statistics (inbox count, collection count, archive count)
-- User can create new collections from here
-
-### Collection Page (/collection/:id)
-- The main page for the collection
-- Displays images according to their status
-- Primary interface for viewing curated images
-
-### Slideshow Page (/collection/:id/slideshow)
-- Cycles through images with "COLLECTION" status
-- Implementation details TBD for future iteration
-
-### Settings Page (/settings)
-- Allows users to adjust product parameters
-- Configuration options TBD for future iteration
-
-## API Design
-
-### Collections
-```typescript
-GET    /api/collections                   // Returns list of collection names ✅
-POST   /api/collections                   // Creates new collection
-GET    /api/collections/:id               // Returns collection metadata  
-DELETE /api/collections/:id               // Deletes entire collection
-PATCH  /api/collections/:id               // Updates collection metadata
+### Module-Specific Commands
+```bash
+npm run domain:tests     # Domain layer business logic tests
+npm run api:tests        # API layer HTTP integration tests
+npm run client:tests     # Client layer UI tests (Playwright)
 ```
 
-### Images
-```typescript
-GET    /api/collections/:id/images                    // Query params: ?status=INBOX&limit=50&offset=0
-POST   /api/collections/:id/images                    // Upload image(s) - processes synchronously for MVP
-GET    /api/images/:collectionId/:imageId             // Serves original image file
-GET    /api/images/:collectionId/:imageId/thumbnail   // Serves thumbnail image
-PATCH  /api/images/:collectionId/:imageId             // Updates single image metadata
-DELETE /api/images/:collectionId/:imageId             // Deletes single image
+For detailed development setup and module-specific workflows, refer to the individual module README files.
+
+## Project Structure
+
+```
+├── api/                  # HTTP interface layer - see api/README.md
+├── client/               # Web interface layer - see client/README.md
+├── domain/               # Business logic layer - see domain/README.md
+├── utils/                # Shared utilities across modules
+├── private/              # Collection data storage (gitignored)
+├── public/               # Static web assets
+├── config.ts             # Project configuration
+└── server.ts             # Application entry point
 ```
 
-### Bulk Operations
-```typescript
-PATCH  /api/collections/:id/images/bulk   // Bulk status updates
-DELETE /api/collections/:id/images/bulk   // Bulk delete operations
+Each module follows a consistent structure with `requirements/`, `src/`, `tests/`, and dedicated documentation.
 
-// Request body format:
-{
-  "imageIds": ["uuid1", "uuid2", "uuid3"],
-  "updates": { "status": "COLLECTION" }
-}
-```
+## Testing Philosophy
 
-## Technical Implementation
+This project uses **executable specifications** - all functionality is defined in Gherkin scenarios that directly correspond to acceptance tests. Key principles:
 
-### Technology Stack
-- **Runtime**: Node.js 24
-- **Framework**: Express server
-- **Architecture**: MVC pattern utilizing vanilla JavaScript and string template literals for HTML components
-- **Rendering**: Server-side initial rendering using same patterns as browser
-- **Database**: SQLite per collection
-- **Language**: TypeScript
+- **Specification-Driven Development**: Features defined before implementation
+- **Layer-Specific Testing**: Each architecture layer tested independently
+- **Real System Testing**: Tests execute against live implementations
+- **Business-Focused Assertions**: User-centric error messages and behavior
 
-### File Processing ✅
-- **Supported Formats**: JPG, JPEG, WebP, PNG (jpeg normalized to jpg)
-- **File Size Limit**: 25MB maximum per image
-- **Collection Limit**: No maximum images per collection
-- **Validation**: Format, integrity, filename safety, and duplicate detection
-- **Security**: XSS-safe filename validation, 256-char limit
-- **Error Handling**: Comprehensive error types with atomic cleanup
+For detailed testing strategies and utilities, see the individual module README files.
 
-### Upload Workflow ✅
-1. Client drag-and-drop multiple files (including directory contents)
-2. Client-side validation for format and size
-3. Server receives upload and validates (format, integrity, safety, duplicates)
-4. Server calculates SHA256 hash for duplicate detection
-5. Server generates 400px thumbnail preserving aspect ratio using Sharp
-6. Server stores original and thumbnail in collection directory structure
-7. Server stores complete metadata in collection's SQLite database
-8. Returns success/error response with specific error types
+## Development Principles
 
-### Future Extensibility Considerations
-- Database schema includes tables for future image tagging functionality
-- API design accommodates future tagging, sorting and ranking features
-- File structure supports additional image processing operations
-- Bulk operations API pattern can be extended for future batch operations
+### Code Organization
+- **Clear Module Boundaries**: Each layer has distinct responsibilities
+- **Type Safety**: Comprehensive TypeScript coverage
+- **Security First**: Input validation and XSS prevention throughout
+- **Performance Conscious**: Lazy loading, caching, and optimized queries
 
-## Success Metrics (MVP)
-- Users can successfully create collections and upload images
-- Duplicate detection prevents redundant storage within collections
-- Users can efficiently sort images between INBOX/COLLECTION/ARCHIVE statuses
-- Bulk operations enable quick classification of multiple images
-- Collections provide organized viewing experience for curated images
+### Error Handling Chain
+- **Domain**: Throws business-specific exceptions
+- **API**: Translates domain exceptions to HTTP status codes
+- **Client**: Displays user-friendly error messages
+
+### Cross-Module Standards
+- **Import Strategy**: Use `@/<module>` for cross-module imports, relative imports within modules
+- **Testing**: All modules use Mocha with custom assertions
+- **Documentation**: Gherkin requirements mirror test structure 1:1
+
+## Success Metrics
+
+### ✅ Current Capabilities
+- Complete collection viewing and management workflow
+- Responsive image display with status-based filtering
+- Robust error handling and user feedback
+- Comprehensive test coverage across all layers
+
+### 🎯 Next Development Priorities
+- Image upload interface with drag-and-drop
+- Collection creation UI workflow
+- Bulk image curation operations
+- Full-screen slideshow viewing mode

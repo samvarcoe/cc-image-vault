@@ -1,5 +1,5 @@
 import express from 'express';
-import { Collection, CollectionCreateError, CollectionNotFoundError, ImageNotFoundError } from '@/domain';
+import { Collection, CollectionCreateError, CollectionNotFoundError, ImageNotFoundError, ImageRetrievalError } from '@/domain';
 
 export const routes = express.Router();
 
@@ -66,13 +66,16 @@ routes.get('/images/:collectionId/:imageId', async (req, res) => {
         return res.status(200).send(buffer);
 
     } catch (error: unknown) {
-
         if (error instanceof CollectionNotFoundError) {
             return res.status(404).json({ message: 'Collection not found' });
         }
 
         if (error instanceof ImageNotFoundError) {
             return res.status(404).json({ message: 'Image not found' });
+        }
+
+        if (error instanceof ImageRetrievalError && error.cause instanceof Error && error.cause.message === 'Invalid imageID') {
+            return res.status(400).json({ message: 'Invalid image ID format' });
         }
 
         return res.status(500).json({ message: 'An error occurred whilst serving the image' });
@@ -102,6 +105,15 @@ routes.get('/images/:collectionId/:imageId/thumbnail', async (req, res) => {
 
         if (error instanceof ImageNotFoundError) {
             return res.status(404).json({ message: 'Image not found' });
+        }
+
+        if (error instanceof ImageRetrievalError) {
+            // Check if the cause is a validation error (invalid image ID format)
+            if (error.cause instanceof Error && error.cause.message === 'Invalid imageID') {
+                return res.status(400).json({ message: 'Invalid image ID format' });
+            }
+            // For other retrieval errors, return 500
+            return res.status(500).json({ message: 'An error occurred whilst serving the thumbnail' });
         }
 
         return res.status(500).json({ message: 'An error occurred whilst serving the thumbnail' });

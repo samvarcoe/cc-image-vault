@@ -2,10 +2,9 @@ import express, { Request, Response, NextFunction } from 'express';
 import compression from 'compression';
 
 import '@/config';
-
-import { routes as apiRoutes } from './api/src/routes';
-import { fsOps } from './domain/src/fs-operations';
-import { routes as pageRoutes } from './client/src/routes';
+import { routes as apiRoutes } from '@/api';
+import { routes as pageRoutes } from '@/client';
+import { fsOps } from '@/domain';
 
 const forceFSError = (req: Request, res: Response, next: NextFunction) => {
     if (CONFIG.MODE === 'DEV' && req.headers['x-force-fs-error']) {

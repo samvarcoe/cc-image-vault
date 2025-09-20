@@ -1,101 +1,246 @@
 # Client Module
 
-## Web Interface for Image Vault
-Frontend client implementation providing collection management interfaces using MVC architecture with TypeScript and HTML template literals.
+## Web Interface Layer
+Frontend implementation providing responsive collection and image management interfaces using custom MVC architecture with TypeScript, server-side rendering, and client-side hydration.
 
 ## Exports
 ```typescript
-export { routes } from './src/routes';
+// Routes are exported directly from src/routes.ts
+import { routes } from './client/src/routes';
 ```
 
-### Architecture
-- **MVC Framework**: Custom TypeScript implementation with Model/View/Controller separation
-- **Server-Side Rendering**: Express routes generate complete HTML pages
-- **Client-Side Hydration**: JavaScript bootstraps MVC components for interactivity
-- **Type Safety**: Full TypeScript implementation with global type declarations
+## Architecture Principles
+- **Custom MVC Framework**: TypeScript implementation with clear Model/View/Controller separation
+- **Server-Side Rendering**: Express routes generate complete HTML pages for SEO and performance
+- **Client-Side Hydration**: JavaScript bootstraps MVC components for rich interactivity
+- **Type Safety**: Full TypeScript implementation with comprehensive type declarations
+- **Responsive Design**: Mobile-first approach with desktop optimization
+- **Component-Based**: Reusable UI components with consistent data attributes
 
-### MVC Implementation
+## Current Implementation Status
+
+### ✅ Implemented Features
+
+#### Home Page (`/`)
+- **Collection Viewing**: Responsive card-based layout displaying all collections
+- **Collection Creation**: Inline form for creating new collections with client-side validation
+- **Navigation**: Direct links to individual collection pages
+- **State Management**: Loading, success, empty, and error states
+- **Responsive Design**: Optimized layouts for mobile (375px), tablet (768px), and desktop (1920px+)
+
+#### Collection Page (`/collection/:name`)
+- **Image Grid Display**: Responsive grid layout with 1-3 columns based on viewport
+- **Status-Based Filtering**: Dynamic filtering by COLLECTION, INBOX, ARCHIVE status via URL parameters
+- **Fullscreen Popover**: Click thumbnails to view original images in modal overlay
+- **Lazy Loading**: Efficient image thumbnail loading with layout shift prevention
+- **Auto-Redirect**: Automatic redirect to `?status=COLLECTION` when no status specified
+- **Error Handling**: 404 for non-existent collections, server error handling
+
+### ⏳ Pending Implementation
+- **Header Menu**: Collection page navigation and actions
+- **Image Upload Interface**: Drag-and-drop upload with progress indicators
+- **Image Management**: Individual image actions (status updates, deletion)
+- **Bulk Operations**: Multi-select image operations
+- **Settings Page**: User preferences and configuration
+
+## MVC Architecture Implementation
+
+### Directory Structure
 ```text
 client/src/
 ├── mvc.ts                # Base Model, View, Controller classes
-├── routes.ts             # Express router definitions
-├── pages/home/           # Home page MVC components
-│   ├── model.ts          # Data management and state
-│   ├── view.ts           # HTML rendering and templating
-│   └── controller.ts     # Event handling and user interactions
-└── styles/input.css      # Tailwind CSS input
+├── routes.ts             # Express router definitions and page routing
+├── pages/
+│   ├── home/            # Home page MVC implementation
+│   │   ├── model.ts     # HomePageModel - data management and API integration
+│   │   ├── view.ts      # HomePageView - HTML generation and templating
+│   │   └── controller.ts # HomePageController - event handling (pending)
+│   └── collection/      # Collection page MVC implementation
+│       ├── model.ts     # CollectionPageModel - image data and filtering
+│       ├── view.ts      # CollectionPageView - responsive grid rendering
+│       └── controller.ts # CollectionPageController - interactions (pending)
+├── styles/
+│   └── input.css        # Tailwind CSS configuration
+└── mockups/             # HTML mockups for UI reference
 ```
 
-### Page Structure
-- **Models**: Manage page state and data serialization for client hydration
-- **Views**: Generate HTML using template literals with full page rendering
-- **Controllers**: Handle user interactions and coordinate model/view updates
+### MVC Patterns
+- **Models**: Manage page state, API integration, and data serialization for client hydration
+  - Home Page Model: Collection list management, creation form state, validation logic
+  - Collection Page Model: Image filtering, popover state management, error handling
+- **Views**: Generate HTML using template literals with complete page rendering
+- **Controllers**: Handle user interactions and coordinate model/view updates (client-side)
 - **Focus Management**: Automatic focus preservation across page updates
+- **State Serialization**: Server-rendered data hydrated into client-side models
 
-## Implementation Status
-- ✅ **Home Page**: Complete MVC implementation for viewing collections with refactored architecture
-- ✅ **Collection Display**: Card-based layout with navigation links and responsive design
-- ✅ **Error Handling**: User-friendly messages for loading errors and empty states
-- ⏳ **Collection Management**: Create, edit, delete operations pending implementation
-- ⏳ **Image Operations**: Image viewing, upload, management interfaces pending implementation
+### Model Capabilities
+- **HomePageModel**: Collection CRUD operations, form validation, loading states, error handling
+- **CollectionPageModel**: Image display management, status filtering, popover state, focus control
 
-### Home Page Details
-The home page (`/`) provides:
-- Collection listing in card-based layout with collection names and hover effects
-- Navigation links to individual collection pages (`/collection/:id`)
-- Empty state message: "No Collections found, create one to get started"
-- Error state message: "Unable to load collections"
-- Responsive design from mobile (375px) to desktop (1920px) with TailwindCSS
-- All 4 acceptance test scenarios passing with comprehensive coverage
+## Responsive Design System
 
-## Styling with Tailwind CSS
+### Viewport Breakpoints
+- **Mobile**: 375px - 767px (1-column image grid, compact navigation)
+- **Tablet**: 768px - 1199px (2-column image grid, medium spacing)
+- **Desktop**: 1200px+ (3-column image grid, generous spacing)
+
+### Layout Specifications
+- **Container**: `max-w-4xl` centered with responsive padding
+- **Typography**: Responsive text sizing with `text-base lg:text-lg` patterns
+- **Grid System**: CSS Grid with `grid-cols-1 md:grid-cols-2 lg:grid-cols-3`
+- **Spacing**: Consistent spacing scale using Tailwind utilities
+
+## Styling with Tailwind CSS v4
 
 ### Configuration
 - **Version**: Tailwind CSS v4 (latest)
-- **CLI**: `@tailwindcss/cli` for compilation
-- **Input**: `client/src/styles/input.css` (`@import "tailwindcss";`)
+- **Build Tool**: `@tailwindcss/cli` for compilation
+- **Input**: `client/src/styles/input.css` (single `@import "tailwindcss";` directive)
 - **Output**: `public/style.css` (served to browser)
+- **Watch Mode**: Integrated with development workflow
 
-### Usage in Components
-Tailwind utility classes are used directly in TypeScript template literals:
+### Usage Patterns
+Tailwind utility classes used directly in TypeScript template literals:
 
 ```typescript
-renderContent() {
+renderImageGrid() {
     return /*html*/`
-        <div class="min-h-screen bg-gray-50">
-            <div class="max-w-4xl mx-auto py-16 px-4">
-                <h1 class="text-4xl font-bold text-gray-900 mb-4">Title</h1>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-id="image-grid">
+            ${this.renderImageCards()}
         </div>
     `;
 }
 ```
 
 ### Build Commands
-- `npm run css:build` - Compile CSS once
 - `npm run css:watch` - Watch and rebuild CSS during development
-- `npm run dev` - Starts CSS watch alongside TypeScript compilation
+- `npm run dev` - Starts CSS watch alongside TypeScript and server
 
-## Error Handling
-- **User-Friendly Messages**: Consistent error display for API failures
-- **Empty States**: Helpful guidance when no data is available
-- **Client-Side Errors**: Console logging with graceful degradation
-- **Focus Management**: Preserved across updates and error states
+## Page Implementations
 
-## Testing
-### Test Setup
-- Test isolation achieved through UI model abstractions and page objects
-- Playwright integration tests execute against live rendered pages
-- UI models provide assertable wrappers for page interactions
-- Hooks implemented in `client/tests/acceptance/setup.ts`
+### Home Page Features
+- **Collection Cards**: Clean card layout with hover effects and navigation
+- **Collection Creation Form**: Inline form with real-time client-side validation
+- **State Management**: Loading states, empty states, error handling
+- **Data Integration**: Direct domain integration via `Collection.list()`
+- **User Messages**: Contextual messaging for all states
+- **Accessibility**: Proper ARIA attributes and semantic HTML
 
-### UI Model Architecture
+#### Collection Creation
+- **Validation Rules**: Non-empty, max 256 characters, alphanumeric with hyphens/underscores only
+- **Real-time Validation**: Client-side validation on submit with immediate feedback
+- **Duplicate Detection**: Prevents creation of collections with existing names
+- **Loading States**: Submit button shows spinner during creation requests
+- **Form Reset**: Input clears after successful creation, remains accessible for additional collections
+
+#### State Messages
+- **Empty State**: "No Collections found, create one to get started"
+- **Error State**: "Unable to load collections"
+- **Loading State**: Graceful loading indication
+- **Validation Errors**: "Collection name is required", "Collection names may only contain letters, numbers, underscores and hyphens", etc.
+
+### Collection Page Features
+- **Dynamic Filtering**: URL-based status filtering (`?status=COLLECTION|INBOX|ARCHIVE`)
+- **Image Thumbnails**: Optimized 400px thumbnails via `/api/images/:id/:imageId/thumbnail`
+- **Fullscreen Image Viewing**: Click any thumbnail to view original image in modal popover
+- **Responsive Grid**: Automatic column adjustment based on viewport
+- **Lazy Loading**: `loading="lazy"` with proper width/height attributes
+- **Layout Shift Prevention**: Consistent image dimensions
+
+#### Fullscreen Popover
+- **Original Image Display**: Shows full-resolution images from `/api/images/:collectionId/:imageId`
+- **Viewport Optimization**: Images scale to fit viewport with 10px padding
+- **Background Overlay**: Semi-transparent blurred background for focus
+- **Multiple Close Methods**: Click background, press Esc key, or close button
+- **Responsive Design**: Works across mobile, tablet, and desktop viewports
+- **Error Handling**: "Unable to load full image" message for loading failures
+- **Focus Management**: Keyboard focus trapped within popover during display
+
+#### URL Structure
+```
+/collection/my-collection                    → Redirects to ?status=COLLECTION
+/collection/my-collection?status=COLLECTION  → Shows curated images
+/collection/my-collection?status=INBOX       → Shows new images
+/collection/my-collection?status=ARCHIVE     → Shows archived images
+```
+
+## Error Handling Strategy
+- **User-Friendly Messages**: Business-focused error messages, not technical details
+- **Graceful Degradation**: Functional fallbacks for JavaScript failures
+- **State Preservation**: Error states maintain user context
+- **Focus Management**: Accessibility preserved during error scenarios
+- **Console Logging**: Detailed technical information for developers
+
+## Testing Infrastructure
+
+### Test Architecture
+- **Playwright Integration**: Full browser testing against live rendered pages
+- **UI Model Pattern**: Page object model with assertable wrappers
+- **Real Data**: Tests use actual domain data, not mocks
+- **Responsive Testing**: Viewport size testing for mobile/tablet/desktop
+- **Error Simulation**: Server-side error injection for comprehensive coverage
+
+### UI Model Hierarchy
 ```text
 client/tests/ui-model/
 ├── base/
-│   ├── element.ts        # Base element interactions
-│   ├── page.ts          # Base page model
-│   └── ui.ts            # UI abstraction layer
-├── pages/home.ts        # Home page model
-└── image-vault.ts       # Application-level model
+│   ├── element.ts       # Base element interactions and assertions
+│   ├── page.ts         # Base page model with common functionality
+│   └── ui.ts           # UI abstraction layer with navigation
+├── pages/
+│   ├── home.ts         # HomePage model with collection card interactions
+│   └── collection.ts   # CollectionPage model with image grid functionality
+├── components/
+│   ├── collection-card.ts  # Reusable collection card component
+│   └── image-grid.ts       # Image grid component with responsive assertions
+└── image-vault.ts      # Application-level model for cross-page functionality
 ```
+
+### Key Testing Utilities
+- **`shouldHaveColumnCount(count)`**: Validates responsive grid columns
+- **`shouldHaveImageCard(imageId)`**: Validates individual image card presence
+- **`shouldShowUserMessage(message)`**: Validates state messaging
+- **`shouldRedirectTo(url)`**: Validates navigation and redirects
+- **`shouldHaveProperLazyLoading()`**: Validates image loading attributes
+
+## Data Attributes for Testing
+All interactive elements include `data-id` attributes for reliable test automation:
+
+```html
+<!-- Collection cards -->
+<div data-id="collection-card-${collectionName}">
+  <h3 data-id="collection-title">${collectionName}</h3>
+</div>
+
+<!-- Collection creation form -->
+<form data-id="collection-creation-form">
+  <input data-id="collection-name-input" placeholder="Add a new Collection..." />
+  <button data-id="collection-submit-button">Create</button>
+  <div data-id="validation-message">${validationError}</div>
+</form>
+
+<!-- Image grid and cards -->
+<div data-id="image-grid">
+  <div data-id="image-card-${imageId}">
+    <img data-id="image-thumbnail" src="/api/images/${collection}/${imageId}/thumbnail" />
+  </div>
+</div>
+
+<!-- Fullscreen popover -->
+<div data-id="fullscreen-popover">
+  <img data-id="popover-image" src="/api/images/${collection}/${imageId}" />
+  <div data-id="popover-error">${errorMessage}</div>
+</div>
+
+<!-- State messages -->
+<div data-id="user-message">${message}</div>
+<div data-id="error-message">${errorMessage}</div>
+<div data-id="empty-message">${emptyMessage}</div>
+```
+
+## Performance Optimizations
+- **Server-Side Rendering**: Initial page load without JavaScript dependency
+- **Lazy Loading**: Images load only when entering viewport
+- **CDN-Ready**: Static assets optimized for CDN caching
+- **Layout Shift Prevention**: Proper image dimensions prevent content jumps
+- **Efficient Hydration**: Minimal client-side JavaScript for interactivity
