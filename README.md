@@ -115,11 +115,12 @@ For detailed testing strategies and utilities, see the individual module README 
 ### ✅ Current Capabilities
 - Complete collection viewing and management workflow
 - Responsive image display with status-based filtering
+- Curate mode for bulk operations (foundation ready)
 - Robust error handling and user feedback
 - Comprehensive test coverage across all layers
 
 ### 🎯 Next Development Priorities
 - Image upload interface with drag-and-drop
 - Collection creation UI workflow
-- Bulk image curation operations
+- Bulk image curation operations (multi-select, batch actions)
 - Full-screen slideshow viewing mode

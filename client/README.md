@@ -31,16 +31,16 @@ import { routes } from './client/src/routes';
 #### Collection Page (`/collection/:name`)
 - **Image Grid Display**: Responsive grid layout with 1-3 columns based on viewport
 - **Status-Based Filtering**: Dynamic filtering by COLLECTION, INBOX, ARCHIVE status via URL parameters
-- **Fullscreen Popover**: Click thumbnails to view original images in modal overlay
+- **Curate Mode**: Toggle-activated curation interface for bulk operations with sticky menu
+- **Fullscreen Popover**: Click thumbnails to view original images in modal overlay (disabled in curate mode)
 - **Lazy Loading**: Efficient image thumbnail loading with layout shift prevention
-- **Auto-Redirect**: Automatic redirect to `?status=COLLECTION` when no status specified
+- **Auto-Redirect**: Automatic redirect to `?status=COLLECTION&curate=false` when parameters not specified
 - **Error Handling**: 404 for non-existent collections, server error handling
 
 ### ⏳ Pending Implementation
-- **Header Menu**: Collection page navigation and actions
 - **Image Upload Interface**: Drag-and-drop upload with progress indicators
 - **Image Management**: Individual image actions (status updates, deletion)
-- **Bulk Operations**: Multi-select image operations
+- **Bulk Operations**: Multi-select image operations (curate mode foundation ready)
 - **Settings Page**: User preferences and configuration
 
 ## MVC Architecture Implementation
@@ -75,7 +75,7 @@ client/src/
 
 ### Model Capabilities
 - **HomePageModel**: Collection CRUD operations, form validation, loading states, error handling
-- **CollectionPageModel**: Image display management, status filtering, popover state, focus control
+- **CollectionPageModel**: Image display management, status filtering, curate mode state, popover state, focus control
 
 ## Responsive Design System
 
@@ -224,6 +224,12 @@ All interactive elements include `data-id` attributes for reliable test automati
   <div data-id="image-card-${imageId}">
     <img data-id="image-thumbnail" src="/api/images/${collection}/${imageId}/thumbnail" />
   </div>
+</div>
+
+<!-- Curate mode elements -->
+<button data-id="curate-button" aria-pressed="${isSelected}">Curate</button>
+<div data-id="curation-menu">
+  <!-- Curation menu content -->
 </div>
 
 <!-- Fullscreen popover -->
