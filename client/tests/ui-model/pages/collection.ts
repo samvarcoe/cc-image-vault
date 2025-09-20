@@ -25,6 +25,10 @@ export class CollectionPage extends PageObject {
         return this.component(Popover, 'Fullscreen Popover', '[data-id="fullscreen-popover"]');
     }
 
+    get curationMenu(): Element {
+        return this.element('Curation Menu', '[data-id="curation-menu"]');
+    }
+
     async visit(collectionName: string, status?: ImageStatus): Promise<void> {
         const searchParams = status ? `?status=${status}` : '';
         await this.page.goto(`${this.url}/${collectionName}${searchParams}`);
@@ -65,6 +69,10 @@ class Header extends Element {
 
     get statusToggle(): StatusToggle {
         return this.child(StatusToggle, 'Status Toggle', '[data-id="status-toggle"]');
+    }
+
+    get curateButton(): Element {
+        return this.child(Element, 'Curate Button', '[data-id="curate-button"]');
     }
 
     async getBoundingBox() {
