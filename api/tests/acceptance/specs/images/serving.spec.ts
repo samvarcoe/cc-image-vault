@@ -101,4 +101,80 @@ suite('API - Images - Serving', () => {
             .shouldHaveStatus(404)
             .shouldHaveBodyWithProperty('message', 'Collection not found');
     });
+
+    test('Image serving with non-existent image in existing collection', async () => {
+        // Given a collection exists but does not contain the specified image ID
+        Collection.create('empty-collection');
+
+        // When the client requests GET /api/images/:collectionId/:imageId
+        const response = await api['/api/images/:collectionId/:imageId'].get({
+            pathParams: {
+                collectionId: 'empty-collection',
+                imageId: '12345678-1234-4123-8123-123456789012' // Valid UUID format but non-existent
+            }
+        });
+
+        // Then the API returns 404 status code
+        // And the API returns error message indicating image not found
+        response
+            .shouldHaveStatus(404)
+            .shouldHaveBodyWithProperty('message', 'Image not found');
+    });
+
+    test('Image serving with invalid image ID format', async () => {
+        // Given a collection exists
+        Collection.create('test-collection');
+
+        // When the client requests GET /api/images/:collectionId/:imageId with an invalid image ID format
+        const response = await api['/api/images/:collectionId/:imageId'].get({
+            pathParams: {
+                collectionId: 'test-collection',
+                imageId: 'invalid-uuid-format'
+            }
+        });
+
+        // Then the API returns 400 status code
+        // And the API returns error message indicating invalid image ID format
+        response
+            .shouldHaveStatus(400)
+            .shouldHaveBodyWithProperty('message', 'Invalid image ID format');
+    });
+
+    test('Thumbnail serving with non-existent image in existing collection', async () => {
+        // Given a collection exists but does not contain the specified image ID
+        Collection.create('empty-thumbnail-collection');
+
+        // When the client requests GET /api/images/:collectionId/:imageId/thumbnail
+        const response = await api['/api/images/:collectionId/:imageId/thumbnail'].get({
+            pathParams: {
+                collectionId: 'empty-thumbnail-collection',
+                imageId: '98765432-4321-4321-8321-210987654321' // Valid UUID format but non-existent
+            }
+        });
+
+        // Then the API returns 404 status code
+        // And the API returns error message indicating image not found
+        response
+            .shouldHaveStatus(404)
+            .shouldHaveBodyWithProperty('message', 'Image not found');
+    });
+
+    test('Thumbnail serving with invalid image ID format', async () => {
+        // Given a collection exists
+        Collection.create('test-thumbnail-collection');
+
+        // When the client requests GET /api/images/:collectionId/:imageId/thumbnail with an invalid image ID format
+        const response = await api['/api/images/:collectionId/:imageId/thumbnail'].get({
+            pathParams: {
+                collectionId: 'test-thumbnail-collection',
+                imageId: 'invalid-thumbnail-uuid'
+            }
+        });
+
+        // Then the API returns 400 status code
+        // And the API returns error message indicating invalid image ID format
+        response
+            .shouldHaveStatus(400)
+            .shouldHaveBodyWithProperty('message', 'Invalid image ID format');
+    });
 });
