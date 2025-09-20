@@ -29,7 +29,8 @@ export default defineConfig([
       "node_modules/**/*",
       "package-lock.json",  // Ignore auto-generated lockfile
       "./test.ts",
-      ".tmp"
+      ".tmp",
+      "**/*.md"
     ]
   }
 ]);

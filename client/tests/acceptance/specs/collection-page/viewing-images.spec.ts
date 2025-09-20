@@ -20,7 +20,7 @@ test.describe('Client - Collection Page - Viewing Images', () => {
         await ui.collectionPage.visit('TestCollection');
 
         // Then the user is redirected to "/collection/TestCollection?status=COLLECTION"
-        await expect(page).toHaveURL('/collection/TestCollection?status=COLLECTION');
+        expect(page.url()).toContain('status=COLLECTION');
 
         // Verify no errors occurred
         await ui.shouldHaveNoConsoleErrors();

@@ -4,7 +4,7 @@
   "description": "Image curation app",
   "main": "index.js",
   "scripts": {
-    "css:watch": "npx @tailwindcss/cli -i client/src/styles/input.css -o public/style.css --watch",
+    "css:watch": "npx @tailwindcss/cli -i client/src/styles/input.css -o public/style.css --watch --content \"client/src/**/view.ts\"",
     "ts:watch": "tsc --project tsconfig.client.json --watch",
     "server:watch": "tsx watch server.ts",
     "dev": "concurrently \"npm run css:watch\" \"npm run ts:watch\" \"npm run server:watch\"",

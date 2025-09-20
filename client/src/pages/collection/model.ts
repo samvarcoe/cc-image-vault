@@ -6,6 +6,7 @@ export interface CollectionPageData {
     images?: ImageMetadata[];
     error?: string;
     loading?: boolean;
+    curate?: boolean;
     popover?: {
         visible: boolean;
         selectedImageId?: string;
@@ -22,6 +23,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             images: [],
             error: '',
             loading: false,
+            curate: false,
             popover: {
                 visible: false,
                 selectedImageId: undefined,
@@ -97,5 +99,17 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         if (this.data.popover) {
             this.data.popover.error = message;
         }
+    }
+
+    isCurateMode(): boolean {
+        return this.data.curate || false;
+    }
+
+    setCurateMode(curate: boolean): void {
+        this.data.curate = curate;
+    }
+
+    toggleCurateMode(): void {
+        this.data.curate = !this.data.curate;
     }
 }
