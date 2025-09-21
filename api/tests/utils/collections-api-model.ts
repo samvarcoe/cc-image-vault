@@ -1,21 +1,5 @@
 import { APIModel } from './api-model';
 
-type ImageMetadata = {
-  id: string;
-  collection: string;
-  name: string;
-  extension: string;
-  mime: string;
-  size: number;
-  hash: string;
-  width: number;
-  height: number;
-  aspect: number;
-  status: string;
-  created: Date;
-  updated: Date;
-};
-
 /**
  * Request type for creating a collection
  */

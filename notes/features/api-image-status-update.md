@@ -22,10 +22,46 @@ Acceptance Test File: api/tests/acceptance/specs/images/status-update.spec.ts
 - Extended CollectionsAPI with PATCH endpoint supporting ImageUpdateRequest → ImageMetadata
 - Added comprehensive validation scenarios covering all error conditions from Gherkin specs
 - Used realistic image fixtures via getImageFixture() for test setup
-- Implemented proper error simulation using sinon stubs for internal error testing
+- Implemented proper error simulation using corruptCollectionDB() utility for database error testing
 - Leveraged existing domain Collection objects for realistic test data orchestration
 - All tests use AssertableResponse chain-based assertions with descriptive failure messages
 - Tests follow 1-1 mapping with Gherkin scenarios as per project standards
-- Successfully verified all tests fail appropriately (404 status) due to pending PATCH endpoint implementation
+- Fixed logical flaw in date validation (updated timestamp should differ from created timestamp)
+- Used proper TypeScript typing and null safety for response body validation
 
 The specification provides comprehensive coverage of the image status update API contract including success cases, validation errors, and internal error handling while maintaining consistency with existing test patterns.
+
+## Interfaces
+```ts
+type ImageUpdateRequest = {
+  status: string;
+};
+
+type ImageMetadata = {
+  id: string;
+  collection: string;
+  name: string;
+  extension: string;
+  mime: string;
+  size: number;
+  hash: string;
+  width: number;
+  height: number;
+  aspect: number;
+  status: string;
+  created: Date;
+  updated: Date;
+};
+```
+
+## Implementation Summary
+REST API PATCH endpoint for updating image status values (INBOX, COLLECTION, ARCHIVE) with comprehensive validation, error handling, and proper HTTP response codes. Integrates with domain layer Collection.updateImage() method and follows existing API patterns.
+
+## Technical Notes
+- Added JSON parsing error middleware to server.ts for malformed request body handling
+- Uses Object.prototype.hasOwnProperty.call() to avoid ESLint no-prototype-builtins warnings
+- Maps domain ImageUpdateError exceptions to appropriate HTTP status codes (400/500)
+- Returns complete ImageMetadata object with updated timestamp reflecting modification time
+- Validates UUID v4 format for image IDs and ensures status values are from allowed enum
+- Maintains existing error response format: {"message": "Error description"}
+- Database corruption testing uses corruptCollectionDB() utility instead of sinon stubbing

@@ -1,7 +1,6 @@
 import { suite, test } from 'mocha';
-import sinon from 'sinon';
 import { Collection } from '@/domain';
-import { getImageFixture } from '@/utils';
+import { getImageFixture, corruptCollectionDB } from '@/utils';
 
 import { CollectionsAPI, ImageUpdateRequest } from '../../../utils/collections-api-model';
 import { AssertableResponse } from '../../../utils/assertable-response';
@@ -50,8 +49,8 @@ suite('API - Images - Updating Image Status', () => {
             .shouldHaveBodyWithProperty('width', imageMetadata.width)
             .shouldHaveBodyWithProperty('height', imageMetadata.height)
             .shouldHaveBodyWithProperty('aspect', imageMetadata.aspect)
-            .shouldHaveBodyWithProperty('created', imageMetadata.created)
-            .shouldHaveBodyWithProperty('updated', imageMetadata.updated);
+            .shouldHaveBodyWithProperty('created', imageMetadata.created.toISOString())
+            .shouldNotHaveBodyWithProperty('updated', imageMetadata.updated.toISOString());
     });
 
     test('Client attempts to update the status of an image in a collection that doesn\'t exist', async () => {
@@ -254,8 +253,8 @@ suite('API - Images - Updating Image Status', () => {
         });
         const imageMetadata = await collection.addImage(imageFixture.filePath);
 
-        // Mock the domain method to throw an error
-        sinon.stub(collection, 'updateImage').throws(new Error('Simulated internal error'));
+        // Corrupt the database to simulate internal error
+        corruptCollectionDB(collection);
 
         const updateRequest: ImageUpdateRequest = {
             status: 'ARCHIVE'

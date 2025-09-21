@@ -14,9 +14,19 @@ const forceFSError = (req: Request, res: Response, next: NextFunction) => {
     next();
 };
 
+// JSON error handling middleware
+const jsonErrorHandler = (err: Error, req: Request, res: Response, next: NextFunction): void => {
+    if (err instanceof SyntaxError && 'body' in err) {
+        res.status(400).json({ message: 'Malformed request body' });
+        return;
+    }
+    next(err);
+};
+
 const app = express()
     .use(express.static('public'))
     .use(express.json())
+    .use(jsonErrorHandler)
     .use(compression())
     .use(forceFSError)
     .use('/', pageRoutes)
