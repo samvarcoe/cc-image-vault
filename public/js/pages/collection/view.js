@@ -86,7 +86,20 @@ export default class CollectionPageView extends View {
             <div data-id="curation-menu" class="sticky top-14 z-30 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-800 dark:border-slate-700">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div class="flex h-14 items-center">
-                        <!-- Curation menu content will be added here in future iterations -->
+                        <div class="flex gap-2">
+                            <button
+                                data-id="select-all-button"
+                                class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                            >
+                                Select All
+                            </button>
+                            <button
+                                data-id="clear-button"
+                                class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                            >
+                                Clear
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -148,8 +161,11 @@ export default class CollectionPageView extends View {
         const thumbnailUrl = `/api/images/${collectionName}/${image.id}/thumbnail`;
         const imageWidth = 400;
         const imageHeight = Math.round(imageWidth / image.aspect);
+        const isSelected = this.model.isImageSelected(image.id);
+        const selectedAttribute = isSelected ? 'data-selected="true"' : '';
+        const selectionClasses = isSelected ? 'border-5 border-blue-200' : '';
         return `
-            <div class="bg-white rounded-lg overflow-hidden shadow-sm mb-4 break-inside-avoid cursor-pointer hover:shadow-md transition-shadow" data-id="image-card-${image.id}" data-image-id="${image.id}">
+            <div class="bg-white rounded-lg overflow-hidden shadow-sm mb-4 break-inside-avoid cursor-pointer hover:shadow-md transition-shadow ${selectionClasses}" data-id="image-card-${image.id}" data-image-id="${image.id}" ${selectedAttribute}>
                 <img
                     src="${thumbnailUrl}"
                     alt="Image ${image.id}"

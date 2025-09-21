@@ -24,13 +24,33 @@ export default class CollectionPageController {
             }
         });
 
-        // Handle image card clicks to open popover (only if not in curate mode)
+        // Handle Select All button clicks
+        document.addEventListener('click', (event) => {
+            const selectAllButton = (event.target as Element).closest('[data-id="select-all-button"]');
+            if (selectAllButton) {
+                this.selectAllImages();
+            }
+        });
+
+        // Handle Clear button clicks
+        document.addEventListener('click', (event) => {
+            const clearButton = (event.target as Element).closest('[data-id="clear-button"]');
+            if (clearButton) {
+                this.clearSelection();
+            }
+        });
+
+        // Handle image card clicks to open popover (only if not in curate mode) or toggle selection (if in curate mode)
         document.addEventListener('click', (event) => {
             const imageCard = (event.target as Element).closest('[data-image-id]') as HTMLElement;
-            if (imageCard && !this.model.isCurateMode()) {
+            if (imageCard) {
                 const imageId = imageCard.dataset.imageId;
                 if (imageId) {
-                    this.openPopover(imageId, imageCard);
+                    if (this.model.isCurateMode()) {
+                        this.toggleImageSelection(imageId);
+                    } else {
+                        this.openPopover(imageId, imageCard);
+                    }
                 }
             }
         });
@@ -85,6 +105,21 @@ export default class CollectionPageController {
     private toggleCurateMode(): void {
         this.model.toggleCurateMode();
         this.updateUrlParams();
+        this.view.update();
+    }
+
+    private toggleImageSelection(imageId: string): void {
+        this.model.toggleImageSelection(imageId);
+        this.view.update();
+    }
+
+    private selectAllImages(): void {
+        this.model.selectAllImages();
+        this.view.update();
+    }
+
+    private clearSelection(): void {
+        this.model.clearSelection();
         this.view.update();
     }
 

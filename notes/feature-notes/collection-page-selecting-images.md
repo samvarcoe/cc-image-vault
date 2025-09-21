@@ -31,3 +31,32 @@ Key implementation considerations:
 - Selection state is contextual to curate mode - clicking images outside curate mode should not trigger selection
 - "Select All" operates only on visible images for the active status view, not all images in the collection
 - Selection functionality must work seamlessly with existing fullscreen popover behavior (disabled in curate mode)
+
+## Interfaces
+```ts
+interface CollectionPageData {
+    name?: string;
+    status?: ImageStatus;
+    images?: ImageMetadata[];
+    error?: string;
+    loading?: boolean;
+    curate?: boolean;
+    selectedImageIds?: string[];
+    popover?: {
+        visible: boolean;
+        selectedImageId?: string;
+        error?: string;
+    };
+}
+```
+
+## Implementation Summary
+Complete image selection functionality for bulk operations in curate mode, featuring individual image selection/deselection, Select All/Clear buttons, visual selection indicators with blue borders, and automatic state management when entering/exiting curate mode.
+
+## Technical Notes
+- **Model Layer**: Extended `CollectionPageData` with `selectedImageIds: string[]` and added comprehensive selection management API including `selectImage()`, `deselectImage()`, `toggleImageSelection()`, `selectAllImages()`, `clearSelection()`, `isImageSelected()`, and `hasSelectedImages()` methods
+- **View Layer**: Enhanced curation menu with Select All/Clear buttons and modified image cards to include `data-selected` attribute with `border-5 border-blue-200` visual styling for selected state
+- **Controller Layer**: Added event delegation for Select All/Clear button clicks and enhanced image click handler to toggle selection in curate mode vs. open fullscreen popover in normal mode
+- **State Management**: Selection state is ephemeral (not URL-persisted), automatically cleared when exiting curate mode via `toggleCurateMode()`, but maintained during status navigation within curate mode
+- **Visual Design**: Selected images display with thick blue border (`border-5 border-blue-200`) that doesn't interfere with thumbnail image quality or layout
+- **Testing Coverage**: All 7 scenarios pass with comprehensive UI model integration including `shouldBeSelected()`, `shouldHaveNoSelectedImages()`, and `shouldHaveAllImagesSelected()` assertions

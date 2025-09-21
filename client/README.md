@@ -32,6 +32,8 @@ import { routes } from './client/src/routes';
 - **Image Grid Display**: Responsive grid layout with 1-3 columns based on viewport
 - **Status-Based Filtering**: Dynamic filtering by COLLECTION, INBOX, ARCHIVE status via URL parameters
 - **Curate Mode**: Toggle-activated curation interface for bulk operations with sticky menu
+- **Image Selection**: Individual image selection/deselection with visual blue border indicators in curate mode
+- **Bulk Selection Operations**: Select All and Clear buttons for efficient multi-image operations
 - **Fullscreen Popover**: Click thumbnails to view original images in modal overlay (disabled in curate mode)
 - **Lazy Loading**: Efficient image thumbnail loading with layout shift prevention
 - **Auto-Redirect**: Automatic redirect to `?status=COLLECTION&curate=false` when parameters not specified
@@ -40,7 +42,7 @@ import { routes } from './client/src/routes';
 ### ⏳ Pending Implementation
 - **Image Upload Interface**: Drag-and-drop upload with progress indicators
 - **Image Management**: Individual image actions (status updates, deletion)
-- **Bulk Operations**: Multi-select image operations (curate mode foundation ready)
+- **Bulk Image Operations**: Actions on selected images (status updates, deletion, organization)
 - **Settings Page**: User preferences and configuration
 
 ## MVC Architecture Implementation
@@ -75,7 +77,7 @@ client/src/
 
 ### Model Capabilities
 - **HomePageModel**: Collection CRUD operations, form validation, loading states, error handling
-- **CollectionPageModel**: Image display management, status filtering, curate mode state, popover state, focus control
+- **CollectionPageModel**: Image display management, status filtering, curate mode state, image selection management, popover state, focus control
 
 ## Responsive Design System
 
@@ -221,7 +223,7 @@ All interactive elements include `data-id` attributes for reliable test automati
 
 <!-- Image grid and cards -->
 <div data-id="image-grid">
-  <div data-id="image-card-${imageId}">
+  <div data-id="image-card-${imageId}" data-selected="${isSelected}" data-image-id="${imageId}">
     <img data-id="image-thumbnail" src="/api/images/${collection}/${imageId}/thumbnail" />
   </div>
 </div>
@@ -229,7 +231,8 @@ All interactive elements include `data-id` attributes for reliable test automati
 <!-- Curate mode elements -->
 <button data-id="curate-button" aria-pressed="${isSelected}">Curate</button>
 <div data-id="curation-menu">
-  <!-- Curation menu content -->
+  <button data-id="select-all-button">Select All</button>
+  <button data-id="clear-button">Clear</button>
 </div>
 
 <!-- Fullscreen popover -->

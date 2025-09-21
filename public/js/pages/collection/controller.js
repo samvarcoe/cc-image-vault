@@ -16,11 +16,28 @@ export default class CollectionPageController {
             }
         });
         document.addEventListener('click', (event) => {
+            const selectAllButton = event.target.closest('[data-id="select-all-button"]');
+            if (selectAllButton) {
+                this.selectAllImages();
+            }
+        });
+        document.addEventListener('click', (event) => {
+            const clearButton = event.target.closest('[data-id="clear-button"]');
+            if (clearButton) {
+                this.clearSelection();
+            }
+        });
+        document.addEventListener('click', (event) => {
             const imageCard = event.target.closest('[data-image-id]');
-            if (imageCard && !this.model.isCurateMode()) {
+            if (imageCard) {
                 const imageId = imageCard.dataset.imageId;
                 if (imageId) {
-                    this.openPopover(imageId, imageCard);
+                    if (this.model.isCurateMode()) {
+                        this.toggleImageSelection(imageId);
+                    }
+                    else {
+                        this.openPopover(imageId, imageCard);
+                    }
                 }
             }
         });
@@ -62,6 +79,18 @@ export default class CollectionPageController {
     toggleCurateMode() {
         this.model.toggleCurateMode();
         this.updateUrlParams();
+        this.view.update();
+    }
+    toggleImageSelection(imageId) {
+        this.model.toggleImageSelection(imageId);
+        this.view.update();
+    }
+    selectAllImages() {
+        this.model.selectAllImages();
+        this.view.update();
+    }
+    clearSelection() {
+        this.model.clearSelection();
         this.view.update();
     }
     updateUrlParams() {
