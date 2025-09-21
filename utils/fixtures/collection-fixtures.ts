@@ -4,7 +4,7 @@ import { existsSync, cpSync } from "fs";
 
 const CACHE_DIR = 'utils/fixtures/collections';
 
-export const createCollectionFixture = async (name: string): Promise<Collection> => {
+export const createCollectionFixture = async (name: string, count = 12): Promise<Collection> => {
     const cachedCollectionDirectory = `${CACHE_DIR}/${name}`;
     const activeCollectionDirectory = `${CONFIG.COLLECTIONS_DIRECTORY}/${name}`;
 
@@ -29,8 +29,6 @@ export const createCollectionFixture = async (name: string): Promise<Collection>
 
         const width = { min: 600, max: 1800 };
         const height = { min: 600, max: 1200 }
-
-        const count = 12;
 
         const x = (i: number, count: number) => Math.round(width.min + (i/count) * (width.max - width.min));
         const y = (i: number, count: number) => Math.round(height.max - (i/count) * (height.max - height.min));

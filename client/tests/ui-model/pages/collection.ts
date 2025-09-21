@@ -75,6 +75,22 @@ class ImageCard extends Element {
     get image(): Element {
         return this.child(Element, 'Image', 'img');
     }
+
+    async shouldBeHidden(): Promise<void> {
+        await expect(this.locator, `${this.name} should be hidden but data-hidden is not "true"`).toHaveAttribute('data-hidden', 'true');
+        LOGGER.log(`✓ ${this.name} is hidden`);
+    }
+
+    async shouldNotBeHidden(): Promise<void> {
+        await expect(this.locator, `${this.name} should not be hidden but data-hidden is "true"`).not.toHaveAttribute('data-hidden', 'true');
+        LOGGER.log(`✓ ${this.name} is not hidden`);
+    }
+
+    async shouldShowPlaceholder(): Promise<void> {
+        await this.shouldBeDisplayed();
+        await this.image.shouldNotBeDisplayed();
+        LOGGER.log(`✓ ${this.name} is showing placeholder (card visible, image hidden)`);
+    }
 }
 
 class Header extends Element {
@@ -126,6 +142,22 @@ class CurationMenu extends Element {
 
     get clearButton(): Element {
         return this.child(Element, 'Clear Button', '[data-id="clear-button"]');
+    }
+
+    get keepButton(): Element {
+        return this.child(Element, 'Keep Button', '[data-id="keep-button"]');
+    }
+
+    get discardButton(): Element {
+        return this.child(Element, 'Discard Button', '[data-id="discard-button"]');
+    }
+
+    get restoreButton(): Element {
+        return this.child(Element, 'Restore Button', '[data-id="restore-button"]');
+    }
+
+    get errorMessage(): Element {
+        return this.child(Element, 'Curation Error Message', '[data-id="curation-error-message"]');
     }
 }
 
