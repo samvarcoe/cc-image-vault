@@ -1,7 +1,7 @@
 import { Model } from '../../mvc.js';
 export default class CollectionPageModel extends Model {
     constructor(initialData = {}) {
-        super(Object.assign({ name: '', status: 'COLLECTION', images: [], error: '', loading: false, curate: false, popover: {
+        super(Object.assign({ name: '', status: 'COLLECTION', images: [], error: '', loading: false, curate: false, selectedImageIds: [], popover: {
                 visible: false,
                 selectedImageId: undefined,
                 error: undefined
@@ -73,5 +73,42 @@ export default class CollectionPageModel extends Model {
     }
     toggleCurateMode() {
         this.data.curate = !this.data.curate;
+        if (!this.data.curate) {
+            this.clearSelection();
+        }
+    }
+    getSelectedImageIds() {
+        return this.data.selectedImageIds || [];
+    }
+    isImageSelected(imageId) {
+        return this.getSelectedImageIds().includes(imageId);
+    }
+    selectImage(imageId) {
+        const selectedIds = this.getSelectedImageIds();
+        if (!selectedIds.includes(imageId)) {
+            this.data.selectedImageIds = [...selectedIds, imageId];
+        }
+    }
+    deselectImage(imageId) {
+        const selectedIds = this.getSelectedImageIds();
+        this.data.selectedImageIds = selectedIds.filter(id => id !== imageId);
+    }
+    toggleImageSelection(imageId) {
+        if (this.isImageSelected(imageId)) {
+            this.deselectImage(imageId);
+        }
+        else {
+            this.selectImage(imageId);
+        }
+    }
+    selectAllImages() {
+        const allImageIds = this.getImages().map(image => image.id);
+        this.data.selectedImageIds = [...allImageIds];
+    }
+    clearSelection() {
+        this.data.selectedImageIds = [];
+    }
+    hasSelectedImages() {
+        return this.getSelectedImageIds().length > 0;
     }
 }

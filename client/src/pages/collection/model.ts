@@ -7,6 +7,7 @@ export interface CollectionPageData {
     error?: string;
     loading?: boolean;
     curate?: boolean;
+    selectedImageIds?: string[];
     popover?: {
         visible: boolean;
         selectedImageId?: string;
@@ -24,6 +25,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             error: '',
             loading: false,
             curate: false,
+            selectedImageIds: [],
             popover: {
                 visible: false,
                 selectedImageId: undefined,
@@ -111,5 +113,49 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
 
     toggleCurateMode(): void {
         this.data.curate = !this.data.curate;
+        if (!this.data.curate) {
+            this.clearSelection();
+        }
+    }
+
+    getSelectedImageIds(): string[] {
+        return this.data.selectedImageIds || [];
+    }
+
+    isImageSelected(imageId: string): boolean {
+        return this.getSelectedImageIds().includes(imageId);
+    }
+
+    selectImage(imageId: string): void {
+        const selectedIds = this.getSelectedImageIds();
+        if (!selectedIds.includes(imageId)) {
+            this.data.selectedImageIds = [...selectedIds, imageId];
+        }
+    }
+
+    deselectImage(imageId: string): void {
+        const selectedIds = this.getSelectedImageIds();
+        this.data.selectedImageIds = selectedIds.filter(id => id !== imageId);
+    }
+
+    toggleImageSelection(imageId: string): void {
+        if (this.isImageSelected(imageId)) {
+            this.deselectImage(imageId);
+        } else {
+            this.selectImage(imageId);
+        }
+    }
+
+    selectAllImages(): void {
+        const allImageIds = this.getImages().map(image => image.id);
+        this.data.selectedImageIds = [...allImageIds];
+    }
+
+    clearSelection(): void {
+        this.data.selectedImageIds = [];
+    }
+
+    hasSelectedImages(): boolean {
+        return this.getSelectedImageIds().length > 0;
     }
 }

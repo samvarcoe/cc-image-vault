@@ -25,8 +25,8 @@ export class CollectionPage extends PageObject {
         return this.component(Popover, 'Fullscreen Popover', '[data-id="fullscreen-popover"]');
     }
 
-    get curationMenu(): Element {
-        return this.element('Curation Menu', '[data-id="curation-menu"]');
+    get curationMenu(): CurationMenu {
+        return this.component(CurationMenu, 'Curation Menu', '[data-id="curation-menu"]');
     }
 
     async visit(collectionName: string, status?: ImageStatus): Promise<void> {
@@ -53,6 +53,21 @@ class ImageGrid extends Element {
         expect(columnCount, `Image grid has ${columnCount} columns instead of ${count}`).toBe(count);
 
         LOGGER.log(`✓ Image grid displays in ${count}-column layout`);
+    }
+
+    async shouldHaveNoSelectedImages(): Promise<void> {
+        const selectedImages = this.locator.locator('[data-id^="image-card-"][data-selected="true"]');
+        await expect(selectedImages, 'Expected no images to be selected in curate mode').toHaveCount(0);
+        LOGGER.log('✓ No images are selected');
+    }
+
+    async shouldHaveAllImagesSelected(): Promise<void> {
+        const allImages = this.locator.locator('[data-id^="image-card-"]');
+        const selectedImages = this.locator.locator('[data-id^="image-card-"][data-selected="true"]');
+
+        const totalCount = await allImages.count();
+        await expect(selectedImages, `Expected all ${totalCount} images to be selected`).toHaveCount(totalCount);
+        LOGGER.log(`✓ All ${totalCount} images are selected`);
     }
 }
 
@@ -102,6 +117,16 @@ class StatusToggle extends Element {
 }
 
 class StatusButton extends Element {
+}
+
+class CurationMenu extends Element {
+    get selectAllButton(): Element {
+        return this.child(Element, 'Select All Button', '[data-id="select-all-button"]');
+    }
+
+    get clearButton(): Element {
+        return this.child(Element, 'Clear Button', '[data-id="clear-button"]');
+    }
 }
 
 class Popover extends Element {

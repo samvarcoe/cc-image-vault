@@ -147,19 +147,29 @@ export class Element {
 
         LOGGER.log(`${this.name} successfully maintained sticky position during scroll`);
     };
+    
+    shouldBePressed = async (timeout = 2000) => {
+        LOGGER.log(`Verifying ${this.name} is in pressed state`);
 
-    shouldBeSelected = async (timeout = 2000) => {
-        LOGGER.log(`Verifying ${this.name} is in selected state`);
-
-        await expect(this.locator, `${this.name} is not in selected state (aria-pressed attribute is not "true") using selector: ${this.selector}`).toHaveAttribute('aria-pressed', 'true', { timeout });
-        LOGGER.log(`${this.name} is confirmed as selected (aria-pressed="true")`);
+        await expect(this.locator, `${this.name} is not in pressed state using selector: ${this.selector}`).toHaveAttribute('aria-pressed', 'true', { timeout });
+        LOGGER.log(`${this.name} is pressed`);
     };
 
-    shouldNotBeSelected = async (timeout = 2000) => {
-        LOGGER.log(`Verifying ${this.name} is not in selected state`);
+    shouldNotBePressed = async (timeout = 2000) => {
+        LOGGER.log(`Verifying ${this.name} is not in pressed state`);
 
-        await expect(this.locator, `${this.name} is in selected state when it should be unselected (aria-pressed attribute is not "false") using selector: ${this.selector}`).toHaveAttribute('aria-pressed', 'false', { timeout });
-        LOGGER.log(`${this.name} is confirmed as not selected (aria-pressed="false")`);
+        await expect(this.locator, `${this.name} is in pressed state when it should be unpressed using selector: ${this.selector}`).toHaveAttribute('aria-pressed', 'false', { timeout });
+        LOGGER.log(`${this.name} is not pressed`);
+    };
+
+    shouldBeSelected = async () => {
+        await expect(this.locator, `${this.name} should be selected but data-selected is not "true"`).toHaveAttribute('data-selected', 'true');
+        LOGGER.log(`✓ ${this.name} is selected`);
+    };
+
+    shouldNotBeSelected = async () => {
+        await expect(this.locator, `${this.name} should not be selected but data-selected is "true"`).not.toHaveAttribute('data-selected', 'true');
+        LOGGER.log(`✓ ${this.name} is not selected`);
     };
 
     shouldHaveWidth = async (expectedWidth: number) => {
