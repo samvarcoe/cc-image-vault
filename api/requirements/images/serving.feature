@@ -1,5 +1,5 @@
 Feature: API - Images - Serving
-    User Story: As a client application, I want to retrieve individual image files via HTTP API, so that I can display original images and thumbnails in the user interface.
+    User Story: As a client, I want to retrieve individual image files via HTTP API, so that I can display original images and thumbnails in the user interface.
 
     Acceptance Criteria
       - AC1: API provides GET endpoint to serve original image files by collection and image ID
