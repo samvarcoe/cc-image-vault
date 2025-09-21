@@ -89,13 +89,32 @@ export { routes } from './src/routes';
 - Status 500: Internal server error with message "An error occurred whilst serving the thumbnail"
 - Thumbnail-specific validation with content differentiation
 
+### Image Status Update
+**`PATCH /api/images/:collectionId/:imageId`**
+- Updates image status via HTTP PATCH with JSON request body
+- Expects JSON body: `{"status": "INBOX|COLLECTION|ARCHIVE"}`
+- Status 200: Success with complete updated ImageMetadata
+- Status 400: Bad request for validation errors
+  - "Request body is required" (missing body)
+  - "Malformed request body" (invalid JSON)
+  - "Status field is required" (missing status field)
+  - "Invalid status value" (invalid status value)
+  - "Invalid image ID format" (malformed UUID v4)
+- Status 404: Resource not found
+  - "Collection not found" (missing collection)
+  - "Image not found" (missing image)
+- Status 500: Internal server error with message "An error occurred whilst updating the image"
+- Uses domain `Collection.updateImage()` method
+- Returns complete ImageMetadata with updated timestamp
+
 ## Testing Infrastructure
 
 ### Test Architecture
-- **API Model Extensions**: Enhanced `CollectionsAPI` class with image serving capabilities
+- **API Model Extensions**: Enhanced `CollectionsAPI` class with image serving and status update capabilities
 - **Binary Response Handling**: `AssertableResponse` with ArrayBuffer support
 - **Real Image Fixtures**: Actual image files for realistic testing scenarios
 - **Content Validation**: Exact buffer matching and MIME type verification
+- **Database Error Simulation**: `corruptCollectionDB()` utility for internal error testing
 
 ### Key Testing Utilities
 - `shouldHaveImageContent(expectedBuffer)`: Binary content validation with exact buffer matching
@@ -120,8 +139,16 @@ const response = await api['/api/collections'].get({
 ```
 This triggers filesystem error conditions in the domain layer for testing error handling paths.
 
+Database operations can be corrupted for error testing using the utility:
+```typescript
+import { corruptCollectionDB } from '@/utils';
+corruptCollectionDB(collection);
+```
+This corrupts the SQLite database file to simulate internal database errors for comprehensive error testing.
+
 ## Security Considerations
 - **Parameter Validation**: URL parameters validated for format and safety
+- **JSON Parsing**: Malformed JSON requests are handled by middleware with 400 responses
 - **Error Information**: Generic error messages prevent information disclosure
 - **File Access**: Controlled access through domain layer validation
 - **Cache Headers**: Immutable content reduces unnecessary requests

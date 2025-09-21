@@ -8,6 +8,13 @@ export type CreateCollectionRequest = {
 };
 
 /**
+ * Request type for updating image status
+ */
+export type ImageUpdateRequest = {
+  status: string;
+};
+
+/**
  * Collections API client for testing
  * Extends the base APIModel with collections-specific endpoints and image serving
  */
@@ -19,6 +26,7 @@ export class CollectionsAPI extends APIModel {
 
   '/api/images/:collectionId/:imageId' = {
     get: this.request<undefined, ArrayBuffer>('/api/images/:collectionId/:imageId', 'GET'),
+    patch: this.request<ImageUpdateRequest, ImageMetadata>('/api/images/:collectionId/:imageId', 'PATCH'),
   };
 
   '/api/images/:collectionId/:imageId/thumbnail' = {

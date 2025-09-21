@@ -1,5 +1,5 @@
 import express from 'express';
-import { Collection, CollectionCreateError, CollectionNotFoundError, ImageNotFoundError, ImageRetrievalError } from '@/domain';
+import { Collection, CollectionCreateError, CollectionNotFoundError, ImageNotFoundError, ImageRetrievalError, ImageUpdateError } from '@/domain';
 
 export const routes = express.Router();
 
@@ -117,5 +117,54 @@ routes.get('/images/:collectionId/:imageId/thumbnail', async (req, res) => {
         }
 
         return res.status(500).json({ message: 'An error occurred whilst serving the thumbnail' });
+    }
+});
+
+routes.patch('/images/:collectionId/:imageId', async (req, res) => {
+    try {
+        const { collectionId, imageId } = req.params;
+
+        // Validate request body exists
+        if (!req.body) {
+            return res.status(400).json({ message: 'Request body is required' });
+        }
+
+        const body = req.body
+        // Validate status field exists
+        if (!body.status) {
+            return res.status(400).json({ message: 'Status field is required' });
+        }
+
+        const status = body.status;
+
+        // Validate status value
+        if (!['INBOX', 'COLLECTION', 'ARCHIVE'].includes(status)) {
+            return res.status(400).json({ message: 'Invalid status value' });
+        }
+
+        const collection = Collection.load(collectionId);
+        const updatedMetadata = await collection.updateImage(imageId, { status });
+
+        return res.status(200).json(updatedMetadata);
+
+    } catch (error: unknown) {
+        if (error instanceof CollectionNotFoundError) {
+            return res.status(404).json({ message: 'Collection not found' });
+        }
+
+        if (error instanceof ImageNotFoundError) {
+            return res.status(404).json({ message: 'Image not found' });
+        }
+
+        if (error instanceof ImageUpdateError && error.cause instanceof Error) {
+            if (error.cause.message === 'Invalid imageID') {
+                return res.status(400).json({ message: 'Invalid image ID format' });
+            }
+            if (error.cause.message === 'Invalid status') {
+                return res.status(400).json({ message: 'Invalid status value' });
+            }
+        }
+
+        return res.status(500).json({ message: 'An error occurred whilst updating the image' });
     }
 });
