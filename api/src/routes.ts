@@ -131,7 +131,7 @@ routes.patch('/images/:collectionId/:imageId', async (req, res) => {
 
         const body = req.body
         // Validate status field exists
-        if (!body.status) {
+        if (!Object.prototype.hasOwnProperty.call(body, 'status') || !body.status) {
             return res.status(400).json({ message: 'Status field is required' });
         }
 

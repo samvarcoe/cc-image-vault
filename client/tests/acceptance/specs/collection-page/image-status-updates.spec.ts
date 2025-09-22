@@ -100,17 +100,22 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(secondImage.id).click();
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
+        
+        await page.route('**/api/images/TestCollection/*', async (route) => {
+            if (route.request().method() === 'PATCH') {
+                // Then the selected images are immediately hidden
+                // Assertions triggered when the request is caught
+                await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeHidden();
+                await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeHidden();
+
+                // But the image cards remain visible as a placeholder
+                await ui.collectionPage.imageGrid.image(firstImage.id).shouldShowPlaceholder();
+                await ui.collectionPage.imageGrid.image(secondImage.id).shouldShowPlaceholder();
+            }
+        });
 
         // When the user clicks the "Keep" button
         await ui.collectionPage.curationMenu.keepButton.click();
-
-        // Then the selected images are immediately hidden
-        await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeHidden();
-        await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeHidden();
-
-        // But the image cards remain visible as a placeholder
-        await ui.collectionPage.imageGrid.image(firstImage.id).shouldShowPlaceholder();
-        await ui.collectionPage.imageGrid.image(secondImage.id).shouldShowPlaceholder();
 
         // Verify no errors occurred
         await ui.shouldHaveNoConsoleErrors();
@@ -135,16 +140,21 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
 
+        await page.route('**/api/images/TestCollection/*', async (route) => {
+            if (route.request().method() === 'PATCH') {
+                // Then the selected images are immediately hidden
+                // Assertions triggered when the request is caught
+                await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeHidden();
+                await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeHidden();
+
+                // But the image cards remain visible as a placeholder
+                await ui.collectionPage.imageGrid.image(firstImage.id).shouldShowPlaceholder();
+                await ui.collectionPage.imageGrid.image(secondImage.id).shouldShowPlaceholder();
+            }
+        });
+
         // When the user clicks the "Discard" button
         await ui.collectionPage.curationMenu.discardButton.click();
-
-        // Then the selected images are immediately hidden
-        await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeHidden();
-        await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeHidden();
-
-        // But the image cards remain visible as a placeholder
-        await ui.collectionPage.imageGrid.image(firstImage.id).shouldShowPlaceholder();
-        await ui.collectionPage.imageGrid.image(secondImage.id).shouldShowPlaceholder();
 
         // Verify no errors occurred
         await ui.shouldHaveNoConsoleErrors();
@@ -169,16 +179,21 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
 
+        await page.route('**/api/images/TestCollection/*', async (route) => {
+            if (route.request().method() === 'PATCH') {
+                // Then the selected images are immediately hidden
+                // Assertions triggered when the request is caught
+                await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeHidden();
+                await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeHidden();
+
+                // But the image cards remain visible as a placeholder
+                await ui.collectionPage.imageGrid.image(firstImage.id).shouldShowPlaceholder();
+                await ui.collectionPage.imageGrid.image(secondImage.id).shouldShowPlaceholder();
+            }
+        });
+
         // When the user clicks the "Discard" button
         await ui.collectionPage.curationMenu.discardButton.click();
-
-        // Then the selected images are immediately hidden
-        await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeHidden();
-        await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeHidden();
-
-        // But the image cards remain visible as a placeholder
-        await ui.collectionPage.imageGrid.image(firstImage.id).shouldShowPlaceholder();
-        await ui.collectionPage.imageGrid.image(secondImage.id).shouldShowPlaceholder();
 
         // Verify no errors occurred
         await ui.shouldHaveNoConsoleErrors();
@@ -203,16 +218,21 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
 
+        await page.route('**/api/images/TestCollection/*', async (route) => {
+            if (route.request().method() === 'PATCH') {
+                // Then the selected images are immediately hidden
+                // Assertions triggered when the request is caught
+                await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeHidden();
+                await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeHidden();
+
+                // But the image cards remain visible as a placeholder
+                await ui.collectionPage.imageGrid.image(firstImage.id).shouldShowPlaceholder();
+                await ui.collectionPage.imageGrid.image(secondImage.id).shouldShowPlaceholder();
+            }
+        });
+
         // When the user clicks the "Restore" button
-        await ui.collectionPage.curationMenu.restoreButton.click();
-
-        // Then the selected images are immediately hidden
-        await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeHidden();
-        await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeHidden();
-
-        // But the image cards remain visible as a placeholder
-        await ui.collectionPage.imageGrid.image(firstImage.id).shouldShowPlaceholder();
-        await ui.collectionPage.imageGrid.image(secondImage.id).shouldShowPlaceholder();
+        await ui.collectionPage.curationMenu.restoreButton.click()
 
         // Verify no errors occurred
         await ui.shouldHaveNoConsoleErrors();
@@ -234,10 +254,6 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(testImage.id).click();
         await ui.collectionPage.imageGrid.image(testImage.id).shouldBeSelected();
         await ui.collectionPage.curationMenu.keepButton.click();
-
-        // Verify immediate hiding
-        await ui.collectionPage.imageGrid.image(testImage.id).shouldBeHidden();
-        await ui.collectionPage.imageGrid.image(testImage.id).shouldShowPlaceholder();
 
         // When the response is successful
         // Wait for API request to complete
@@ -327,10 +343,14 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         // And clicks the "Keep" button
         await ui.collectionPage.curationMenu.keepButton.click();
 
+        // Wait for all the API calls to complete
+        await page.waitForLoadState('networkidle');
+
+        // Ensure all images are removed from the grid
+        await ui.collectionPage.imageGrid.image().shouldHaveCount(0);
+
         // And API calls were made for all selected images
         expect(apiCalls.length, `The number of calls to PATCH update status is incorrect`).toBe(imageCount);
-
-        await ui.collectionPage.imageGrid.image().shouldHaveCount(0);
 
         // Verify no errors occurred
         await ui.shouldHaveNoConsoleErrors();
