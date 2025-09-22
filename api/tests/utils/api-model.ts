@@ -62,16 +62,24 @@ export class APIModel {
       }
 
       const headers = options.headers || {};
-      
-      // Add Content-Type header for requests with body
+
+      let body: string | FormData | undefined;
+
+      // Handle FormData vs JSON bodies
       if (options.body) {
-        headers['Content-Type'] = 'application/json';
+        if (options.body instanceof FormData) {
+          body = options.body;
+          // Don't set Content-Type for FormData - browser will set it with boundary
+        } else {
+          headers['Content-Type'] = 'application/json';
+          body = JSON.stringify(options.body);
+        }
       }
-      
+
       const init: RequestInit = {
         method,
         headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
+        body,
       };
 
 

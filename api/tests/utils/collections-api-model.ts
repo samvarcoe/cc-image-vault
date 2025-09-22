@@ -24,6 +24,10 @@ export class CollectionsAPI extends APIModel {
     post: this.request<CreateCollectionRequest, undefined>('/api/collections', 'POST'),
   };
 
+  '/api/images/:collectionId' = {
+    post: this.request<FormData, ImageMetadata>('/api/images/:collectionId', 'POST'),
+  };
+
   '/api/images/:collectionId/:imageId' = {
     get: this.request<undefined, ArrayBuffer>('/api/images/:collectionId/:imageId', 'GET'),
     patch: this.request<ImageUpdateRequest, ImageMetadata>('/api/images/:collectionId/:imageId', 'PATCH'),

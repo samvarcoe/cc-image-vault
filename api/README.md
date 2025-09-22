@@ -71,6 +71,22 @@ export { routes } from './src/routes';
 - Status 500: Internal server error with message "An error occurred whilst creating the Collection"
 - Uses domain `Collection.create()` method
 
+### Image Upload
+**`POST /api/images/:collectionId`**
+- Uploads image files to collections via multipart form data
+- Expects multipart/form-data with file in "file" field
+- Content-Type: multipart/form-data (set automatically by client)
+- Status 201: Success with complete ImageMetadata response including generated UUID
+- Status 400: Bad request for validation errors
+  - "Collection ID is required" (missing collection ID parameter)
+  - "File is required" (missing file in form data)
+  - Domain validation messages for unsupported file types, corrupted files, unsafe filenames, filename length, or duplicate images
+- Status 404: Collection not found ("Collection not found")
+- Status 500: Internal server error with message "An error occurred whilst uploading the image"
+- Uses domain `Collection.addImage()` method for processing and validation
+- Supports JPG/JPEG (normalized to JPG), PNG, and WebP image formats
+- Returns complete ImageMetadata with ID, collection, name, extension, MIME type, size, dimensions, hash, status (INBOX), and timestamps
+
 ### Image Serving
 **`GET /api/images/:collectionId/:imageId`**
 - Serves original image files with proper MIME types
@@ -110,8 +126,9 @@ export { routes } from './src/routes';
 ## Testing Infrastructure
 
 ### Test Architecture
-- **API Model Extensions**: Enhanced `CollectionsAPI` class with image serving and status update capabilities
+- **API Model Extensions**: Enhanced `CollectionsAPI` class with image serving, upload, and status update capabilities
 - **Binary Response Handling**: `AssertableResponse` with ArrayBuffer support
+- **FormData Upload Testing**: Complete multipart form data upload testing with proper file handling
 - **Real Image Fixtures**: Actual image files for realistic testing scenarios
 - **Content Validation**: Exact buffer matching and MIME type verification
 - **Database Error Simulation**: `corruptCollectionDB()` utility for internal error testing
