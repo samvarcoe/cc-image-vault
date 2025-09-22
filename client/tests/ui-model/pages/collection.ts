@@ -29,6 +29,10 @@ export class CollectionPage extends PageObject {
         return this.component(CurationMenu, 'Curation Menu', '[data-id="curation-menu"]');
     }
 
+    get confirmationDialog(): ConfirmationDialog {
+        return this.component(ConfirmationDialog, 'Confirmation Dialog', '[data-id="confirmation-dialog"]');
+    }
+
     async visit(collectionName: string, status?: ImageStatus): Promise<void> {
         const searchParams = status ? `?status=${status}` : '';
         await this.page.goto(`${this.url}/${collectionName}${searchParams}`);
@@ -156,6 +160,10 @@ class CurationMenu extends Element {
         return this.child(Element, 'Restore Button', '[data-id="restore-button"]');
     }
 
+    get deleteButton(): Element {
+        return this.child(Element, 'Delete Button', '[data-id="delete-button"]');
+    }
+
     get errorMessage(): Element {
         return this.child(Element, 'Curation Error Message', '[data-id="curation-error-message"]');
     }
@@ -175,5 +183,19 @@ class Popover extends Element {
             window.getComputedStyle(el).zIndex
         );
         return zIndex === 'auto' ? 0 : parseInt(zIndex);
+    }
+};
+
+class ConfirmationDialog extends Element {
+    get message(): Element {
+        return this.child(Element, 'Confirmation Message', '[data-id="confirmation-message"]');
+    }
+
+    get cancelButton(): Element {
+        return this.child(Element, 'Cancel Button', '[data-id="cancel-button"]');
+    }
+
+    get deleteButton(): Element {
+        return this.child(Element, 'Confirm Delete Button', '[data-id="confirm-delete-button"]');
     }
 };

@@ -5,6 +5,9 @@ export default class CollectionPageModel extends Model {
                 visible: false,
                 selectedImageId: undefined,
                 error: undefined
+            }, confirmationDialog: {
+                visible: false,
+                message: undefined
             } }, initialData));
     }
     getCollectionName() {
@@ -147,5 +150,25 @@ export default class CollectionPageModel extends Model {
     }
     clearProcessingImageIds() {
         this.data.processingImageIds = [];
+    }
+    isConfirmationDialogVisible() {
+        var _a;
+        return ((_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.visible) || false;
+    }
+    getConfirmationDialogMessage() {
+        var _a;
+        return ((_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.message) || '';
+    }
+    showConfirmationDialog(message) {
+        this.data.confirmationDialog = {
+            visible: true,
+            message: message
+        };
+    }
+    hideConfirmationDialog() {
+        this.data.confirmationDialog = {
+            visible: false,
+            message: undefined
+        };
     }
 }

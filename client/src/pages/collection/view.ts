@@ -14,6 +14,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
     renderContent(): string {
         return /*html*/`
             ${this.popover()}
+            ${this.confirmationDialog()}
             <div class="min-h-full">
                 ${this.header()}
                 ${this.curationMenu()}
@@ -174,6 +175,13 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                     >
                         Restore
                     </button>
+                    <button
+                        data-id="delete-button"
+                        class="${baseClasses} ${enabledClasses}"
+                        ${!hasSelectedImages ? 'disabled' : ''}
+                    >
+                        Delete
+                    </button>
                 `;
             default:
                 return '';
@@ -254,12 +262,14 @@ export default class CollectionPageView extends View<CollectionPageModel> {
         const selectionClasses = isSelected ? 'border-5 border-blue-200' : '';
 
         // When hidden, we maintain the card dimensions by keeping the img element but making it invisible
+        // and prevent loading the thumbnail to avoid 404 errors during deletion
         const imageClasses = isHidden ? 'invisible' : '';
+        const imageSrc = isHidden ? '' : thumbnailUrl;
 
         return /*html*/`
             <div class="bg-white rounded-lg overflow-hidden shadow-sm mb-4 break-inside-avoid cursor-pointer hover:shadow-md transition-shadow ${selectionClasses}" data-id="image-card-${image.id}" data-image-id="${image.id}" ${selectedAttribute} ${hiddenAttribute}>
                 <img
-                    src="${thumbnailUrl}"
+                    src="${imageSrc}"
                     alt="Image ${image.id}"
                     loading="lazy"
                     width="${imageWidth}"
@@ -306,6 +316,38 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                         </div>
                     `
                 }
+            </div>
+        `;
+    }
+
+    private confirmationDialog(): string {
+        if (!this.model.isConfirmationDialogVisible()) {
+            return '';
+        }
+
+        const message = this.model.getConfirmationDialogMessage();
+
+        return /*html*/`
+            <div data-id="confirmation-dialog" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg">
+                <div class="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md mx-4 shadow-xl">
+                    <div class="text-slate-900 dark:text-white text-lg font-medium mb-4" data-id="confirmation-message">
+                        ${message}
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button
+                            data-id="cancel-button"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            data-id="confirm-delete-button"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
             </div>
         `;
     }

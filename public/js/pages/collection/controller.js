@@ -46,6 +46,22 @@ export default class CollectionPageController {
             }
         });
         document.addEventListener('click', (event) => {
+            const deleteButton = event.target.closest('[data-id="delete-button"]');
+            if (deleteButton && !deleteButton.hasAttribute('disabled')) {
+                this.handleDeleteButtonClick();
+            }
+        });
+        document.addEventListener('click', (event) => {
+            const cancelButton = event.target.closest('[data-id="cancel-button"]');
+            const confirmDeleteButton = event.target.closest('[data-id="confirm-delete-button"]');
+            if (cancelButton) {
+                this.handleCancelDelete();
+            }
+            else if (confirmDeleteButton) {
+                this.handleConfirmDelete();
+            }
+        });
+        document.addEventListener('click', (event) => {
             const imageCard = event.target.closest('[data-image-id]');
             if (imageCard) {
                 const imageId = imageCard.dataset.imageId;
@@ -166,6 +182,62 @@ export default class CollectionPageController {
         });
         if (!response.ok) {
             throw new Error(`Failed to update image ${imageId}`);
+        }
+    }
+    handleDeleteButtonClick() {
+        const selectedImageIds = this.model.getSelectedImageIds();
+        if (selectedImageIds.length === 0) {
+            return;
+        }
+        this.model.showConfirmationDialog('Are you sure you want to permanently delete these images? This action cannot be undone.');
+        this.view.update();
+    }
+    handleCancelDelete() {
+        this.model.hideConfirmationDialog();
+        this.view.update();
+    }
+    async handleConfirmDelete() {
+        this.model.hideConfirmationDialog();
+        const selectedImageIds = this.model.getSelectedImageIds();
+        if (selectedImageIds.length === 0) {
+            return;
+        }
+        this.model.clearStatusUpdateError();
+        this.model.hideSelectedImages();
+        this.view.update();
+        const collectionName = this.model.getCollectionName();
+        const batchSize = 10;
+        const allResults = [];
+        for (let i = 0; i < selectedImageIds.length; i += batchSize) {
+            const batch = selectedImageIds.slice(i, i + batchSize);
+            const batchPromises = batch.map(imageId => this.sendDeleteRequest(collectionName, imageId)
+                .then(() => ({ imageId, success: true }))
+                .catch(() => ({ imageId, success: false })));
+            const batchResults = await Promise.all(batchPromises);
+            allResults.push(...batchResults);
+        }
+        const successfulIds = allResults.filter(r => r.success).map(r => r.imageId);
+        const failedIds = allResults.filter(r => !r.success).map(r => r.imageId);
+        if (successfulIds.length > 0) {
+            this.model.removeImages(successfulIds);
+        }
+        if (failedIds.length > 0) {
+            this.model.unhideImages(failedIds);
+            if (failedIds.length === allResults.length) {
+                this.model.setStatusUpdateError('Unable to delete images');
+            }
+            else {
+                this.model.setStatusUpdateError('Unable to delete all images');
+            }
+        }
+        this.view.update();
+    }
+    async sendDeleteRequest(collectionName, imageId) {
+        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to delete image ${imageId}`);
         }
     }
 }

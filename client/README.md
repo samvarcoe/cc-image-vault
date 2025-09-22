@@ -34,6 +34,8 @@ import { routes } from './client/src/routes';
 - **Curate Mode**: Toggle-activated curation interface for bulk operations with sticky menu
 - **Image Selection**: Individual image selection/deselection with visual blue border indicators in curate mode
 - **Bulk Selection Operations**: Select All and Clear buttons for efficient multi-image operations
+- **Image Status Management**: Keep, Discard, and Restore operations with optimistic UI updates
+- **Image Deletion**: Permanent deletion of ARCHIVE images with confirmation dialog and batched processing
 - **Fullscreen Popover**: Click thumbnails to view original images in modal overlay (disabled in curate mode)
 - **Lazy Loading**: Efficient image thumbnail loading with layout shift prevention
 - **Auto-Redirect**: Automatic redirect to `?status=COLLECTION&curate=false` when parameters not specified
@@ -41,8 +43,6 @@ import { routes } from './client/src/routes';
 
 ### ⏳ Pending Implementation
 - **Image Upload Interface**: Drag-and-drop upload with progress indicators
-- **Image Management**: Individual image actions (status updates, deletion)
-- **Bulk Image Operations**: Actions on selected images (status updates, deletion, organization)
 - **Settings Page**: User preferences and configuration
 
 ## MVC Architecture Implementation
@@ -233,6 +233,18 @@ All interactive elements include `data-id` attributes for reliable test automati
 <div data-id="curation-menu">
   <button data-id="select-all-button">Select All</button>
   <button data-id="clear-button">Clear</button>
+  <button data-id="keep-button">Keep</button>
+  <button data-id="discard-button">Discard</button>
+  <button data-id="restore-button">Restore</button>
+  <button data-id="delete-button">Delete</button>
+  <div data-id="curation-error-message">${errorMessage}</div>
+</div>
+
+<!-- Confirmation dialog -->
+<div data-id="confirmation-dialog">
+  <div data-id="confirmation-message">${message}</div>
+  <button data-id="cancel-button">Cancel</button>
+  <button data-id="confirm-delete-button">Delete</button>
 </div>
 
 <!-- Fullscreen popover -->
