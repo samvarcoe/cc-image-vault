@@ -27,6 +27,7 @@ export class CollectionsAPI extends APIModel {
   '/api/images/:collectionId/:imageId' = {
     get: this.request<undefined, ArrayBuffer>('/api/images/:collectionId/:imageId', 'GET'),
     patch: this.request<ImageUpdateRequest, ImageMetadata>('/api/images/:collectionId/:imageId', 'PATCH'),
+    delete: this.request<undefined, undefined>('/api/images/:collectionId/:imageId', 'DELETE'),
   };
 
   '/api/images/:collectionId/:imageId/thumbnail' = {

@@ -1,5 +1,5 @@
 import express from 'express';
-import { Collection, CollectionCreateError, CollectionNotFoundError, ImageNotFoundError, ImageRetrievalError, ImageUpdateError } from '@/domain';
+import { Collection, CollectionCreateError, CollectionNotFoundError, ImageNotFoundError, ImageRetrievalError, ImageUpdateError, ImageDeletionError } from '@/domain';
 
 export const routes = express.Router();
 
@@ -166,5 +166,33 @@ routes.patch('/images/:collectionId/:imageId', async (req, res) => {
         }
 
         return res.status(500).json({ message: 'An error occurred whilst updating the image' });
+    }
+});
+
+routes.delete('/images/:collectionId/:imageId', async (req, res) => {
+    try {
+        const { collectionId, imageId } = req.params;
+
+        const collection = Collection.load(collectionId);
+        await collection.deleteImage(imageId);
+
+        return res.status(204).send();
+
+    } catch (error: unknown) {
+        if (error instanceof CollectionNotFoundError) {
+            return res.status(404).json({ message: 'Collection not found' });
+        }
+
+        if (error instanceof ImageNotFoundError) {
+            return res.status(404).json({ message: 'Image not found' });
+        }
+
+        if (error instanceof ImageDeletionError && error.cause instanceof Error) {
+            if (error.cause.message === 'Invalid imageID') {
+                return res.status(400).json({ message: 'Invalid image ID format' });
+            }
+        }
+
+        return res.status(500).json({ message: 'An error occurred whilst deleting the image' });
     }
 });
