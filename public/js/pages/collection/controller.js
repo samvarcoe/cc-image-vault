@@ -28,6 +28,24 @@ export default class CollectionPageController {
             }
         });
         document.addEventListener('click', (event) => {
+            const keepButton = event.target.closest('[data-id="keep-button"]');
+            if (keepButton && !keepButton.hasAttribute('disabled')) {
+                this.handleKeepImages();
+            }
+        });
+        document.addEventListener('click', (event) => {
+            const discardButton = event.target.closest('[data-id="discard-button"]');
+            if (discardButton && !discardButton.hasAttribute('disabled')) {
+                this.handleDiscardImages();
+            }
+        });
+        document.addEventListener('click', (event) => {
+            const restoreButton = event.target.closest('[data-id="restore-button"]');
+            if (restoreButton && !restoreButton.hasAttribute('disabled')) {
+                this.handleRestoreImages();
+            }
+        });
+        document.addEventListener('click', (event) => {
             const imageCard = event.target.closest('[data-image-id]');
             if (imageCard) {
                 const imageId = imageCard.dataset.imageId;
@@ -98,5 +116,56 @@ export default class CollectionPageController {
         const curateValue = this.model.isCurateMode() ? 'true' : 'false';
         url.searchParams.set('curate', curateValue);
         window.history.pushState({}, '', url.toString());
+    }
+    async handleKeepImages() {
+        await this.updateImageStatus('COLLECTION');
+    }
+    async handleDiscardImages() {
+        await this.updateImageStatus('ARCHIVE');
+    }
+    async handleRestoreImages() {
+        await this.updateImageStatus('COLLECTION');
+    }
+    async updateImageStatus(newStatus) {
+        const selectedImageIds = this.model.getSelectedImageIds();
+        if (selectedImageIds.length === 0) {
+            return;
+        }
+        this.model.clearStatusUpdateError();
+        this.model.hideSelectedImages();
+        this.view.update();
+        const collectionName = this.model.getCollectionName();
+        const batchSize = 10;
+        const allResults = [];
+        for (let i = 0; i < selectedImageIds.length; i += batchSize) {
+            const batch = selectedImageIds.slice(i, i + batchSize);
+            const batchPromises = batch.map(imageId => this.sendStatusUpdateRequest(collectionName, imageId, newStatus)
+                .then(() => ({ imageId, success: true }))
+                .catch(() => ({ imageId, success: false })));
+            const batchResults = await Promise.all(batchPromises);
+            allResults.push(...batchResults);
+        }
+        const successfulIds = allResults.filter(r => r.success).map(r => r.imageId);
+        const failedIds = allResults.filter(r => !r.success).map(r => r.imageId);
+        if (successfulIds.length > 0) {
+            this.model.removeImages(successfulIds);
+        }
+        if (failedIds.length > 0) {
+            this.model.unhideImages(failedIds);
+            this.model.setStatusUpdateError('Unable to complete update for all Images');
+        }
+        this.view.update();
+    }
+    async sendStatusUpdateRequest(collectionName, imageId, status) {
+        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status })
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to update image ${imageId}`);
+        }
     }
 }

@@ -1,7 +1,7 @@
 import { Model } from '../../mvc.js';
 export default class CollectionPageModel extends Model {
     constructor(initialData = {}) {
-        super(Object.assign({ name: '', status: 'COLLECTION', images: [], error: '', loading: false, curate: false, selectedImageIds: [], popover: {
+        super(Object.assign({ name: '', status: 'COLLECTION', images: [], error: '', loading: false, curate: false, selectedImageIds: [], hiddenImageIds: [], statusUpdateError: '', processingImageIds: [], popover: {
                 visible: false,
                 selectedImageId: undefined,
                 error: undefined
@@ -110,5 +110,42 @@ export default class CollectionPageModel extends Model {
     }
     hasSelectedImages() {
         return this.getSelectedImageIds().length > 0;
+    }
+    getStatusUpdateError() {
+        return this.data.statusUpdateError || '';
+    }
+    setStatusUpdateError(error) {
+        this.data.statusUpdateError = error;
+    }
+    clearStatusUpdateError() {
+        this.data.statusUpdateError = '';
+    }
+    getHiddenImageIds() {
+        return this.data.hiddenImageIds || [];
+    }
+    isImageHidden(imageId) {
+        return this.getHiddenImageIds().includes(imageId);
+    }
+    hideSelectedImages() {
+        const selectedIds = this.getSelectedImageIds();
+        this.data.hiddenImageIds = [...new Set([...this.getHiddenImageIds(), ...selectedIds])];
+    }
+    unhideImages(imageIds) {
+        const hiddenIds = this.getHiddenImageIds();
+        this.data.hiddenImageIds = hiddenIds.filter(id => !imageIds.includes(id));
+    }
+    removeImages(imageIds) {
+        this.data.images = (this.data.images || []).filter(img => !imageIds.includes(img.id));
+        this.data.hiddenImageIds = (this.data.hiddenImageIds || []).filter(id => !imageIds.includes(id));
+        this.data.selectedImageIds = (this.data.selectedImageIds || []).filter(id => !imageIds.includes(id));
+    }
+    getProcessingImageIds() {
+        return this.data.processingImageIds || [];
+    }
+    setProcessingImageIds(imageIds) {
+        this.data.processingImageIds = imageIds;
+    }
+    clearProcessingImageIds() {
+        this.data.processingImageIds = [];
     }
 }

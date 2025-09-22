@@ -94,10 +94,14 @@ export default class CollectionPageView extends View<CollectionPageModel> {
             return '';
         }
 
+        const currentStatus = this.model.getCurrentStatus();
+        const hasSelectedImages = this.model.hasSelectedImages();
+        const statusUpdateError = this.model.getStatusUpdateError();
+
         return /*html*/`
             <div data-id="curation-menu" class="sticky top-14 z-30 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-800 dark:border-slate-700">
                 <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div class="flex h-14 items-center">
+                    <div class="flex h-14 items-center justify-between">
                         <div class="flex gap-2">
                             <button
                                 data-id="select-all-button"
@@ -112,10 +116,68 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                                 Clear
                             </button>
                         </div>
+                        ${statusUpdateError ? /*html*/`
+                            <div data-id="curation-error-message" class="text-red-600 text-sm">
+                                ${statusUpdateError}
+                            </div>
+                        ` : ''}
+                        <div class="flex gap-2">
+                            ${this.statusUpdateButtons(currentStatus, hasSelectedImages)}
+                        </div>
                     </div>
                 </div>
             </div>
         `;
+    }
+
+    private statusUpdateButtons(status: ImageStatus, hasSelectedImages: boolean): string {
+        const disabledClass = hasSelectedImages ? '' : 'opacity-50 cursor-not-allowed';
+        const baseClasses = `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${disabledClass}`;
+        const enabledClasses = hasSelectedImages
+            ? 'bg-blue-600 text-white hover:bg-blue-700'
+            : 'bg-slate-100 text-slate-700';
+
+        switch (status) {
+            case 'INBOX':
+                return /*html*/`
+                    <button
+                        data-id="keep-button"
+                        class="${baseClasses} ${enabledClasses}"
+                        ${!hasSelectedImages ? 'disabled' : ''}
+                    >
+                        Keep
+                    </button>
+                    <button
+                        data-id="discard-button"
+                        class="${baseClasses} ${enabledClasses}"
+                        ${!hasSelectedImages ? 'disabled' : ''}
+                    >
+                        Discard
+                    </button>
+                `;
+            case 'COLLECTION':
+                return /*html*/`
+                    <button
+                        data-id="discard-button"
+                        class="${baseClasses} ${enabledClasses}"
+                        ${!hasSelectedImages ? 'disabled' : ''}
+                    >
+                        Discard
+                    </button>
+                `;
+            case 'ARCHIVE':
+                return /*html*/`
+                    <button
+                        data-id="restore-button"
+                        class="${baseClasses} ${enabledClasses}"
+                        ${!hasSelectedImages ? 'disabled' : ''}
+                    >
+                        Restore
+                    </button>
+                `;
+            default:
+                return '';
+        }
     }
 
     private main(): string {
@@ -186,18 +248,23 @@ export default class CollectionPageView extends View<CollectionPageModel> {
         const imageHeight = Math.round(imageWidth / image.aspect);
 
         const isSelected = this.model.isImageSelected(image.id);
+        const isHidden = this.model.isImageHidden(image.id);
         const selectedAttribute = isSelected ? 'data-selected="true"' : '';
+        const hiddenAttribute = isHidden ? 'data-hidden="true"' : '';
         const selectionClasses = isSelected ? 'border-5 border-blue-200' : '';
 
+        // When hidden, we maintain the card dimensions by keeping the img element but making it invisible
+        const imageClasses = isHidden ? 'invisible' : '';
+
         return /*html*/`
-            <div class="bg-white rounded-lg overflow-hidden shadow-sm mb-4 break-inside-avoid cursor-pointer hover:shadow-md transition-shadow ${selectionClasses}" data-id="image-card-${image.id}" data-image-id="${image.id}" ${selectedAttribute}>
+            <div class="bg-white rounded-lg overflow-hidden shadow-sm mb-4 break-inside-avoid cursor-pointer hover:shadow-md transition-shadow ${selectionClasses}" data-id="image-card-${image.id}" data-image-id="${image.id}" ${selectedAttribute} ${hiddenAttribute}>
                 <img
                     src="${thumbnailUrl}"
                     alt="Image ${image.id}"
                     loading="lazy"
                     width="${imageWidth}"
                     height="${imageHeight}"
-                    class="w-full h-auto block"
+                    class="w-full h-auto block ${imageClasses}"
                 />
             </div>
         `;

@@ -8,6 +8,9 @@ export interface CollectionPageData {
     loading?: boolean;
     curate?: boolean;
     selectedImageIds?: string[];
+    hiddenImageIds?: string[];
+    statusUpdateError?: string;
+    processingImageIds?: string[];
     popover?: {
         visible: boolean;
         selectedImageId?: string;
@@ -26,6 +29,9 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             loading: false,
             curate: false,
             selectedImageIds: [],
+            hiddenImageIds: [],
+            statusUpdateError: '',
+            processingImageIds: [],
             popover: {
                 visible: false,
                 selectedImageId: undefined,
@@ -157,5 +163,56 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
 
     hasSelectedImages(): boolean {
         return this.getSelectedImageIds().length > 0;
+    }
+
+    // Status update methods
+    getStatusUpdateError(): string {
+        return this.data.statusUpdateError || '';
+    }
+
+    setStatusUpdateError(error: string): void {
+        this.data.statusUpdateError = error;
+    }
+
+    clearStatusUpdateError(): void {
+        this.data.statusUpdateError = '';
+    }
+
+    getHiddenImageIds(): string[] {
+        return this.data.hiddenImageIds || [];
+    }
+
+    isImageHidden(imageId: string): boolean {
+        return this.getHiddenImageIds().includes(imageId);
+    }
+
+    hideSelectedImages(): void {
+        const selectedIds = this.getSelectedImageIds();
+        this.data.hiddenImageIds = [...new Set([...this.getHiddenImageIds(), ...selectedIds])];
+    }
+
+    unhideImages(imageIds: string[]): void {
+        const hiddenIds = this.getHiddenImageIds();
+        this.data.hiddenImageIds = hiddenIds.filter(id => !imageIds.includes(id));
+    }
+
+    removeImages(imageIds: string[]): void {
+        // Remove images from the images array
+        this.data.images = (this.data.images || []).filter(img => !imageIds.includes(img.id));
+        // Also remove from hidden and selected lists
+        this.data.hiddenImageIds = (this.data.hiddenImageIds || []).filter(id => !imageIds.includes(id));
+        this.data.selectedImageIds = (this.data.selectedImageIds || []).filter(id => !imageIds.includes(id));
+    }
+
+    getProcessingImageIds(): string[] {
+        return this.data.processingImageIds || [];
+    }
+
+    setProcessingImageIds(imageIds: string[]): void {
+        this.data.processingImageIds = imageIds;
+    }
+
+    clearProcessingImageIds(): void {
+        this.data.processingImageIds = [];
     }
 }
