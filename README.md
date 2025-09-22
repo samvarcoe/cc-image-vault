@@ -116,11 +116,12 @@ For detailed testing strategies and utilities, see the individual module README 
 - Complete collection viewing and management workflow
 - Responsive image display with status-based filtering
 - Curate mode with image selection functionality (multi-select, Select All/Clear)
+- HTTP API for image uploads with comprehensive validation (JPG/JPEG, PNG, WebP)
 - Robust error handling and user feedback
 - Comprehensive test coverage across all layers
 
 ### 🎯 Next Development Priorities
-- Image upload interface with drag-and-drop
+- Client-side image upload interface with drag-and-drop
 - Collection creation UI workflow
 - Bulk image operations (status updates, deletion, organization)
 - Full-screen slideshow viewing mode

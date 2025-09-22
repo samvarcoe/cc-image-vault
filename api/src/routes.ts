@@ -1,5 +1,13 @@
 import express from 'express';
-import { Collection, CollectionCreateError, CollectionNotFoundError, ImageNotFoundError, ImageRetrievalError, ImageUpdateError, ImageDeletionError } from '@/domain';
+import multer from 'multer';
+import { Collection, CollectionCreateError, CollectionNotFoundError, ImageNotFoundError, ImageRetrievalError, ImageUpdateError, ImageDeletionError, ImageAdditionError } from '@/domain';
+import { writeFileSync, mkdirSync, rmSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomUUID } from 'crypto';
+
+// Configure multer for handling multipart form data uploads
+const upload = multer({ storage: multer.memoryStorage() });
 
 export const routes = express.Router();
 
@@ -47,6 +55,75 @@ routes.post('/collections', (req, res) => {
         }
 
         return res.status(500).json({ message: 'An error occurred whilst creating the Collection' });
+    }
+});
+
+routes.post('/images/:collectionId', upload.single('file'), async (req, res) => {
+    let tempDir: string | null = null;
+
+    try {
+        const { collectionId } = req.params;
+
+        // Validate required route parameter (guaranteed by Express routing)
+        if (!collectionId) {
+            return res.status(400).json({ message: 'Collection ID is required' });
+        }
+
+        // Validate file was provided
+        if (!req.file) {
+            return res.status(400).json({ message: 'File is required' });
+        }
+
+        // Load collection (this will throw CollectionNotFoundError if not found)
+        const collection = Collection.load(collectionId);
+
+        // Create temporary file for domain processing
+        // Use original filename to preserve the name/extension the domain layer expects
+        const originalName = req.file.originalname || 'upload';
+        // Use a UUID for the directory to avoid conflicts while preserving original filename
+        tempDir = join(tmpdir(), randomUUID());
+        const tempFilePath = join(tempDir, originalName);
+
+        // Create temp directory and write buffer to temporary file
+        mkdirSync(tempDir, { recursive: true });
+        writeFileSync(tempFilePath, req.file.buffer);
+
+        // Add image through domain layer
+        const metadata = await collection.addImage(tempFilePath);
+
+        // Return created image metadata with 201 status
+        return res.status(201).json(metadata);
+
+    } catch (error: unknown) {
+        if (error instanceof CollectionNotFoundError) {
+            return res.status(404).json({ message: 'Collection not found' });
+        }
+
+        if (error instanceof ImageAdditionError && error.cause instanceof Error) {
+            const causeMessage = error.cause.message;
+
+            // Map domain validation errors to 400 status
+            if (causeMessage.includes('Unsupported file type') ||
+                causeMessage.includes('Invalid or corrupted image file') ||
+                causeMessage.includes('Unsafe or invalid filename') ||
+                causeMessage.includes('Filename exceeds 256 characters') ||
+                causeMessage.includes('Image already exists in Collection')) {
+                return res.status(400).json({ message: causeMessage });
+            }
+        }
+
+        // All other errors return 500 with generic message
+        return res.status(500).json({ message: 'An error occurred whilst uploading the image' });
+
+    } finally {
+        // Clean up temporary directory and file
+        if (tempDir) {
+            try {
+                rmSync(tempDir, { recursive: true, force: true });
+            } catch {
+                // Ignore cleanup errors
+            }
+        }
     }
 });
 
