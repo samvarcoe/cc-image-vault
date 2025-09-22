@@ -16,6 +16,10 @@ export interface CollectionPageData {
         selectedImageId?: string;
         error?: string;
     };
+    confirmationDialog?: {
+        visible: boolean;
+        message?: string;
+    };
 }
 
 export default class CollectionPageModel extends Model<CollectionPageData> {
@@ -36,6 +40,10 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
                 visible: false,
                 selectedImageId: undefined,
                 error: undefined
+            },
+            confirmationDialog: {
+                visible: false,
+                message: undefined
             },
             ...initialData
         });
@@ -214,5 +222,28 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
 
     clearProcessingImageIds(): void {
         this.data.processingImageIds = [];
+    }
+
+    // Confirmation dialog methods
+    isConfirmationDialogVisible(): boolean {
+        return this.data.confirmationDialog?.visible || false;
+    }
+
+    getConfirmationDialogMessage(): string {
+        return this.data.confirmationDialog?.message || '';
+    }
+
+    showConfirmationDialog(message: string): void {
+        this.data.confirmationDialog = {
+            visible: true,
+            message: message
+        };
+    }
+
+    hideConfirmationDialog(): void {
+        this.data.confirmationDialog = {
+            visible: false,
+            message: undefined
+        };
     }
 }

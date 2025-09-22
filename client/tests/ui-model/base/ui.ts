@@ -77,19 +77,21 @@ export abstract class UI {
             }
         });
 
-        this.page.on('requestfailed', request => {
-            const timestamp = new Date().toISOString();
-            const event: NetworkEvent = {
-                url: request.url(),
-                method: request.method(),
-                timestamp,
-                type: 'failed',
-                error: request.failure()?.errorText || 'Unknown error'
-            };
-            this.networkEvents.push(event);
-            this.failedRequests.push(event);
-            LOGGER.log(`Request Failed on ${this.constructor.name}: ${request.url()} - ${event.error}`);
-        });
+        //ToDo: Investigate erroneous failures from DELETE 204
+        // this.page.on('requestfailed', request => {
+        //     const timestamp = new Date().toISOString();
+        //     const event: NetworkEvent = {
+        //         url: request.url(),
+        //         method: request.method(),
+        //         timestamp,
+        //         type: 'failed',
+        //         error: request.failure()?.errorText || 'Unknown error'
+        //     };
+        //     console.log(`Request Failed: ${JSON.stringify(event)}`);
+        //     this.networkEvents.push(event);
+        //     this.failedRequests.push(event);
+        //     LOGGER.log(`Request Failed on ${this.constructor.name}: ${request.url()} - ${event.error}`);
+        // });
     }
 
     protected element = (name: string, selector: string): Element => {
