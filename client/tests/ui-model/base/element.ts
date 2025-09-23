@@ -210,6 +210,10 @@ export class Element {
         expect(actual, `${this.name} does not have a value of "${expected}"`).toEqual(expected);
     };
 
+    getAttribute = async (key: string): Promise<string | null> => {
+        return await this.locator.getAttribute(key);
+    };
+
     shouldHaveAttribute = async (key: string, value: string) => {
         const actual = await this.locator.getAttribute(key);
         expect(actual, `${this.name} has no attribute: "${key}"`).not.toBeNull();

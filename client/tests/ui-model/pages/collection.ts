@@ -37,6 +37,10 @@ export class CollectionPage extends PageObject {
         return this.component(UploadDialog, 'Upload Dialog', '[data-id="upload-dialog"]');
     }
 
+    get slideshow(): Slideshow {
+        return this.component(Slideshow, 'Slideshow', '[data-id="slideshow"]');
+    }
+
     async visit(collectionName: string, status?: ImageStatus): Promise<void> {
         const searchParams = status ? `?status=${status}` : '';
         await this.page.goto(`${this.url}/${collectionName}${searchParams}`);
@@ -112,6 +116,10 @@ class Header extends Element {
 
     get curateButton(): Element {
         return this.child(Element, 'Curate Button', '[data-id="curate-button"]');
+    }
+
+    get slideshowButton(): Element {
+        return this.child(Element, 'Slideshow Button', '[data-id="slideshow-button"]');
     }
 
     get uploadButton(): Element {
@@ -219,5 +227,64 @@ class UploadDialog extends Element {
 
     get addButton(): Element {
         return this.child(Element, 'Add Button', '[data-id="add-button"]');
+    }
+};
+
+class Slideshow extends Element {
+    get image(): Element {
+        return this.child(Element, 'Slideshow Image', '[data-id="slideshow-image"]');
+    }
+
+    get pauseSymbol(): Element {
+        return this.child(Element, 'Pause Symbol', '[data-id="pause-symbol"]');
+    }
+
+    async shouldShowPauseSymbol(): Promise<void> {
+        await this.pauseSymbol.shouldBeDisplayed();
+        LOGGER.log('✓ Pause symbol is displayed');
+    }
+
+    async shouldHidePauseSymbol(): Promise<void> {
+        await this.pauseSymbol.shouldNotBeDisplayed();
+        LOGGER.log('✓ Pause symbol is hidden');
+    }
+
+    async shouldShowImageFromCollection(collectionName: string): Promise<void> {
+        const src = await this.image.getAttribute('src');
+        const expectedPattern = `/api/images/${collectionName}/`;
+        expect(src).toContain(expectedPattern);
+        LOGGER.log(`✓ Slideshow is displaying image from collection "${collectionName}"`);
+    }
+
+    async getCurrentImageId(): Promise<string> {
+        const src = await this.image.getAttribute('src');
+        if (!src) {
+            throw new Error('Slideshow image has no src attribute');
+        }
+        // Extract image ID from src pattern: /api/images/collectionName/imageId
+        const matches = src.match(/\/api\/images\/[^/]+\/(.+)$/);
+        if (!matches || !matches[1]) {
+            throw new Error(`Could not extract image ID from src: ${src}`);
+        }
+        return matches[1];
+    }
+
+    async shouldShowDifferentImage(previousImageId: string): Promise<void> {
+        const currentImageId = await this.getCurrentImageId();
+        expect(currentImageId).not.toBe(previousImageId);
+        LOGGER.log(`✓ Slideshow advanced from image "${previousImageId}" to "${currentImageId}"`);
+    }
+
+    async shouldShowSameImage(expectedImageId: string): Promise<void> {
+        const currentImageId = await this.getCurrentImageId();
+        expect(currentImageId).toBe(expectedImageId);
+        LOGGER.log(`✓ Slideshow is still showing image "${expectedImageId}"`);
+    }
+
+    async getZIndex(): Promise<number> {
+        const zIndex = await this.locator.evaluate(el =>
+            window.getComputedStyle(el).zIndex
+        );
+        return zIndex === 'auto' ? 0 : parseInt(zIndex);
     }
 };
