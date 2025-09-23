@@ -15,6 +15,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
         return /*html*/`
             ${this.popover()}
             ${this.confirmationDialog()}
+            ${this.uploadDialog()}
             <div class="min-h-full">
                 ${this.header()}
                 ${this.curationMenu()}
@@ -42,7 +43,8 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                             ${this.statusButton('COLLECTION', collectionName, currentStatus)}
                             ${this.statusButton('ARCHIVE', collectionName, currentStatus)}
                         </div>
-                        <div class="flex-1 flex justify-end">
+                        <div class="flex-1 flex justify-end gap-2">
+                            ${this.uploadButton()}
                             ${this.curateButton()}
                         </div>
                     </div>
@@ -69,6 +71,24 @@ export default class CollectionPageView extends View<CollectionPageModel> {
             >
                 ${status}
             </a>
+        `;
+    }
+
+    private uploadButton(): string {
+        const isUploading = this.model.isUploading();
+        const baseClasses = 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer';
+        const stateClasses = 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600';
+        const disabledClasses = isUploading ? 'opacity-50 cursor-not-allowed' : '';
+
+        return /*html*/`
+            <button
+                data-id="upload-button"
+                data-loading="${isUploading}"
+                class="${baseClasses} ${stateClasses} ${disabledClasses}"
+                ${isUploading ? 'disabled' : ''}
+            >
+                ${isUploading ? '⏳' : 'Upload'}
+            </button>
         `;
     }
 
@@ -201,9 +221,16 @@ export default class CollectionPageView extends View<CollectionPageModel> {
 
     private pageHeader(): string {
         const collectionName = this.model.getCollectionName();
+        const uploadError = this.model.getUploadError();
+
         return /*html*/`
             <div class="text-center mb-8">
                 <h1 class="text-3xl font-semibold text-slate-900 dark:text-white mb-2">${collectionName}</h1>
+                ${uploadError ? /*html*/`
+                    <div data-id="error-message" class="text-red-600 text-sm mt-2">
+                        ${uploadError}
+                    </div>
+                ` : ''}
             </div>
         `;
     }
@@ -345,6 +372,52 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                             class="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-red-600 text-white hover:bg-red-700"
                         >
                             Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    private uploadDialog(): string {
+        if (!this.model.isUploadDialogVisible()) {
+            return '';
+        }
+
+        return /*html*/`
+            <div data-id="upload-dialog" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg">
+                <div class="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md mx-4 shadow-xl">
+                    <div class="text-slate-900 dark:text-white text-lg font-medium mb-4">
+                        Upload Images
+                    </div>
+                    <div class="mb-4">
+                        <input
+                            type="file"
+                            data-id="file-input"
+                            accept="image/*"
+                            multiple=""
+                            class="block w-full text-sm text-slate-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-md file:border-0
+                                file:text-sm file:font-medium
+                                file:bg-blue-50 file:text-blue-700
+                                hover:file:bg-blue-100
+                                dark:file:bg-slate-700 dark:file:text-slate-300
+                                dark:hover:file:bg-slate-600"
+                        />
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button
+                            data-id="cancel-button"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            data-id="add-button"
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                            Add
                         </button>
                     </div>
                 </div>

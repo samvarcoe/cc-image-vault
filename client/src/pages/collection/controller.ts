@@ -16,6 +16,14 @@ export default class CollectionPageController {
     }
 
     private attachEventListeners(): void {
+        // Handle upload button clicks
+        document.addEventListener('click', (event) => {
+            const uploadButton = (event.target as Element).closest('[data-id="upload-button"]');
+            if (uploadButton && !uploadButton.hasAttribute('disabled')) {
+                this.handleUploadButtonClick();
+            }
+        });
+
         // Handle curate button clicks
         document.addEventListener('click', (event) => {
             const curateButton = (event.target as Element).closest('[data-id="curate-button"]');
@@ -78,9 +86,23 @@ export default class CollectionPageController {
             const confirmDeleteButton = (event.target as Element).closest('[data-id="confirm-delete-button"]');
 
             if (cancelButton) {
-                this.handleCancelDelete();
+                // Check if it's in upload dialog or confirmation dialog
+                const uploadDialog = cancelButton.closest('[data-id="upload-dialog"]');
+                if (uploadDialog) {
+                    this.handleUploadCancel();
+                } else {
+                    this.handleCancelDelete();
+                }
             } else if (confirmDeleteButton) {
                 this.handleConfirmDelete();
+            }
+        });
+
+        // Handle upload dialog add button clicks
+        document.addEventListener('click', (event) => {
+            const addButton = (event.target as Element).closest('[data-id="add-button"]');
+            if (addButton) {
+                this.handleUploadAdd();
             }
         });
 
@@ -122,6 +144,17 @@ export default class CollectionPageController {
                 this.handleImageLoadError();
             }
         }, true);
+
+        // Handle navigation warning during upload
+        window.addEventListener('beforeunload', (event) => {
+            if (this.model.isUploading()) {
+                const message = 'Upload currently in progress, pending image uploads will be canceled if you leave the page';
+                event.preventDefault();
+                event.returnValue = message;
+                return message;
+            }
+            return undefined;
+        });
     }
 
     private openPopover(imageId: string, clickedElement: HTMLElement): void {
@@ -333,6 +366,79 @@ export default class CollectionPageController {
 
         if (!response.ok) {
             throw new Error(`Failed to delete image ${imageId}`);
+        }
+    }
+
+    private handleUploadButtonClick(): void {
+        this.model.showUploadDialog();
+        this.view.update();
+    }
+
+    private handleUploadCancel(): void {
+        this.model.hideUploadDialog();
+        this.view.update();
+    }
+
+    private async handleUploadAdd(): Promise<void> {
+        const fileInput = document.querySelector('[data-id="file-input"]') as HTMLInputElement;
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            return;
+        }
+
+        const files = Array.from(fileInput.files);
+
+        // Hide dialog and start upload
+        this.model.hideUploadDialog();
+        this.model.setUploading(true);
+        this.model.clearUploadError();
+        this.view.update();
+
+        // Process uploads in batches of 10
+        const collectionName = this.model.getCollectionName();
+        const batchSize = 10;
+        const allResults: Array<{ file: File; success: boolean }> = [];
+
+        for (let i = 0; i < files.length; i += batchSize) {
+            const batch = files.slice(i, i + batchSize);
+            const batchPromises = batch.map(file =>
+                this.uploadFile(collectionName, file)
+                    .then(() => ({ file, success: true }))
+                    .catch(() => ({ file, success: false }))
+            );
+
+            // Wait for this batch to complete before moving to the next
+            const batchResults = await Promise.all(batchPromises);
+            allResults.push(...batchResults);
+        }
+
+        // Process results
+        const failedFiles = allResults.filter(r => !r.success);
+
+        if (failedFiles.length > 0) {
+            this.model.setUploadError('Unable to upload some images');
+        }
+
+        // Finish upload
+        this.model.setUploading(false);
+        this.view.update();
+
+        // Only reload the page if ALL uploads succeeded (no errors to display)
+        if (allResults.some(r => r.success) && failedFiles.length === 0) {
+            window.location.reload();
+        }
+    }
+
+    private async uploadFile(collectionName: string, file: File): Promise<void> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`/api/images/${collectionName}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to upload file ${file.name}`);
         }
     }
 }

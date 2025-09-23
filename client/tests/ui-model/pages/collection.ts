@@ -33,6 +33,10 @@ export class CollectionPage extends PageObject {
         return this.component(ConfirmationDialog, 'Confirmation Dialog', '[data-id="confirmation-dialog"]');
     }
 
+    get uploadDialog(): UploadDialog {
+        return this.component(UploadDialog, 'Upload Dialog', '[data-id="upload-dialog"]');
+    }
+
     async visit(collectionName: string, status?: ImageStatus): Promise<void> {
         const searchParams = status ? `?status=${status}` : '';
         await this.page.goto(`${this.url}/${collectionName}${searchParams}`);
@@ -108,6 +112,10 @@ class Header extends Element {
 
     get curateButton(): Element {
         return this.child(Element, 'Curate Button', '[data-id="curate-button"]');
+    }
+
+    get uploadButton(): Element {
+        return this.child(Element, 'Upload Button', '[data-id="upload-button"]');
     }
 
     async getBoundingBox() {
@@ -197,5 +205,19 @@ class ConfirmationDialog extends Element {
 
     get deleteButton(): Element {
         return this.child(Element, 'Confirm Delete Button', '[data-id="confirm-delete-button"]');
+    }
+};
+
+class UploadDialog extends Element {
+    get fileInput(): Element {
+        return this.child(Element, 'File Input', '[data-id="file-input"]');
+    }
+
+    get cancelButton(): Element {
+        return this.child(Element, 'Cancel Button', '[data-id="cancel-button"]');
+    }
+
+    get addButton(): Element {
+        return this.child(Element, 'Add Button', '[data-id="add-button"]');
     }
 };
