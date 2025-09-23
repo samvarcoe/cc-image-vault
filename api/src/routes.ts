@@ -75,7 +75,7 @@ routes.post('/images/:collectionId', upload.single('file'), async (req, res) => 
         }
 
         // Load collection (this will throw CollectionNotFoundError if not found)
-        const collection = Collection.load(collectionId);
+        const collection = Collection.load(collectionId!);
 
         // Create temporary file for domain processing
         // Use original filename to preserve the name/extension the domain layer expects
@@ -131,7 +131,7 @@ routes.get('/images/:collectionId/:imageId', async (req, res) => {
     try {
         const { collectionId, imageId } = req.params;
 
-        const collection = Collection.load(collectionId);
+        const collection = Collection.load(collectionId!);
         const metadata = await collection.getImage(imageId);
 
         res.set('Content-Type', metadata.mime);
@@ -163,7 +163,7 @@ routes.get('/images/:collectionId/:imageId/thumbnail', async (req, res) => {
     try {
         const { collectionId, imageId } = req.params;
 
-        const collection = Collection.load(collectionId);
+        const collection = Collection.load(collectionId!);
         const metadata = await collection.getImage(imageId);
 
         const buffer = await collection.getThumbnailData(metadata.id);
@@ -219,7 +219,7 @@ routes.patch('/images/:collectionId/:imageId', async (req, res) => {
             return res.status(400).json({ message: 'Invalid status value' });
         }
 
-        const collection = Collection.load(collectionId);
+        const collection = Collection.load(collectionId!);
         const updatedMetadata = await collection.updateImage(imageId, { status });
 
         return res.status(200).json(updatedMetadata);
@@ -250,7 +250,7 @@ routes.delete('/images/:collectionId/:imageId', async (req, res) => {
     try {
         const { collectionId, imageId } = req.params;
 
-        const collection = Collection.load(collectionId);
+        const collection = Collection.load(collectionId!);
         await collection.deleteImage(imageId);
 
         return res.status(204).send();

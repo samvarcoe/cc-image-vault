@@ -8,6 +8,11 @@ export default class CollectionPageModel extends Model {
             }, confirmationDialog: {
                 visible: false,
                 message: undefined
+            }, uploadDialog: {
+                visible: false
+            }, upload: {
+                isUploading: false,
+                error: undefined
             } }, initialData));
     }
     getCollectionName() {
@@ -169,6 +174,49 @@ export default class CollectionPageModel extends Model {
         this.data.confirmationDialog = {
             visible: false,
             message: undefined
+        };
+    }
+    isUploadDialogVisible() {
+        var _a;
+        return ((_a = this.data.uploadDialog) === null || _a === void 0 ? void 0 : _a.visible) || false;
+    }
+    showUploadDialog() {
+        this.data.uploadDialog = {
+            visible: true
+        };
+    }
+    hideUploadDialog() {
+        this.data.uploadDialog = {
+            visible: false
+        };
+    }
+    isUploading() {
+        var _a;
+        return ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false;
+    }
+    setUploading(isUploading) {
+        var _a;
+        this.data.upload = {
+            isUploading: isUploading,
+            error: (_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.error
+        };
+    }
+    getUploadError() {
+        var _a;
+        return (_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.error;
+    }
+    setUploadError(error) {
+        var _a;
+        this.data.upload = {
+            isUploading: ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false,
+            error: error
+        };
+    }
+    clearUploadError() {
+        var _a;
+        this.data.upload = {
+            isUploading: ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false,
+            error: undefined
         };
     }
 }

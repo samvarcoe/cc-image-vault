@@ -20,6 +20,13 @@ export interface CollectionPageData {
         visible: boolean;
         message?: string;
     };
+    uploadDialog?: {
+        visible: boolean;
+    };
+    upload?: {
+        isUploading: boolean;
+        error?: string;
+    };
 }
 
 export default class CollectionPageModel extends Model<CollectionPageData> {
@@ -44,6 +51,13 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             confirmationDialog: {
                 visible: false,
                 message: undefined
+            },
+            uploadDialog: {
+                visible: false
+            },
+            upload: {
+                isUploading: false,
+                error: undefined
             },
             ...initialData
         });
@@ -244,6 +258,53 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         this.data.confirmationDialog = {
             visible: false,
             message: undefined
+        };
+    }
+
+    // Upload dialog methods
+    isUploadDialogVisible(): boolean {
+        return this.data.uploadDialog?.visible || false;
+    }
+
+    showUploadDialog(): void {
+        this.data.uploadDialog = {
+            visible: true
+        };
+    }
+
+    hideUploadDialog(): void {
+        this.data.uploadDialog = {
+            visible: false
+        };
+    }
+
+    // Upload state methods
+    isUploading(): boolean {
+        return this.data.upload?.isUploading || false;
+    }
+
+    setUploading(isUploading: boolean): void {
+        this.data.upload = {
+            isUploading: isUploading,
+            error: this.data.upload?.error
+        };
+    }
+
+    getUploadError(): string | undefined {
+        return this.data.upload?.error;
+    }
+
+    setUploadError(error: string): void {
+        this.data.upload = {
+            isUploading: this.data.upload?.isUploading || false,
+            error: error
+        };
+    }
+
+    clearUploadError(): void {
+        this.data.upload = {
+            isUploading: this.data.upload?.isUploading || false,
+            error: undefined
         };
     }
 }
