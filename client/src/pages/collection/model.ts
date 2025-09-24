@@ -145,6 +145,52 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         }
     }
 
+    advancePopoverToNext(): void {
+        if (!this.isPopoverVisible() || !this.data.popover?.selectedImageId) {
+            return;
+        }
+
+        const currentImageId = this.data.popover.selectedImageId;
+        const images = this.getImages();
+        const currentIndex = images.findIndex(img => img.id === currentImageId);
+
+        if (currentIndex === -1) {
+            return; // Current image not found
+        }
+
+        // Move to next image, or wrap around to first image
+        const nextIndex = (currentIndex + 1) % images.length;
+        const nextImage = images[nextIndex];
+
+        if (nextImage) {
+            this.data.popover.selectedImageId = nextImage.id;
+            this.data.popover.error = undefined; // Clear any previous errors
+        }
+    }
+
+    advancePopoverToPrevious(): void {
+        if (!this.isPopoverVisible() || !this.data.popover?.selectedImageId) {
+            return;
+        }
+
+        const currentImageId = this.data.popover.selectedImageId;
+        const images = this.getImages();
+        const currentIndex = images.findIndex(img => img.id === currentImageId);
+
+        if (currentIndex === -1) {
+            return; // Current image not found
+        }
+
+        // Move to previous image, or wrap around to last image
+        const prevIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+        const prevImage = images[prevIndex];
+
+        if (prevImage) {
+            this.data.popover.selectedImageId = prevImage.id;
+            this.data.popover.error = undefined; // Clear any previous errors
+        }
+    }
+
     isCurateMode(): boolean {
         return this.data.curate || false;
     }

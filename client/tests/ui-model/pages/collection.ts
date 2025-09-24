@@ -194,6 +194,23 @@ class Popover extends Element {
         return this.child(Element, 'Popover Error Message', '[data-id="popover-error-message"]');
     }
 
+    async shouldShowImage(imageId: string, collectionName: string): Promise<void> {
+        await this.image.shouldHaveAttribute('src', `/api/images/${collectionName}/${imageId}`);
+        LOGGER.log(`✓ Popover displays image "${imageId}" from collection "${collectionName}"`);
+    }
+
+    async scrollDown(): Promise<void> {
+        await this.locator.hover();
+        await this.page.mouse.wheel(0, 100);
+        LOGGER.log('✓ Scrolled mouse wheel down in popover');
+    }
+
+    async scrollUp(): Promise<void> {
+        await this.locator.hover();
+        await this.page.mouse.wheel(0, -100);
+        LOGGER.log('✓ Scrolled mouse wheel up in popover');
+    }
+
     async getZIndex(): Promise<number> {
         const zIndex = await this.locator.evaluate(el =>
             window.getComputedStyle(el).zIndex

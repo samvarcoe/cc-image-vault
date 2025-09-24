@@ -28,6 +28,21 @@ Feature: Client - Collection Page - Fullscreen Popover
         And the image is fully visible within the viewport
         And the background has a blurred semi-transparent effect
 
+    Scenario: User advances image with keyboard
+        Given a collection page is open with an image popover displayed
+        When the user presses the "ENTER" key
+        Then the popover displays the next image
+
+    Scenario: User advances image with mouse
+        Given a collection page is open with an image popover displayed
+        When the user scrolls their mouse wheel down
+        Then the popover displays the next image
+
+    Scenario: User goes back to previous image with mouse
+        Given a collection page is open with an image popover displayed
+        When the user scrolls their mouse wheel up
+        Then the popover displays the previous image
+
     Scenario: User closes popover by clicking background
         Given a collection page is open with an image popover displayed
         When the user clicks on the background overlay
