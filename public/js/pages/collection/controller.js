@@ -120,10 +120,17 @@ export default class CollectionPageController {
                 this.model.toggleSlideshowPause();
                 this.view.update();
             }
-            else if (event.key === 'Enter' && this.model.isSlideshowVisible()) {
-                event.preventDefault();
-                this.model.advanceSlideshow();
-                this.view.update();
+            else if (event.key === 'Enter') {
+                if (this.model.isSlideshowVisible()) {
+                    event.preventDefault();
+                    this.model.advanceSlideshow();
+                    this.view.update();
+                }
+                else if (this.model.isPopoverVisible()) {
+                    event.preventDefault();
+                    this.model.advancePopoverToNext();
+                    this.view.update();
+                }
             }
         });
         document.addEventListener('error', (event) => {
@@ -135,6 +142,23 @@ export default class CollectionPageController {
                 this.handleSlideshowImageLoadError();
             }
         }, true);
+        document.addEventListener('wheel', (event) => {
+            if (!this.model.isPopoverVisible()) {
+                return;
+            }
+            const popover = event.target.closest('[data-id="fullscreen-popover"]');
+            if (popover) {
+                event.preventDefault();
+                if (event.deltaY > 0) {
+                    this.model.advancePopoverToNext();
+                    this.view.update();
+                }
+                else if (event.deltaY < 0) {
+                    this.model.advancePopoverToPrevious();
+                    this.view.update();
+                }
+            }
+        }, { passive: false });
         window.addEventListener('beforeunload', (event) => {
             if (this.model.isUploading()) {
                 const message = 'Upload currently in progress, pending image uploads will be canceled if you leave the page';

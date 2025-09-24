@@ -151,10 +151,16 @@ export default class CollectionPageController {
                 event.preventDefault(); // Prevent page scroll
                 this.model.toggleSlideshowPause();
                 this.view.update();
-            } else if (event.key === 'Enter' && this.model.isSlideshowVisible()) {
-                event.preventDefault();
-                this.model.advanceSlideshow();
-                this.view.update();
+            } else if (event.key === 'Enter') {
+                if (this.model.isSlideshowVisible()) {
+                    event.preventDefault();
+                    this.model.advanceSlideshow();
+                    this.view.update();
+                } else if (this.model.isPopoverVisible()) {
+                    event.preventDefault();
+                    this.model.advancePopoverToNext();
+                    this.view.update();
+                }
             }
         });
 
@@ -167,6 +173,30 @@ export default class CollectionPageController {
                 this.handleSlideshowImageLoadError();
             }
         }, true);
+
+        // Handle mouse wheel events on popover
+        document.addEventListener('wheel', (event) => {
+            // Only handle wheel events when popover is visible
+            if (!this.model.isPopoverVisible()) {
+                return;
+            }
+
+            // Check if the wheel event is on the popover element
+            const popover = (event.target as Element).closest('[data-id="fullscreen-popover"]');
+            if (popover) {
+                event.preventDefault(); // Prevent page scrolling
+
+                if (event.deltaY > 0) {
+                    // Wheel down - advance to next image
+                    this.model.advancePopoverToNext();
+                    this.view.update();
+                } else if (event.deltaY < 0) {
+                    // Wheel up - go to previous image
+                    this.model.advancePopoverToPrevious();
+                    this.view.update();
+                }
+            }
+        }, { passive: false }); // Not passive so we can preventDefault
 
         // Handle navigation warning during upload
         window.addEventListener('beforeunload', (event) => {

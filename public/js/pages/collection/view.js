@@ -385,25 +385,25 @@ export default class CollectionPageView extends View {
             return '';
         }
         return `
-            <div data-id="upload-dialog" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/60 backdrop-blur-lg">
-                <div class="bg-white dark:bg-slate-800 rounded-lg p-6 w-96 h-128 mx-4 shadow-xl">
+            <div data-id="upload-dialog" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg">
+                <div class="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md mx-4 shadow-xl">
                     <div class="text-slate-900 dark:text-white text-lg font-medium mb-4">
                         Upload Images
                     </div>
-                    <div class="w-full h-4/5 mb-4 dark:bg-slate-700 dark:hover:bg-slate-600">
+                    <div class="mb-4">
                         <input
                             type="file"
                             data-id="file-input"
                             accept="image/*"
                             multiple=""
-                            class="block w-full h-full text-sm text-slate-500
+                            class="block w-full text-sm text-slate-500
                                 file:mr-4 file:py-2 file:px-4
                                 file:rounded-md file:border-0
                                 file:text-sm file:font-medium
                                 file:bg-blue-50 file:text-blue-700
                                 hover:file:bg-blue-100
-                                dark:file:bg-slate-600 dark:file:text-slate-300
-                                dark:hover:file:bg-slate-500"
+                                dark:file:bg-slate-700 dark:file:text-slate-300
+                                dark:hover:file:bg-slate-600"
                         />
                     </div>
                     <div class="flex justify-end gap-3">

@@ -78,7 +78,7 @@ client/src/
 
 ### Model Capabilities
 - **HomePageModel**: Collection CRUD operations, form validation, loading states, error handling
-- **CollectionPageModel**: Image display management, status filtering, curate mode state, image selection management, popover state, slideshow state with random sequencing, focus control
+- **CollectionPageModel**: Image display management, status filtering, curate mode state, image selection management, popover state with navigation (`advancePopoverToNext()`, `advancePopoverToPrevious()`), slideshow state with random sequencing, focus control
 
 ## Responsive Design System
 
@@ -155,9 +155,15 @@ renderImageGrid() {
 - **Viewport Optimization**: Images scale to fit viewport with 10px padding
 - **Background Overlay**: Semi-transparent blurred background for focus
 - **Multiple Close Methods**: Click background, press Esc key, or close button
+- **Image Navigation**: Slideshow-like navigation through collection images while popover is open
+  - `ENTER` key - Advance to next image in collection sequence
+  - Mouse wheel down - Advance to next image
+  - Mouse wheel up - Go back to previous image
+  - Wraparound navigation (next from last image goes to first, previous from first goes to last)
 - **Responsive Design**: Works across mobile, tablet, and desktop viewports
 - **Error Handling**: "Unable to load full image" message for loading failures
 - **Focus Management**: Keyboard focus trapped within popover during display
+- **Status Filtering**: Navigation respects current status filter (COLLECTION, INBOX, ARCHIVE)
 
 #### Slideshow Mode
 - **Fullscreen Display**: Immersive fullscreen image viewing experience with black background

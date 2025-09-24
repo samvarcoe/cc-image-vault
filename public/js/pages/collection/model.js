@@ -79,6 +79,42 @@ export default class CollectionPageModel extends Model {
             this.data.popover.error = message;
         }
     }
+    advancePopoverToNext() {
+        var _a;
+        if (!this.isPopoverVisible() || !((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId)) {
+            return;
+        }
+        const currentImageId = this.data.popover.selectedImageId;
+        const images = this.getImages();
+        const currentIndex = images.findIndex(img => img.id === currentImageId);
+        if (currentIndex === -1) {
+            return;
+        }
+        const nextIndex = (currentIndex + 1) % images.length;
+        const nextImage = images[nextIndex];
+        if (nextImage) {
+            this.data.popover.selectedImageId = nextImage.id;
+            this.data.popover.error = undefined;
+        }
+    }
+    advancePopoverToPrevious() {
+        var _a;
+        if (!this.isPopoverVisible() || !((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId)) {
+            return;
+        }
+        const currentImageId = this.data.popover.selectedImageId;
+        const images = this.getImages();
+        const currentIndex = images.findIndex(img => img.id === currentImageId);
+        if (currentIndex === -1) {
+            return;
+        }
+        const prevIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+        const prevImage = images[prevIndex];
+        if (prevImage) {
+            this.data.popover.selectedImageId = prevImage.id;
+            this.data.popover.error = undefined;
+        }
+    }
     isCurateMode() {
         return this.data.curate || false;
     }

@@ -115,6 +115,7 @@ For detailed testing strategies and utilities, see the individual module README 
 ### ✅ Current Capabilities
 - Complete collection viewing and management workflow
 - Responsive image display with status-based filtering
+- Fullscreen popover with slideshow-like navigation (ENTER key, mouse wheel)
 - Curate mode with image selection functionality (multi-select, Select All/Clear)
 - HTTP API for image uploads with comprehensive validation (JPG/JPEG, PNG, WebP)
 - Robust error handling and user feedback
@@ -124,4 +125,3 @@ For detailed testing strategies and utilities, see the individual module README 
 - Client-side image upload interface with drag-and-drop
 - Collection creation UI workflow
 - Bulk image operations (status updates, deletion, organization)
-- Full-screen slideshow viewing mode

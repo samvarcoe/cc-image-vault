@@ -157,6 +157,81 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         await ui.shouldHaveNoFailedRequests();
     });
 
+    test('User advances image with keyboard', async ({ page }) => {
+        const ui = new ImageVault(page);
+
+        // Given a collection page is open with an image popover displayed
+        const collection = await createCollectionFixture('TestCollection');
+        const collectionImages = await collection.getImages({status: "COLLECTION"});
+        const firstImage = collectionImages[0]!;
+        const secondImage = collectionImages[1]!;
+
+        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.imageGrid.image(firstImage.id).click();
+        await ui.collectionPage.popover.shouldBeDisplayed();
+        await ui.collectionPage.popover.shouldShowImage(firstImage.id, collection.name);
+
+        // When the user presses the "ENTER" key
+        await page.keyboard.press('Enter');
+
+        // Then the popover displays the next image
+        await ui.collectionPage.popover.shouldShowImage(secondImage.id, collection.name);
+
+        // Verify no errors occurred
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+
+    test('User advances image with mouse', async ({ page }) => {
+        const ui = new ImageVault(page);
+
+        // Given a collection page is open with an image popover displayed
+        const collection = await createCollectionFixture('TestCollection');
+        const collectionImages = await collection.getImages({status: "COLLECTION"});
+        const firstImage = collectionImages[0]!;
+        const secondImage = collectionImages[1]!;
+
+        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.imageGrid.image(firstImage.id).click();
+        await ui.collectionPage.popover.shouldBeDisplayed();
+        await ui.collectionPage.popover.shouldShowImage(firstImage.id, collection.name);
+
+        // When the user scrolls their mouse wheel down
+        await ui.collectionPage.popover.scrollDown();
+
+        // Then the popover displays the next image
+        await ui.collectionPage.popover.shouldShowImage(secondImage.id, collection.name);
+
+        // Verify no errors occurred
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+
+    test('User goes back to previous image with mouse', async ({ page }) => {
+        const ui = new ImageVault(page);
+
+        // Given a collection page is open with an image popover displayed
+        const collection = await createCollectionFixture('TestCollection');
+        const collectionImages = await collection.getImages({status: "COLLECTION"});
+        const firstImage = collectionImages[0]!;
+        const secondImage = collectionImages[1]!;
+
+        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.imageGrid.image(secondImage.id).click(); // Start with second image
+        await ui.collectionPage.popover.shouldBeDisplayed();
+        await ui.collectionPage.popover.shouldShowImage(secondImage.id, collection.name);
+
+        // When the user scrolls their mouse wheel up
+        await ui.collectionPage.popover.scrollUp();
+
+        // Then the popover displays the previous image
+        await ui.collectionPage.popover.shouldShowImage(firstImage.id, collection.name);
+
+        // Verify no errors occurred
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+
     test('Original image fails to load in popover', async ({ page }) => {
         const ui = new ImageVault(page);
 
