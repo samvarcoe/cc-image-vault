@@ -13,6 +13,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
 
     renderContent(): string {
         return /*html*/`
+            ${this.slideshow()}
             ${this.popover()}
             ${this.confirmationDialog()}
             ${this.uploadDialog()}
@@ -44,6 +45,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                             ${this.statusButton('ARCHIVE', collectionName, currentStatus)}
                         </div>
                         <div class="flex-1 flex justify-end gap-2">
+                            ${this.slideshowButton()}
                             ${this.uploadButton()}
                             ${this.curateButton()}
                         </div>
@@ -88,6 +90,24 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                 ${isUploading ? 'disabled' : ''}
             >
                 ${isUploading ? '⏳' : 'Upload'}
+            </button>
+        `;
+    }
+
+    private slideshowButton(): string {
+        const hasImages = this.model.hasImages();
+        const baseClasses = 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer';
+        const stateClasses = hasImages
+            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+            : 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500';
+
+        return /*html*/`
+            <button
+                data-id="slideshow-button"
+                class="${baseClasses} ${stateClasses}"
+                ${!hasImages ? 'disabled' : ''}
+            >
+                Slideshow
             </button>
         `;
     }
@@ -375,6 +395,38 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                         </button>
                     </div>
                 </div>
+            </div>
+        `;
+    }
+
+    private slideshow(): string {
+        if (!this.model.isSlideshowVisible()) {
+            return '';
+        }
+
+        const currentImageId = this.model.getCurrentSlideshowImageId();
+        const collectionName = this.model.getCollectionName();
+        const isPaused = this.model.isSlideshowPaused();
+
+        if (!currentImageId) {
+            return '';
+        }
+
+        const imageUrl = `/api/images/${collectionName}/${currentImageId}`;
+
+        return /*html*/`
+            <div data-id="slideshow" class="fixed inset-0 z-[60] bg-black flex items-center justify-center">
+                <img
+                    src="${imageUrl}"
+                    alt="Slideshow image ${currentImageId}"
+                    class="max-w-full max-h-full object-contain"
+                    data-id="slideshow-image"
+                />
+                ${isPaused ? /*html*/`
+                    <div data-id="pause-symbol" class="fixed bottom-4 right-4 text-white text-2xl">
+                        ⏸
+                    </div>
+                ` : ''}
             </div>
         `;
     }

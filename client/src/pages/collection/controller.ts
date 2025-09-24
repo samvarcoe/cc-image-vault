@@ -3,6 +3,7 @@ import CollectionPageView from './view.js';
 
 export default class CollectionPageController {
     private lastFocusedElement: HTMLElement | null = null;
+    private slideshowTimer: NodeJS.Timeout | null = null;
 
     constructor(
         private model: CollectionPageModel,
@@ -16,6 +17,14 @@ export default class CollectionPageController {
     }
 
     private attachEventListeners(): void {
+        // Handle slideshow button clicks
+        document.addEventListener('click', (event) => {
+            const slideshowButton = (event.target as Element).closest('[data-id="slideshow-button"]');
+            if (slideshowButton && !slideshowButton.hasAttribute('disabled')) {
+                this.handleSlideshowButtonClick();
+            }
+        });
+
         // Handle upload button clicks
         document.addEventListener('click', (event) => {
             const uploadButton = (event.target as Element).closest('[data-id="upload-button"]');
@@ -130,18 +139,32 @@ export default class CollectionPageController {
             }
         });
 
-        // Handle escape key to close popover
+        // Handle keyboard events
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && this.model.isPopoverVisible()) {
-                this.closePopover();
+            if (event.key === 'Escape') {
+                if (this.model.isSlideshowVisible()) {
+                    this.closeSlideshowAndCleanup();
+                } else if (this.model.isPopoverVisible()) {
+                    this.closePopover();
+                }
+            } else if (event.key === ' ' && this.model.isSlideshowVisible()) {
+                event.preventDefault(); // Prevent page scroll
+                this.model.toggleSlideshowPause();
+                this.view.update();
+            } else if (event.key === 'Enter' && this.model.isSlideshowVisible()) {
+                event.preventDefault();
+                this.model.advanceSlideshow();
+                this.view.update();
             }
         });
 
-        // Handle image load errors in popover
+        // Handle image load errors
         document.addEventListener('error', (event) => {
-            const popoverImage = event.target as HTMLImageElement;
-            if (popoverImage && popoverImage.closest('[data-id="popover-image"]')) {
+            const image = event.target as HTMLImageElement;
+            if (image && image.closest('[data-id="popover-image"]')) {
                 this.handleImageLoadError();
+            } else if (image && image.closest('[data-id="slideshow-image"]')) {
+                this.handleSlideshowImageLoadError();
             }
         }, true);
 
@@ -176,6 +199,12 @@ export default class CollectionPageController {
 
     private handleImageLoadError(): void {
         this.model.setPopoverError('Unable to load full image');
+        this.view.update();
+    }
+
+    private handleSlideshowImageLoadError(): void {
+        // Skip to the next image when current image fails to load
+        this.model.skipToNextImage();
         this.view.update();
     }
 
@@ -440,5 +469,40 @@ export default class CollectionPageController {
         if (!response.ok) {
             throw new Error(`Failed to upload file ${file.name}`);
         }
+    }
+
+    private handleSlideshowButtonClick(): void {
+        this.model.openSlideshow();
+        this.view.update();
+        this.startSlideshowTimer();
+    }
+
+    private startSlideshowTimer(): void {
+        this.stopSlideshowTimer();
+
+        this.slideshowTimer = setInterval(() => {
+            if (!this.model.isSlideshowVisible()) {
+                this.stopSlideshowTimer();
+                return;
+            }
+
+            if (!this.model.isSlideshowPaused()) {
+                this.model.advanceSlideshow();
+                this.view.update();
+            }
+        }, 5000);
+    }
+
+    private stopSlideshowTimer(): void {
+        if (this.slideshowTimer) {
+            clearInterval(this.slideshowTimer);
+            this.slideshowTimer = null;
+        }
+    }
+
+    private closeSlideshowAndCleanup(): void {
+        this.stopSlideshowTimer();
+        this.model.closeSlideshow();
+        this.view.update();
     }
 }

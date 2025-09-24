@@ -13,6 +13,12 @@ export default class CollectionPageModel extends Model {
             }, upload: {
                 isUploading: false,
                 error: undefined
+            }, slideshow: {
+                visible: false,
+                currentImageId: undefined,
+                isPaused: false,
+                imageSequence: [],
+                currentIndex: 0
             } }, initialData));
     }
     getCollectionName() {
@@ -218,5 +224,105 @@ export default class CollectionPageModel extends Model {
             isUploading: ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false,
             error: undefined
         };
+    }
+    isSlideshowVisible() {
+        var _a;
+        return ((_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.visible) || false;
+    }
+    openSlideshow() {
+        const images = this.getImages();
+        if (images.length === 0) {
+            return;
+        }
+        const imageIds = images.map(img => img.id);
+        const shuffledIds = this.shuffleArray([...imageIds]);
+        this.data.slideshow = {
+            visible: true,
+            currentImageId: shuffledIds[0],
+            isPaused: false,
+            imageSequence: shuffledIds,
+            currentIndex: 0
+        };
+    }
+    closeSlideshow() {
+        this.data.slideshow = {
+            visible: false,
+            currentImageId: undefined,
+            isPaused: false,
+            imageSequence: [],
+            currentIndex: 0
+        };
+    }
+    getCurrentSlideshowImageId() {
+        var _a;
+        return (_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.currentImageId;
+    }
+    isSlideshowPaused() {
+        var _a;
+        return ((_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.isPaused) || false;
+    }
+    pauseSlideshow() {
+        if (this.data.slideshow) {
+            this.data.slideshow.isPaused = true;
+        }
+    }
+    resumeSlideshow() {
+        if (this.data.slideshow) {
+            this.data.slideshow.isPaused = false;
+        }
+    }
+    toggleSlideshowPause() {
+        if (this.data.slideshow) {
+            this.data.slideshow.isPaused = !this.data.slideshow.isPaused;
+        }
+    }
+    advanceSlideshow() {
+        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+            return;
+        }
+        const nextIndex = this.data.slideshow.currentIndex + 1;
+        if (nextIndex >= this.data.slideshow.imageSequence.length) {
+            const images = this.getImages();
+            const imageIds = images.map(img => img.id);
+            const shuffledIds = this.shuffleArray([...imageIds]);
+            this.data.slideshow.imageSequence = shuffledIds;
+            this.data.slideshow.currentIndex = 0;
+            this.data.slideshow.currentImageId = shuffledIds[0];
+        }
+        else {
+            this.data.slideshow.currentIndex = nextIndex;
+            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[nextIndex];
+        }
+    }
+    skipToNextImage() {
+        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+            return;
+        }
+        const currentImageId = this.data.slideshow.currentImageId;
+        this.data.slideshow.imageSequence = this.data.slideshow.imageSequence.filter(id => id !== currentImageId);
+        if (this.data.slideshow.imageSequence.length === 0) {
+            const images = this.getImages();
+            const imageIds = images.map(img => img.id).filter(id => id !== currentImageId);
+            this.data.slideshow.imageSequence = this.shuffleArray([...imageIds]);
+            this.data.slideshow.currentIndex = 0;
+        }
+        else {
+            if (this.data.slideshow.currentIndex >= this.data.slideshow.imageSequence.length) {
+                this.data.slideshow.currentIndex = 0;
+            }
+        }
+        if (this.data.slideshow.imageSequence.length > 0) {
+            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[this.data.slideshow.currentIndex];
+        }
+    }
+    shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = shuffled[i];
+            shuffled[i] = shuffled[j];
+            shuffled[j] = temp;
+        }
+        return shuffled;
     }
 }
