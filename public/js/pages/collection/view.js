@@ -10,6 +10,7 @@ export default class CollectionPageView extends View {
     }
     renderContent() {
         return `
+            ${this.slideshow()}
             ${this.popover()}
             ${this.confirmationDialog()}
             ${this.uploadDialog()}
@@ -39,6 +40,7 @@ export default class CollectionPageView extends View {
                             ${this.statusButton('ARCHIVE', collectionName, currentStatus)}
                         </div>
                         <div class="flex-1 flex justify-end gap-2">
+                            ${this.slideshowButton()}
                             ${this.uploadButton()}
                             ${this.curateButton()}
                         </div>
@@ -78,6 +80,22 @@ export default class CollectionPageView extends View {
                 ${isUploading ? 'disabled' : ''}
             >
                 ${isUploading ? '⏳' : 'Upload'}
+            </button>
+        `;
+    }
+    slideshowButton() {
+        const hasImages = this.model.hasImages();
+        const baseClasses = 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer';
+        const stateClasses = hasImages
+            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+            : 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500';
+        return `
+            <button
+                data-id="slideshow-button"
+                class="${baseClasses} ${stateClasses}"
+                ${!hasImages ? 'disabled' : ''}
+            >
+                Slideshow
             </button>
         `;
     }
@@ -335,30 +353,57 @@ export default class CollectionPageView extends View {
             </div>
         `;
     }
+    slideshow() {
+        if (!this.model.isSlideshowVisible()) {
+            return '';
+        }
+        const currentImageId = this.model.getCurrentSlideshowImageId();
+        const collectionName = this.model.getCollectionName();
+        const isPaused = this.model.isSlideshowPaused();
+        if (!currentImageId) {
+            return '';
+        }
+        const imageUrl = `/api/images/${collectionName}/${currentImageId}`;
+        return `
+            <div data-id="slideshow" class="fixed inset-0 z-[60] bg-black flex items-center justify-center">
+                <img
+                    src="${imageUrl}"
+                    alt="Slideshow image ${currentImageId}"
+                    class="max-w-full max-h-full object-contain"
+                    data-id="slideshow-image"
+                />
+                ${isPaused ? `
+                    <div data-id="pause-symbol" class="fixed bottom-4 right-4 text-white text-2xl">
+                        ⏸
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
     uploadDialog() {
         if (!this.model.isUploadDialogVisible()) {
             return '';
         }
         return `
-            <div data-id="upload-dialog" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/70 backdrop-blur-lg">
-                <div class="bg-white dark:bg-slate-800 rounded-lg p-6 max-w-md mx-4 shadow-xl">
+            <div data-id="upload-dialog" class="fixed w-full h-full z-50 flex items-center justify-center bg-black/60 backdrop-blur-lg">
+                <div class="bg-white dark:bg-slate-800 rounded-lg p-6 w-96 h-128 mx-4 shadow-xl">
                     <div class="text-slate-900 dark:text-white text-lg font-medium mb-4">
                         Upload Images
                     </div>
-                    <div class="mb-4">
+                    <div class="w-full h-4/5 mb-4 dark:bg-slate-700 dark:hover:bg-slate-600">
                         <input
                             type="file"
                             data-id="file-input"
                             accept="image/*"
                             multiple=""
-                            class="block w-full text-sm text-slate-500
+                            class="block w-full h-full text-sm text-slate-500
                                 file:mr-4 file:py-2 file:px-4
                                 file:rounded-md file:border-0
                                 file:text-sm file:font-medium
                                 file:bg-blue-50 file:text-blue-700
                                 hover:file:bg-blue-100
-                                dark:file:bg-slate-700 dark:file:text-slate-300
-                                dark:hover:file:bg-slate-600"
+                                dark:file:bg-slate-600 dark:file:text-slate-300
+                                dark:hover:file:bg-slate-500"
                         />
                     </div>
                     <div class="flex justify-end gap-3">

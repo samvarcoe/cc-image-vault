@@ -27,6 +27,13 @@ export interface CollectionPageData {
         isUploading: boolean;
         error?: string;
     };
+    slideshow?: {
+        visible: boolean;
+        currentImageId?: string;
+        isPaused: boolean;
+        imageSequence: string[];
+        currentIndex: number;
+    };
 }
 
 export default class CollectionPageModel extends Model<CollectionPageData> {
@@ -58,6 +65,13 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             upload: {
                 isUploading: false,
                 error: undefined
+            },
+            slideshow: {
+                visible: false,
+                currentImageId: undefined,
+                isPaused: false,
+                imageSequence: [],
+                currentIndex: 0
             },
             ...initialData
         });
@@ -306,5 +320,127 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             isUploading: this.data.upload?.isUploading || false,
             error: undefined
         };
+    }
+
+    // Slideshow methods
+    isSlideshowVisible(): boolean {
+        return this.data.slideshow?.visible || false;
+    }
+
+    openSlideshow(): void {
+        const images = this.getImages();
+        if (images.length === 0) {
+            return;
+        }
+
+        // Create a shuffled sequence of image IDs
+        const imageIds = images.map(img => img.id);
+        const shuffledIds = this.shuffleArray([...imageIds]);
+
+        this.data.slideshow = {
+            visible: true,
+            currentImageId: shuffledIds[0],
+            isPaused: false,
+            imageSequence: shuffledIds,
+            currentIndex: 0
+        };
+    }
+
+    closeSlideshow(): void {
+        this.data.slideshow = {
+            visible: false,
+            currentImageId: undefined,
+            isPaused: false,
+            imageSequence: [],
+            currentIndex: 0
+        };
+    }
+
+    getCurrentSlideshowImageId(): string | undefined {
+        return this.data.slideshow?.currentImageId;
+    }
+
+    isSlideshowPaused(): boolean {
+        return this.data.slideshow?.isPaused || false;
+    }
+
+    pauseSlideshow(): void {
+        if (this.data.slideshow) {
+            this.data.slideshow.isPaused = true;
+        }
+    }
+
+    resumeSlideshow(): void {
+        if (this.data.slideshow) {
+            this.data.slideshow.isPaused = false;
+        }
+    }
+
+    toggleSlideshowPause(): void {
+        if (this.data.slideshow) {
+            this.data.slideshow.isPaused = !this.data.slideshow.isPaused;
+        }
+    }
+
+    advanceSlideshow(): void {
+        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+            return;
+        }
+
+        const nextIndex = this.data.slideshow.currentIndex + 1;
+
+        if (nextIndex >= this.data.slideshow.imageSequence.length) {
+            // End of sequence - create new shuffled sequence and restart
+            const images = this.getImages();
+            const imageIds = images.map(img => img.id);
+            const shuffledIds = this.shuffleArray([...imageIds]);
+
+            this.data.slideshow.imageSequence = shuffledIds;
+            this.data.slideshow.currentIndex = 0;
+            this.data.slideshow.currentImageId = shuffledIds[0];
+        } else {
+            // Advance to next image in sequence
+            this.data.slideshow.currentIndex = nextIndex;
+            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[nextIndex];
+        }
+    }
+
+    skipToNextImage(): void {
+        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+            return;
+        }
+
+        // Remove the current failing image from the sequence
+        const currentImageId = this.data.slideshow.currentImageId;
+        this.data.slideshow.imageSequence = this.data.slideshow.imageSequence.filter(id => id !== currentImageId);
+
+        // If no images left in sequence, create new sequence
+        if (this.data.slideshow.imageSequence.length === 0) {
+            const images = this.getImages();
+            const imageIds = images.map(img => img.id).filter(id => id !== currentImageId);
+            this.data.slideshow.imageSequence = this.shuffleArray([...imageIds]);
+            this.data.slideshow.currentIndex = 0;
+        } else {
+            // Adjust index if needed
+            if (this.data.slideshow.currentIndex >= this.data.slideshow.imageSequence.length) {
+                this.data.slideshow.currentIndex = 0;
+            }
+        }
+
+        // Set the new current image
+        if (this.data.slideshow.imageSequence.length > 0) {
+            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[this.data.slideshow.currentIndex];
+        }
+    }
+
+    private shuffleArray<T>(array: T[]): T[] {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = shuffled[i]!;
+            shuffled[i] = shuffled[j]!;
+            shuffled[j] = temp;
+        }
+        return shuffled;
     }
 }

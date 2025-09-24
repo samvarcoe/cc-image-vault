@@ -37,6 +37,7 @@ import { routes } from './client/src/routes';
 - **Image Status Management**: Keep, Discard, and Restore operations with optimistic UI updates
 - **Image Deletion**: Permanent deletion of ARCHIVE images with confirmation dialog and batched processing
 - **Fullscreen Popover**: Click thumbnails to view original images in modal overlay (disabled in curate mode)
+- **Slideshow Mode**: Fullscreen slideshow with randomized image sequence, auto-advance every 5 seconds, keyboard controls, and error handling
 - **Lazy Loading**: Efficient image thumbnail loading with layout shift prevention
 - **Auto-Redirect**: Automatic redirect to `?status=COLLECTION&curate=false` when parameters not specified
 - **Error Handling**: 404 for non-existent collections, server error handling
@@ -77,7 +78,7 @@ client/src/
 
 ### Model Capabilities
 - **HomePageModel**: Collection CRUD operations, form validation, loading states, error handling
-- **CollectionPageModel**: Image display management, status filtering, curate mode state, image selection management, popover state, focus control
+- **CollectionPageModel**: Image display management, status filtering, curate mode state, image selection management, popover state, slideshow state with random sequencing, focus control
 
 ## Responsive Design System
 
@@ -157,6 +158,19 @@ renderImageGrid() {
 - **Responsive Design**: Works across mobile, tablet, and desktop viewports
 - **Error Handling**: "Unable to load full image" message for loading failures
 - **Focus Management**: Keyboard focus trapped within popover during display
+
+#### Slideshow Mode
+- **Fullscreen Display**: Immersive fullscreen image viewing experience with black background
+- **Random Image Sequence**: Fisher-Yates shuffle algorithm ensures non-repeating random order until all images shown
+- **Auto-Advance**: Automatic progression every 5 seconds with pause/resume capability
+- **Keyboard Controls**:
+  - `ESC` - Close slideshow and return to collection page
+  - `SPACE` - Toggle pause/resume with visual pause symbol (⏸) indicator
+  - `ENTER` - Manual advance to next random image
+- **Error Handling**: Graceful handling of failed image loads with automatic skipping to next image
+- **State Preservation**: Curate mode selection state maintained across slideshow open/close operations
+- **Complete Cycling**: After all images shown once, reshuffles and starts new randomized sequence
+- **Responsive Design**: Scales images to fit viewport while maintaining aspect ratio
 
 #### URL Structure
 ```
@@ -251,6 +265,13 @@ All interactive elements include `data-id` attributes for reliable test automati
 <div data-id="fullscreen-popover">
   <img data-id="popover-image" src="/api/images/${collection}/${imageId}" />
   <div data-id="popover-error">${errorMessage}</div>
+</div>
+
+<!-- Slideshow -->
+<button data-id="slideshow-button" disabled="${hasNoImages}">Slideshow</button>
+<div data-id="slideshow">
+  <img data-id="slideshow-image" src="/api/images/${collection}/${imageId}" />
+  <div data-id="pause-symbol">⏸</div>
 </div>
 
 <!-- State messages -->

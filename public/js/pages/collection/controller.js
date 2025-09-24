@@ -3,12 +3,19 @@ export default class CollectionPageController {
         this.model = model;
         this.view = view;
         this.lastFocusedElement = null;
+        this.slideshowTimer = null;
         this.init();
     }
     init() {
         this.attachEventListeners();
     }
     attachEventListeners() {
+        document.addEventListener('click', (event) => {
+            const slideshowButton = event.target.closest('[data-id="slideshow-button"]');
+            if (slideshowButton && !slideshowButton.hasAttribute('disabled')) {
+                this.handleSlideshowButtonClick();
+            }
+        });
         document.addEventListener('click', (event) => {
             const uploadButton = event.target.closest('[data-id="upload-button"]');
             if (uploadButton && !uploadButton.hasAttribute('disabled')) {
@@ -100,14 +107,32 @@ export default class CollectionPageController {
             }
         });
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && this.model.isPopoverVisible()) {
-                this.closePopover();
+            if (event.key === 'Escape') {
+                if (this.model.isSlideshowVisible()) {
+                    this.closeSlideshowAndCleanup();
+                }
+                else if (this.model.isPopoverVisible()) {
+                    this.closePopover();
+                }
+            }
+            else if (event.key === ' ' && this.model.isSlideshowVisible()) {
+                event.preventDefault();
+                this.model.toggleSlideshowPause();
+                this.view.update();
+            }
+            else if (event.key === 'Enter' && this.model.isSlideshowVisible()) {
+                event.preventDefault();
+                this.model.advanceSlideshow();
+                this.view.update();
             }
         });
         document.addEventListener('error', (event) => {
-            const popoverImage = event.target;
-            if (popoverImage && popoverImage.closest('[data-id="popover-image"]')) {
+            const image = event.target;
+            if (image && image.closest('[data-id="popover-image"]')) {
                 this.handleImageLoadError();
+            }
+            else if (image && image.closest('[data-id="slideshow-image"]')) {
+                this.handleSlideshowImageLoadError();
             }
         }, true);
         window.addEventListener('beforeunload', (event) => {
@@ -135,6 +160,10 @@ export default class CollectionPageController {
     }
     handleImageLoadError() {
         this.model.setPopoverError('Unable to load full image');
+        this.view.update();
+    }
+    handleSlideshowImageLoadError() {
+        this.model.skipToNextImage();
         this.view.update();
     }
     toggleCurateMode() {
@@ -316,5 +345,34 @@ export default class CollectionPageController {
         if (!response.ok) {
             throw new Error(`Failed to upload file ${file.name}`);
         }
+    }
+    handleSlideshowButtonClick() {
+        this.model.openSlideshow();
+        this.view.update();
+        this.startSlideshowTimer();
+    }
+    startSlideshowTimer() {
+        this.stopSlideshowTimer();
+        this.slideshowTimer = setInterval(() => {
+            if (!this.model.isSlideshowVisible()) {
+                this.stopSlideshowTimer();
+                return;
+            }
+            if (!this.model.isSlideshowPaused()) {
+                this.model.advanceSlideshow();
+                this.view.update();
+            }
+        }, 5000);
+    }
+    stopSlideshowTimer() {
+        if (this.slideshowTimer) {
+            clearInterval(this.slideshowTimer);
+            this.slideshowTimer = null;
+        }
+    }
+    closeSlideshowAndCleanup() {
+        this.stopSlideshowTimer();
+        this.model.closeSlideshow();
+        this.view.update();
     }
 }

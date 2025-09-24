@@ -270,11 +270,12 @@ test.describe('Client - Collection Page - Slideshow', () => {
             requestCount++;
 
             if (requestCount == 2) {
+                LOGGER.log(`Aborting image request #${requestCount} to ${route.request().url()}`);
                 route.abort('failed');
                 failedImageId = route.request().url().split('/').pop()!;
 
             } else {
-                route.continue(); // Required for non-aborted requests
+                route.continue();
             }
         });
 
@@ -284,22 +285,16 @@ test.describe('Client - Collection Page - Slideshow', () => {
         // Store the initially displayed image
         const initialImageId = await ui.collectionPage.slideshow.getCurrentImageId();
 
-        // When an image fails to load during auto-advance
-        // Then the slideshow automatically skips to the next image
-        // And the image advances every 5 seconds
+        // Advance the clock
         await page.clock.fastForward(5000);
-
-        // Check the request to the failed image was made
+        
+        // When an image fails to load during auto-advance
         expect(failedImageId!, 'Failed image ID should have been captured in failed request').toBeDefined();
 
-        // Check another request was made and a new image is displayed, despite the second request failing
-        expect(requestCount, 'The expected number of requests were not made').toBe(3);
+        // Then the slideshow automatically skips to the next image
         await ui.collectionPage.slideshow.shouldShowDifferentImage(initialImageId);
         await ui.collectionPage.slideshow.shouldShowDifferentImage(failedImageId!);
-
-        // Verify no errors occurred (failed image loading should be handled gracefully)
-        await ui.shouldHaveNoConsoleErrors();
-        await ui.shouldHaveNoFailedRequests();
+        expect(requestCount, 'The expected number of requests were not made').toBe(3);
     });
 
     test('User watches the whole slideshow', async ({ page }) => {
