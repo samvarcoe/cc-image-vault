@@ -161,6 +161,12 @@ export default class CollectionPageController {
                     this.model.advancePopoverToNext();
                     this.view.update();
                 }
+            } else if (event.key === 'Tab' && this.model.isPopoverVisible()) {
+                event.preventDefault();
+                this.handlePopoverTabKeyPress();
+            } else if (event.key === 'Backspace' && this.model.isPopoverVisible()) {
+                event.preventDefault();
+                this.handlePopoverBackspaceKeyPress();
             }
         });
 
@@ -534,5 +540,77 @@ export default class CollectionPageController {
         this.stopSlideshowTimer();
         this.model.closeSlideshow();
         this.view.update();
+    }
+
+    private handlePopoverTabKeyPress(): void {
+        const selectedImage = this.model.getSelectedImage();
+        if (!selectedImage) return;
+
+        const currentStatus = selectedImage.status;
+
+        if (currentStatus === 'INBOX') {
+            // Tab on INBOX image = Keep (move to COLLECTION)
+            this.handleSingleImageStatusUpdate('COLLECTION');
+        } else if (currentStatus === 'ARCHIVE') {
+            // Tab on ARCHIVE image = Restore (move to COLLECTION)
+            this.handleSingleImageStatusUpdate('COLLECTION');
+        }
+        // COLLECTION images do not respond to Tab key
+    }
+
+    private handlePopoverBackspaceKeyPress(): void {
+        const selectedImage = this.model.getSelectedImage();
+        if (!selectedImage) return;
+
+        const currentStatus = selectedImage.status;
+
+        if (currentStatus === 'INBOX' || currentStatus === 'COLLECTION') {
+            // Backspace on INBOX or COLLECTION image = Discard (move to ARCHIVE)
+            this.handleSingleImageStatusUpdate('ARCHIVE');
+        }
+        // ARCHIVE images do not respond to Backspace key
+    }
+
+    private async handleSingleImageStatusUpdate(newStatus: ImageStatus): Promise<void> {
+        const selectedImage = this.model.getSelectedImage();
+        if (!selectedImage) return;
+
+        const collectionName = this.model.getCollectionName();
+        const imageId = selectedImage.id;
+
+        // Clear any previous status messages
+        this.model.clearPopoverStatusMessage();
+
+        try {
+            // Make the API call
+            await this.sendStatusUpdateRequest(collectionName, imageId, newStatus);
+
+            // Update was successful
+            const successMessage = newStatus === 'COLLECTION' ? 'Image moved to COLLECTION' : 'Image moved to ARCHIVE';
+            this.model.setPopoverStatusMessage(successMessage);
+            this.view.update();
+
+            // Update the image status in the model
+            selectedImage.status = newStatus;
+
+            // Wait 500ms, then remove updated image and advance to next
+            setTimeout(() => {
+                this.model.clearPopoverStatusMessage();
+                this.model.removeImages([imageId]);
+                this.model.advancePopoverToNext();
+                this.view.update();
+            }, 500);
+
+        } catch {
+            // Update failed
+            this.model.setPopoverStatusMessage('Unable to update image status');
+            this.view.update();
+
+            // Hide error message after 500ms (no advance)
+            setTimeout(() => {
+                this.model.clearPopoverStatusMessage();
+                this.view.update();
+            }, 500);
+        }
     }
 }

@@ -15,6 +15,7 @@ export interface CollectionPageData {
         visible: boolean;
         selectedImageId?: string;
         error?: string;
+        statusMessage?: string;
     };
     confirmationDialog?: {
         visible: boolean;
@@ -53,7 +54,8 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             popover: {
                 visible: false,
                 selectedImageId: undefined,
-                error: undefined
+                error: undefined,
+                statusMessage: undefined
             },
             confirmationDialog: {
                 visible: false,
@@ -123,11 +125,28 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         return this.data.popover?.error;
     }
 
+    getPopoverStatusMessage(): string | undefined {
+        return this.data.popover?.statusMessage;
+    }
+
+    setPopoverStatusMessage(message: string): void {
+        if (this.data.popover) {
+            this.data.popover.statusMessage = message;
+        }
+    }
+
+    clearPopoverStatusMessage(): void {
+        if (this.data.popover) {
+            this.data.popover.statusMessage = undefined;
+        }
+    }
+
     openPopover(imageId: string): void {
         this.data.popover = {
             visible: true,
             selectedImageId: imageId,
-            error: undefined
+            error: undefined,
+            statusMessage: undefined
         };
     }
 
@@ -135,7 +154,8 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         this.data.popover = {
             visible: false,
             selectedImageId: undefined,
-            error: undefined
+            error: undefined,
+            statusMessage: undefined
         };
     }
 
@@ -150,12 +170,26 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             return;
         }
 
-        const currentImageId = this.data.popover.selectedImageId;
         const images = this.getImages();
+
+        // If no images remain in the filtered view, close the popover
+        if (images.length === 0) {
+            this.closePopover();
+            return;
+        }
+
+        const currentImageId = this.data.popover.selectedImageId;
         const currentIndex = images.findIndex(img => img.id === currentImageId);
 
+        // If current image is no longer in the filtered view, show the first available image
         if (currentIndex === -1) {
-            return; // Current image not found
+            const firstImage = images[0];
+            if (firstImage) {
+                this.data.popover.selectedImageId = firstImage.id;
+                this.data.popover.error = undefined; // Clear any previous errors
+                this.data.popover.statusMessage = undefined; // Clear any previous status messages
+            }
+            return;
         }
 
         // Move to next image, or wrap around to first image
@@ -165,6 +199,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         if (nextImage) {
             this.data.popover.selectedImageId = nextImage.id;
             this.data.popover.error = undefined; // Clear any previous errors
+            this.data.popover.statusMessage = undefined; // Clear any previous status messages
         }
     }
 
@@ -188,6 +223,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         if (prevImage) {
             this.data.popover.selectedImageId = prevImage.id;
             this.data.popover.error = undefined; // Clear any previous errors
+            this.data.popover.statusMessage = undefined; // Clear any previous status messages
         }
     }
 

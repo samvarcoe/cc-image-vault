@@ -116,6 +116,9 @@ For detailed testing strategies and utilities, see the individual module README 
 - Complete collection viewing and management workflow
 - Responsive image display with status-based filtering
 - Fullscreen popover with slideshow-like navigation (ENTER key, mouse wheel)
+- Keyboard-based image status updates in fullscreen mode (Tab/Backspace shortcuts)
+- Context-sensitive status update constraints and user messaging
+- Enhanced fullscreen status updates with grid synchronization and auto-close behavior
 - Curate mode with image selection functionality (multi-select, Select All/Clear)
 - HTTP API for image uploads with comprehensive validation (JPG/JPEG, PNG, WebP)
 - Robust error handling and user feedback
