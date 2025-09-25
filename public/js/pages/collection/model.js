@@ -101,10 +101,20 @@ export default class CollectionPageModel extends Model {
         if (!this.isPopoverVisible() || !((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId)) {
             return;
         }
-        const currentImageId = this.data.popover.selectedImageId;
         const images = this.getImages();
+        if (images.length === 0) {
+            this.closePopover();
+            return;
+        }
+        const currentImageId = this.data.popover.selectedImageId;
         const currentIndex = images.findIndex(img => img.id === currentImageId);
         if (currentIndex === -1) {
+            const firstImage = images[0];
+            if (firstImage) {
+                this.data.popover.selectedImageId = firstImage.id;
+                this.data.popover.error = undefined;
+                this.data.popover.statusMessage = undefined;
+            }
             return;
         }
         const nextIndex = (currentIndex + 1) % images.length;

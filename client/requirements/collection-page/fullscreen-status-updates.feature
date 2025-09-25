@@ -58,6 +58,19 @@ Feature: Client - Images - Fullscreen Status Updates
         And after 500ms delay the popover advances to the next image
         And the success message is hidden
 
+    Scenario: User exits fullscreen mode after updating images
+        Given the user is viewing a fullscreen image 
+        And the user has updated some images since entering fullscreen mode
+        When the user exits fullscreen mode
+        Then the image grid reflects the updates they made
+
+    Scenario: User updates the last image
+        Given the user is viewing a fullscreen image
+        And it is the only image with the current status
+        When the user updates the status of the image
+        Then fullscreen mode is closed
+        And the empty state message is displayed
+
     Scenario: Status update request fails
         Given the user is viewing an image in fullscreen
         And the user has initiated a status update request

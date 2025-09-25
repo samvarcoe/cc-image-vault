@@ -443,6 +443,7 @@ export default class CollectionPageController {
             selectedImage.status = newStatus;
             setTimeout(() => {
                 this.model.clearPopoverStatusMessage();
+                this.model.removeImages([imageId]);
                 this.model.advancePopoverToNext();
                 this.view.update();
             }, 500);

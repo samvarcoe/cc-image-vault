@@ -170,12 +170,26 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             return;
         }
 
-        const currentImageId = this.data.popover.selectedImageId;
         const images = this.getImages();
+
+        // If no images remain in the filtered view, close the popover
+        if (images.length === 0) {
+            this.closePopover();
+            return;
+        }
+
+        const currentImageId = this.data.popover.selectedImageId;
         const currentIndex = images.findIndex(img => img.id === currentImageId);
 
+        // If current image is no longer in the filtered view, show the first available image
         if (currentIndex === -1) {
-            return; // Current image not found
+            const firstImage = images[0];
+            if (firstImage) {
+                this.data.popover.selectedImageId = firstImage.id;
+                this.data.popover.error = undefined; // Clear any previous errors
+                this.data.popover.statusMessage = undefined; // Clear any previous status messages
+            }
+            return;
         }
 
         // Move to next image, or wrap around to first image

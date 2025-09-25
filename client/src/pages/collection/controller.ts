@@ -593,9 +593,10 @@ export default class CollectionPageController {
             // Update the image status in the model
             selectedImage.status = newStatus;
 
-            // Wait 500ms, then advance to next image and hide message
+            // Wait 500ms, then remove updated image and advance to next
             setTimeout(() => {
                 this.model.clearPopoverStatusMessage();
+                this.model.removeImages([imageId]);
                 this.model.advancePopoverToNext();
                 this.view.update();
             }, 500);

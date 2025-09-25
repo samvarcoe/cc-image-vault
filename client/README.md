@@ -37,6 +37,7 @@ import { routes } from './client/src/routes';
 - **Image Status Management**: Keep, Discard, and Restore operations with optimistic UI updates
 - **Image Deletion**: Permanent deletion of ARCHIVE images with confirmation dialog and batched processing
 - **Fullscreen Popover**: Click thumbnails to view original images in modal overlay (disabled in curate mode)
+- **Keyboard Status Updates**: Tab/Backspace shortcuts for efficient image status changes while viewing fullscreen
 - **Slideshow Mode**: Fullscreen slideshow with randomized image sequence, auto-advance every 5 seconds, keyboard controls, and error handling
 - **Lazy Loading**: Efficient image thumbnail loading with layout shift prevention
 - **Auto-Redirect**: Automatic redirect to `?status=COLLECTION&curate=false` when parameters not specified
@@ -78,7 +79,7 @@ client/src/
 
 ### Model Capabilities
 - **HomePageModel**: Collection CRUD operations, form validation, loading states, error handling
-- **CollectionPageModel**: Image display management, status filtering, curate mode state, image selection management, popover state with navigation (`advancePopoverToNext()`, `advancePopoverToPrevious()`), slideshow state with random sequencing, focus control
+- **CollectionPageModel**: Image display management, status filtering, curate mode state, image selection management, popover state with enhanced navigation (`advancePopoverToNext()` with auto-close and graceful handling, `advancePopoverToPrevious()`), slideshow state with random sequencing, focus control
 
 ## Responsive Design System
 
@@ -160,6 +161,16 @@ renderImageGrid() {
   - Mouse wheel down - Advance to next image
   - Mouse wheel up - Go back to previous image
   - Wraparound navigation (next from last image goes to first, previous from first goes to last)
+- **Keyboard Status Updates**: Context-sensitive image status modification while viewing fullscreen
+  - `TAB` key - Keep INBOX images (move to COLLECTION), Restore ARCHIVE images (move to COLLECTION)
+  - `BACKSPACE` key - Discard INBOX/COLLECTION images (move to ARCHIVE)
+  - Context constraints: COLLECTION images don't respond to Tab, ARCHIVE images don't respond to Backspace
+  - Success messages: "Image moved to COLLECTION" or "Image moved to ARCHIVE" with 500ms timing
+  - Automatic image advancement after successful status updates
+  - Error messages: "Unable to update image status" with 500ms timeout
+  - **Grid Synchronization**: Updated images are immediately removed from filtered view ensuring grid reflects changes when exiting fullscreen
+  - **Auto-Close Behavior**: Fullscreen mode automatically closes when updating the last image in a filtered view, displaying appropriate empty state
+- **Layout Shift Prevention**: Status messages use absolute positioning with backdrop overlay to prevent content jumping
 - **Responsive Design**: Works across mobile, tablet, and desktop viewports
 - **Error Handling**: "Unable to load full image" message for loading failures
 - **Focus Management**: Keyboard focus trapped within popover during display
@@ -271,6 +282,7 @@ All interactive elements include `data-id` attributes for reliable test automati
 <div data-id="fullscreen-popover">
   <img data-id="popover-image" src="/api/images/${collection}/${imageId}" />
   <div data-id="popover-error">${errorMessage}</div>
+  <div data-id="popover-status-message">${statusMessage}</div>
 </div>
 
 <!-- Slideshow -->

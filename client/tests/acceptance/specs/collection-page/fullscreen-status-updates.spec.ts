@@ -177,6 +177,95 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await ui.shouldHaveNoFailedRequests();
     });
 
+    test('User exits fullscreen mode after updating images', async ({ page }) => {
+        const ui = new ImageVault(page);
+
+        // Install clock to control timing
+        await page.clock.install();
+
+        // Given the user is viewing a fullscreen image
+        const collection = await createCollectionFixture('TestCollection');
+        const inboxImages = await collection.getImages({status: "INBOX"});
+
+        await ui.collectionPage.visit('TestCollection', 'INBOX');
+
+        // Capture the first image ID from what's actually displayed in the popover
+        const firstImageId = inboxImages[0]!.id;
+        await ui.collectionPage.imageGrid.image(firstImageId).click();
+        await ui.collectionPage.popover.shouldBeDisplayed();
+        await ui.collectionPage.popover.shouldShowImage(firstImageId, collection.name);
+
+        // And the user has updated some images since entering fullscreen mode
+        // Update first image: INBOX -> COLLECTION (Tab key)
+        await ui.collectionPage.popover.pressTab();
+        await page.clock.fastForward(500);
+
+        // Capture the ID of whatever image is now showing (this is what we'll update next)
+        const popoverImage = await page.locator('[data-id="popover-image"]');
+        const currentImageSrc = await popoverImage.getAttribute('src');
+        const currentImageId = currentImageSrc!.split('/').pop()!;
+
+        // Update second image: whatever -> ARCHIVE (Backspace key)
+        await ui.collectionPage.popover.pressBackspace();
+        await page.clock.fastForward(500);
+
+        // When the user exits fullscreen mode
+        await page.keyboard.press('Escape');
+        await ui.collectionPage.popover.shouldNotBeDisplayed();
+
+        // Then the image grid reflects the updates they made
+        // The first image (moved to COLLECTION) should not be in INBOX view
+        await ui.collectionPage.imageGrid.image(firstImageId).shouldNotBeDisplayed();
+        // The second image (moved to ARCHIVE) should not be in INBOX view
+        await ui.collectionPage.imageGrid.image(currentImageId).shouldNotBeDisplayed();
+
+        // Verify that remaining INBOX images are still displayed
+        const remainingInboxImages = inboxImages.filter(img =>
+            img.id !== firstImageId && img.id !== currentImageId
+        );
+        for (const img of remainingInboxImages) {
+            await ui.collectionPage.imageGrid.image(img.id).shouldBeDisplayed();
+        }
+
+        // Verify no errors occurred
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+
+    test('User updates the last image', async ({ page }) => {
+        const ui = new ImageVault(page);
+
+        // Install clock to control timing
+        await page.clock.install();
+
+        // Given the user is viewing a fullscreen image
+        // And it is the only image with the current status
+        const collection = await createCollectionFixture('SingleImage', 1);
+
+        // Get all INBOX images and make sure only one remains
+        const inboxImages = await collection.getImages({status: "INBOX"});
+        const lastImage = inboxImages[0]!;
+
+        await ui.collectionPage.visit('SingleImage', 'INBOX');
+        await ui.collectionPage.imageGrid.image(lastImage.id).click();
+        await ui.collectionPage.popover.shouldBeDisplayed();
+        await ui.collectionPage.popover.shouldShowImage(lastImage.id, collection.name);
+
+        // When the user updates the status of the image
+        await ui.collectionPage.popover.pressTab();
+        await page.clock.fastForward(500);
+
+        // Then fullscreen mode is closed
+        await ui.collectionPage.popover.shouldNotBeDisplayed();
+
+        // And the view shows the empty state since no images remain with current status
+        await expect(page.locator('[data-id="empty-message"]')).toBeVisible();
+
+        // Verify no errors occurred
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+
     test('Status update request fails', async ({ page }) => {
         const ui = new ImageVault(page);
 
