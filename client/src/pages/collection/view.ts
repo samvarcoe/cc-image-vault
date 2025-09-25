@@ -334,6 +334,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
 
         const selectedImage = this.model.getSelectedImage();
         const popoverError = this.model.getPopoverError();
+        const popoverStatusMessage = this.model.getPopoverStatusMessage();
         const collectionName = this.model.getCollectionName();
 
         if (!selectedImage) {
@@ -351,7 +352,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                         </div>
                     ` :
                     /*html*/`
-                        <div class="w-full h-full flex items-center justify-center p-4">
+                        <div class="w-full h-full flex items-center justify-center p-4 relative">
                             <img
                                 src="${originalImageUrl}"
                                 alt="Full size image ${selectedImage.id}"
@@ -360,6 +361,11 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                                 height="${selectedImage.height}"
                                 data-id="popover-image"
                             />
+                            ${popoverStatusMessage ? /*html*/`
+                                <div data-id="popover-status-message" class="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-75 text-white text-lg font-medium px-4 py-2 rounded-lg">
+                                    ${popoverStatusMessage}
+                                </div>
+                            ` : ''}
                         </div>
                     `
                 }

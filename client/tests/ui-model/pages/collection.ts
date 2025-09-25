@@ -194,9 +194,43 @@ class Popover extends Element {
         return this.child(Element, 'Popover Error Message', '[data-id="popover-error-message"]');
     }
 
+    get statusMessage(): Element {
+        return this.child(Element, 'Popover Status Message', '[data-id="popover-status-message"]');
+    }
+
     async shouldShowImage(imageId: string, collectionName: string): Promise<void> {
         await this.image.shouldHaveAttribute('src', `/api/images/${collectionName}/${imageId}`);
         LOGGER.log(`✓ Popover displays image "${imageId}" from collection "${collectionName}"`);
+    }
+
+    async shouldShowStatusMessage(expectedMessage: string): Promise<void> {
+        await this.statusMessage.shouldBeDisplayed();
+        await this.statusMessage.shouldHaveText(expectedMessage);
+        LOGGER.log(`✓ Popover shows status message: "${expectedMessage}"`);
+    }
+
+    async shouldHideStatusMessage(): Promise<void> {
+        await this.statusMessage.shouldNotBeDisplayed();
+        LOGGER.log('✓ Popover status message is hidden');
+    }
+
+    async shouldHaveStatusMessageThenHide(expectedMessage: string): Promise<void> {
+        // First verify the message is displayed to avoid false positives
+        await this.statusMessage.shouldBeDisplayed();
+        await this.statusMessage.shouldHaveText(expectedMessage);
+        // Then verify it gets hidden
+        await this.statusMessage.shouldNotBeDisplayed();
+        LOGGER.log(`✓ Popover status message "${expectedMessage}" appeared then was hidden`);
+    }
+
+    async pressTab(): Promise<void> {
+        await this.page.keyboard.press('Tab');
+        LOGGER.log('✓ Pressed Tab key in popover');
+    }
+
+    async pressBackspace(): Promise<void> {
+        await this.page.keyboard.press('Backspace');
+        LOGGER.log('✓ Pressed Backspace key in popover');
     }
 
     async scrollDown(): Promise<void> {

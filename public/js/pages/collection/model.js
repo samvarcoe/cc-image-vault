@@ -4,7 +4,8 @@ export default class CollectionPageModel extends Model {
         super(Object.assign({ name: '', status: 'COLLECTION', images: [], error: '', loading: false, curate: false, selectedImageIds: [], hiddenImageIds: [], statusUpdateError: '', processingImageIds: [], popover: {
                 visible: false,
                 selectedImageId: undefined,
-                error: undefined
+                error: undefined,
+                statusMessage: undefined
             }, confirmationDialog: {
                 visible: false,
                 message: undefined
@@ -60,18 +61,34 @@ export default class CollectionPageModel extends Model {
         var _a;
         return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.error;
     }
+    getPopoverStatusMessage() {
+        var _a;
+        return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.statusMessage;
+    }
+    setPopoverStatusMessage(message) {
+        if (this.data.popover) {
+            this.data.popover.statusMessage = message;
+        }
+    }
+    clearPopoverStatusMessage() {
+        if (this.data.popover) {
+            this.data.popover.statusMessage = undefined;
+        }
+    }
     openPopover(imageId) {
         this.data.popover = {
             visible: true,
             selectedImageId: imageId,
-            error: undefined
+            error: undefined,
+            statusMessage: undefined
         };
     }
     closePopover() {
         this.data.popover = {
             visible: false,
             selectedImageId: undefined,
-            error: undefined
+            error: undefined,
+            statusMessage: undefined
         };
     }
     setPopoverError(message) {
@@ -95,6 +112,7 @@ export default class CollectionPageModel extends Model {
         if (nextImage) {
             this.data.popover.selectedImageId = nextImage.id;
             this.data.popover.error = undefined;
+            this.data.popover.statusMessage = undefined;
         }
     }
     advancePopoverToPrevious() {
@@ -113,6 +131,7 @@ export default class CollectionPageModel extends Model {
         if (prevImage) {
             this.data.popover.selectedImageId = prevImage.id;
             this.data.popover.error = undefined;
+            this.data.popover.statusMessage = undefined;
         }
     }
     isCurateMode() {
