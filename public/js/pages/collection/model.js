@@ -23,47 +23,31 @@ export default class CollectionPageModel extends Model {
             } }, initialData));
     }
     getCollectionName() {
-        var _a;
-        return (_a = this.data.name) !== null && _a !== void 0 ? _a : '';
+        return this.data.name;
     }
     getCurrentStatus() {
-        var _a;
-        return (_a = this.data.status) !== null && _a !== void 0 ? _a : 'COLLECTION';
+        return this.data.status;
     }
     getImages() {
-        var _a;
-        return (_a = this.data.images) !== null && _a !== void 0 ? _a : [];
-    }
-    ensurePopover() {
-        if (!this.data.popover) {
-            this.data.popover = {
-                visible: false,
-                selectedImageId: undefined,
-                error: undefined,
-                statusMessage: undefined
-            };
-        }
-        return this.data.popover;
+        return this.data.images;
     }
     hasImages() {
-        return (this.data.images || []).length > 0;
+        return this.data.images.length > 0;
     }
     hasError() {
         return !!this.data.error;
     }
     getErrorMessage() {
-        return this.data.error || '';
+        return this.data.error;
     }
     isLoading() {
-        return this.data.loading || false;
+        return this.data.loading;
     }
     isPopoverVisible() {
-        var _a, _b;
-        return (_b = (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.visible) !== null && _b !== void 0 ? _b : false;
+        return this.data.popover.visible;
     }
     getSelectedImageId() {
-        var _a;
-        return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId;
+        return this.data.popover.selectedImageId;
     }
     getSelectedImage() {
         const selectedId = this.getSelectedImageId();
@@ -72,20 +56,16 @@ export default class CollectionPageModel extends Model {
         return this.getImages().find(img => img.id === selectedId);
     }
     getPopoverError() {
-        var _a;
-        return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.error;
+        return this.data.popover.error;
     }
     getPopoverStatusMessage() {
-        var _a;
-        return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.statusMessage;
+        return this.data.popover.statusMessage;
     }
     setPopoverStatusMessage(message) {
-        const popover = this.ensurePopover();
-        popover.statusMessage = message;
+        this.data.popover.statusMessage = message;
     }
     clearPopoverStatusMessage() {
-        const popover = this.ensurePopover();
-        popover.statusMessage = undefined;
+        this.data.popover.statusMessage = undefined;
     }
     openPopover(imageId) {
         this.data.popover = {
@@ -104,13 +84,10 @@ export default class CollectionPageModel extends Model {
         };
     }
     setPopoverError(message) {
-        if (this.data.popover) {
-            this.data.popover.error = message;
-        }
+        this.data.popover.error = message;
     }
     advancePopoverToNext() {
-        var _a;
-        if (!this.isPopoverVisible() || !((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId)) {
+        if (!this.isPopoverVisible() || !this.data.popover.selectedImageId) {
             return;
         }
         const images = this.getImages();
@@ -138,8 +115,7 @@ export default class CollectionPageModel extends Model {
         }
     }
     advancePopoverToPrevious() {
-        var _a;
-        if (!this.isPopoverVisible() || !((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId)) {
+        if (!this.isPopoverVisible() || !this.data.popover.selectedImageId) {
             return;
         }
         const currentImageId = this.data.popover.selectedImageId;
@@ -157,7 +133,7 @@ export default class CollectionPageModel extends Model {
         }
     }
     isCurateMode() {
-        return this.data.curate || false;
+        return this.data.curate;
     }
     setCurateMode(curate) {
         this.data.curate = curate;
@@ -169,7 +145,7 @@ export default class CollectionPageModel extends Model {
         }
     }
     getSelectedImageIds() {
-        return this.data.selectedImageIds || [];
+        return this.data.selectedImageIds;
     }
     isImageSelected(imageId) {
         return this.getSelectedImageIds().includes(imageId);
@@ -203,7 +179,7 @@ export default class CollectionPageModel extends Model {
         return this.getSelectedImageIds().length > 0;
     }
     getStatusUpdateError() {
-        return this.data.statusUpdateError || '';
+        return this.data.statusUpdateError;
     }
     setStatusUpdateError(error) {
         this.data.statusUpdateError = error;
@@ -212,7 +188,7 @@ export default class CollectionPageModel extends Model {
         this.data.statusUpdateError = '';
     }
     getHiddenImageIds() {
-        return this.data.hiddenImageIds || [];
+        return this.data.hiddenImageIds;
     }
     isImageHidden(imageId) {
         return this.getHiddenImageIds().includes(imageId);
@@ -226,12 +202,12 @@ export default class CollectionPageModel extends Model {
         this.data.hiddenImageIds = hiddenIds.filter(id => !imageIds.includes(id));
     }
     removeImages(imageIds) {
-        this.data.images = (this.data.images || []).filter(img => !imageIds.includes(img.id));
-        this.data.hiddenImageIds = (this.data.hiddenImageIds || []).filter(id => !imageIds.includes(id));
-        this.data.selectedImageIds = (this.data.selectedImageIds || []).filter(id => !imageIds.includes(id));
+        this.data.images = this.data.images.filter(img => !imageIds.includes(img.id));
+        this.data.hiddenImageIds = this.data.hiddenImageIds.filter(id => !imageIds.includes(id));
+        this.data.selectedImageIds = this.data.selectedImageIds.filter(id => !imageIds.includes(id));
     }
     getProcessingImageIds() {
-        return this.data.processingImageIds || [];
+        return this.data.processingImageIds;
     }
     setProcessingImageIds(imageIds) {
         this.data.processingImageIds = imageIds;
@@ -239,97 +215,51 @@ export default class CollectionPageModel extends Model {
     clearProcessingImageIds() {
         this.data.processingImageIds = [];
     }
-    ensureConfirmationDialog() {
-        if (!this.data.confirmationDialog) {
-            this.data.confirmationDialog = {
-                visible: false,
-                message: undefined
-            };
-        }
-        return this.data.confirmationDialog;
-    }
-    ensureUploadDialog() {
-        if (!this.data.uploadDialog) {
-            this.data.uploadDialog = {
-                visible: false
-            };
-        }
-        return this.data.uploadDialog;
-    }
     isConfirmationDialogVisible() {
-        var _a, _b;
-        return (_b = (_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.visible) !== null && _b !== void 0 ? _b : false;
+        return this.data.confirmationDialog.visible;
     }
     getConfirmationDialogMessage() {
-        var _a, _b;
-        return (_b = (_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.message) !== null && _b !== void 0 ? _b : '';
+        var _a;
+        return (_a = this.data.confirmationDialog.message) !== null && _a !== void 0 ? _a : '';
     }
     showConfirmationDialog(message) {
-        const dialog = this.ensureConfirmationDialog();
-        dialog.visible = true;
-        dialog.message = message;
+        this.data.confirmationDialog = {
+            visible: true,
+            message: message
+        };
     }
     hideConfirmationDialog() {
-        const dialog = this.ensureConfirmationDialog();
-        dialog.visible = false;
-        dialog.message = undefined;
+        this.data.confirmationDialog = {
+            visible: false,
+            message: undefined
+        };
     }
     isUploadDialogVisible() {
-        var _a, _b;
-        return (_b = (_a = this.data.uploadDialog) === null || _a === void 0 ? void 0 : _a.visible) !== null && _b !== void 0 ? _b : false;
+        return this.data.uploadDialog.visible;
     }
     showUploadDialog() {
-        const dialog = this.ensureUploadDialog();
-        dialog.visible = true;
+        this.data.uploadDialog.visible = true;
     }
     hideUploadDialog() {
-        const dialog = this.ensureUploadDialog();
-        dialog.visible = false;
-    }
-    ensureUpload() {
-        if (!this.data.upload) {
-            this.data.upload = {
-                isUploading: false,
-                error: undefined
-            };
-        }
-        return this.data.upload;
+        this.data.uploadDialog.visible = false;
     }
     isUploading() {
-        var _a, _b;
-        return (_b = (_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) !== null && _b !== void 0 ? _b : false;
+        return this.data.upload.isUploading;
     }
     setUploading(isUploading) {
-        const upload = this.ensureUpload();
-        upload.isUploading = isUploading;
+        this.data.upload.isUploading = isUploading;
     }
     getUploadError() {
-        var _a;
-        return (_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.error;
+        return this.data.upload.error;
     }
     setUploadError(error) {
-        const upload = this.ensureUpload();
-        upload.error = error;
+        this.data.upload.error = error;
     }
     clearUploadError() {
-        const upload = this.ensureUpload();
-        upload.error = undefined;
-    }
-    ensureSlideshow() {
-        if (!this.data.slideshow) {
-            this.data.slideshow = {
-                visible: false,
-                currentImageId: undefined,
-                isPaused: false,
-                imageSequence: [],
-                currentIndex: 0
-            };
-        }
-        return this.data.slideshow;
+        this.data.upload.error = undefined;
     }
     isSlideshowVisible() {
-        var _a, _b;
-        return (_b = (_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.visible) !== null && _b !== void 0 ? _b : false;
+        return this.data.slideshow.visible;
     }
     openSlideshow() {
         const images = this.getImages();
@@ -338,43 +268,40 @@ export default class CollectionPageModel extends Model {
         }
         const imageIds = images.map(img => img.id);
         const shuffledIds = this.shuffleArray([...imageIds]);
-        const slideshow = this.ensureSlideshow();
-        slideshow.visible = true;
-        slideshow.currentImageId = shuffledIds[0];
-        slideshow.isPaused = false;
-        slideshow.imageSequence = shuffledIds;
-        slideshow.currentIndex = 0;
+        this.data.slideshow = {
+            visible: true,
+            currentImageId: shuffledIds[0],
+            isPaused: false,
+            imageSequence: shuffledIds,
+            currentIndex: 0
+        };
     }
     closeSlideshow() {
-        const slideshow = this.ensureSlideshow();
-        slideshow.visible = false;
-        slideshow.currentImageId = undefined;
-        slideshow.isPaused = false;
-        slideshow.imageSequence = [];
-        slideshow.currentIndex = 0;
+        this.data.slideshow = {
+            visible: false,
+            currentImageId: undefined,
+            isPaused: false,
+            imageSequence: [],
+            currentIndex: 0
+        };
     }
     getCurrentSlideshowImageId() {
-        var _a;
-        return (_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.currentImageId;
+        return this.data.slideshow.currentImageId;
     }
     isSlideshowPaused() {
-        var _a, _b;
-        return (_b = (_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.isPaused) !== null && _b !== void 0 ? _b : false;
+        return this.data.slideshow.isPaused;
     }
     pauseSlideshow() {
-        const slideshow = this.ensureSlideshow();
-        slideshow.isPaused = true;
+        this.data.slideshow.isPaused = true;
     }
     resumeSlideshow() {
-        const slideshow = this.ensureSlideshow();
-        slideshow.isPaused = false;
+        this.data.slideshow.isPaused = false;
     }
     toggleSlideshowPause() {
-        const slideshow = this.ensureSlideshow();
-        slideshow.isPaused = !slideshow.isPaused;
+        this.data.slideshow.isPaused = !this.data.slideshow.isPaused;
     }
     advanceSlideshow() {
-        const slideshow = this.ensureSlideshow();
+        const slideshow = this.data.slideshow;
         if (slideshow.imageSequence.length === 0) {
             return;
         }
@@ -393,7 +320,7 @@ export default class CollectionPageModel extends Model {
         }
     }
     skipToNextImage() {
-        const slideshow = this.ensureSlideshow();
+        const slideshow = this.data.slideshow;
         if (slideshow.imageSequence.length === 0) {
             return;
         }

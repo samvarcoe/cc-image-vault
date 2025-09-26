@@ -1,34 +1,34 @@
 import { Model } from '../../mvc.js';
 
 export interface CollectionPageData {
-    name?: string;
-    status?: ImageStatus;
-    images?: ImageMetadata[];
-    error?: string;
-    loading?: boolean;
-    curate?: boolean;
-    selectedImageIds?: string[];
-    hiddenImageIds?: string[];
-    statusUpdateError?: string;
-    processingImageIds?: string[];
-    popover?: {
+    name: string;
+    status: ImageStatus;
+    images: ImageMetadata[];
+    error: string;
+    loading: boolean;
+    curate: boolean;
+    selectedImageIds: string[];
+    hiddenImageIds: string[];
+    statusUpdateError: string;
+    processingImageIds: string[];
+    popover: {
         visible: boolean;
         selectedImageId?: string;
         error?: string;
         statusMessage?: string;
     };
-    confirmationDialog?: {
+    confirmationDialog: {
         visible: boolean;
         message?: string;
     };
-    uploadDialog?: {
+    uploadDialog: {
         visible: boolean;
     };
-    upload?: {
+    upload: {
         isUploading: boolean;
         error?: string;
     };
-    slideshow?: {
+    slideshow: {
         visible: boolean;
         currentImageId?: string;
         isPaused: boolean;
@@ -80,31 +80,20 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     getCollectionName(): string {
-        return this.data.name ?? '';
+        return this.data.name;
     }
 
     getCurrentStatus(): ImageStatus {
-        return this.data.status ?? 'COLLECTION';
+        return this.data.status;
     }
 
     getImages(): ImageMetadata[] {
-        return this.data.images ?? [];
+        return this.data.images;
     }
 
-    private ensurePopover(): NonNullable<CollectionPageData['popover']> {
-        if (!this.data.popover) {
-            this.data.popover = {
-                visible: false,
-                selectedImageId: undefined,
-                error: undefined,
-                statusMessage: undefined
-            };
-        }
-        return this.data.popover;
-    }
 
     hasImages(): boolean {
-        return (this.data.images || []).length > 0;
+        return this.data.images.length > 0;
     }
 
     hasError(): boolean {
@@ -112,19 +101,19 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     getErrorMessage(): string {
-        return this.data.error || '';
+        return this.data.error;
     }
 
     isLoading(): boolean {
-        return this.data.loading || false;
+        return this.data.loading;
     }
 
     isPopoverVisible(): boolean {
-        return this.data.popover?.visible ?? false;
+        return this.data.popover.visible;
     }
 
     getSelectedImageId(): string | undefined {
-        return this.data.popover?.selectedImageId;
+        return this.data.popover.selectedImageId;
     }
 
     getSelectedImage(): ImageMetadata | undefined {
@@ -134,21 +123,19 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     getPopoverError(): string | undefined {
-        return this.data.popover?.error;
+        return this.data.popover.error;
     }
 
     getPopoverStatusMessage(): string | undefined {
-        return this.data.popover?.statusMessage;
+        return this.data.popover.statusMessage;
     }
 
     setPopoverStatusMessage(message: string): void {
-        const popover = this.ensurePopover();
-        popover.statusMessage = message;
+        this.data.popover.statusMessage = message;
     }
 
     clearPopoverStatusMessage(): void {
-        const popover = this.ensurePopover();
-        popover.statusMessage = undefined;
+        this.data.popover.statusMessage = undefined;
     }
 
     openPopover(imageId: string): void {
@@ -170,13 +157,11 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     setPopoverError(message: string): void {
-        if (this.data.popover) {
-            this.data.popover.error = message;
-        }
+        this.data.popover.error = message;
     }
 
     advancePopoverToNext(): void {
-        if (!this.isPopoverVisible() || !this.data.popover?.selectedImageId) {
+        if (!this.isPopoverVisible() || !this.data.popover.selectedImageId) {
             return;
         }
 
@@ -214,7 +199,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     advancePopoverToPrevious(): void {
-        if (!this.isPopoverVisible() || !this.data.popover?.selectedImageId) {
+        if (!this.isPopoverVisible() || !this.data.popover.selectedImageId) {
             return;
         }
 
@@ -238,7 +223,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     isCurateMode(): boolean {
-        return this.data.curate || false;
+        return this.data.curate;
     }
 
     setCurateMode(curate: boolean): void {
@@ -253,7 +238,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     getSelectedImageIds(): string[] {
-        return this.data.selectedImageIds || [];
+        return this.data.selectedImageIds;
     }
 
     isImageSelected(imageId: string): boolean {
@@ -295,7 +280,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
 
     // Status update methods
     getStatusUpdateError(): string {
-        return this.data.statusUpdateError || '';
+        return this.data.statusUpdateError;
     }
 
     setStatusUpdateError(error: string): void {
@@ -307,7 +292,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     getHiddenImageIds(): string[] {
-        return this.data.hiddenImageIds || [];
+        return this.data.hiddenImageIds;
     }
 
     isImageHidden(imageId: string): boolean {
@@ -326,14 +311,14 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
 
     removeImages(imageIds: string[]): void {
         // Remove images from the images array
-        this.data.images = (this.data.images || []).filter(img => !imageIds.includes(img.id));
+        this.data.images = this.data.images.filter(img => !imageIds.includes(img.id));
         // Also remove from hidden and selected lists
-        this.data.hiddenImageIds = (this.data.hiddenImageIds || []).filter(id => !imageIds.includes(id));
-        this.data.selectedImageIds = (this.data.selectedImageIds || []).filter(id => !imageIds.includes(id));
+        this.data.hiddenImageIds = this.data.hiddenImageIds.filter(id => !imageIds.includes(id));
+        this.data.selectedImageIds = this.data.selectedImageIds.filter(id => !imageIds.includes(id));
     }
 
     getProcessingImageIds(): string[] {
-        return this.data.processingImageIds || [];
+        return this.data.processingImageIds;
     }
 
     setProcessingImageIds(imageIds: string[]): void {
@@ -345,109 +330,66 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     // Dialog management
-    private ensureConfirmationDialog(): NonNullable<CollectionPageData['confirmationDialog']> {
-        if (!this.data.confirmationDialog) {
-            this.data.confirmationDialog = {
-                visible: false,
-                message: undefined
-            };
-        }
-        return this.data.confirmationDialog;
-    }
-
-    private ensureUploadDialog(): NonNullable<CollectionPageData['uploadDialog']> {
-        if (!this.data.uploadDialog) {
-            this.data.uploadDialog = {
-                visible: false
-            };
-        }
-        return this.data.uploadDialog;
-    }
 
     isConfirmationDialogVisible(): boolean {
-        return this.data.confirmationDialog?.visible ?? false;
+        return this.data.confirmationDialog.visible;
     }
 
     getConfirmationDialogMessage(): string {
-        return this.data.confirmationDialog?.message ?? '';
+        return this.data.confirmationDialog.message ?? '';
     }
 
     showConfirmationDialog(message: string): void {
-        const dialog = this.ensureConfirmationDialog();
-        dialog.visible = true;
-        dialog.message = message;
+        this.data.confirmationDialog = {
+            visible: true,
+            message: message
+        };
     }
 
     hideConfirmationDialog(): void {
-        const dialog = this.ensureConfirmationDialog();
-        dialog.visible = false;
-        dialog.message = undefined;
+        this.data.confirmationDialog = {
+            visible: false,
+            message: undefined
+        };
     }
 
     isUploadDialogVisible(): boolean {
-        return this.data.uploadDialog?.visible ?? false;
+        return this.data.uploadDialog.visible;
     }
 
     showUploadDialog(): void {
-        const dialog = this.ensureUploadDialog();
-        dialog.visible = true;
+        this.data.uploadDialog.visible = true;
     }
 
     hideUploadDialog(): void {
-        const dialog = this.ensureUploadDialog();
-        dialog.visible = false;
+        this.data.uploadDialog.visible = false;
     }
 
     // Upload state management
-    private ensureUpload(): NonNullable<CollectionPageData['upload']> {
-        if (!this.data.upload) {
-            this.data.upload = {
-                isUploading: false,
-                error: undefined
-            };
-        }
-        return this.data.upload;
-    }
 
     isUploading(): boolean {
-        return this.data.upload?.isUploading ?? false;
+        return this.data.upload.isUploading;
     }
 
     setUploading(isUploading: boolean): void {
-        const upload = this.ensureUpload();
-        upload.isUploading = isUploading;
+        this.data.upload.isUploading = isUploading;
     }
 
     getUploadError(): string | undefined {
-        return this.data.upload?.error;
+        return this.data.upload.error;
     }
 
     setUploadError(error: string): void {
-        const upload = this.ensureUpload();
-        upload.error = error;
+        this.data.upload.error = error;
     }
 
     clearUploadError(): void {
-        const upload = this.ensureUpload();
-        upload.error = undefined;
+        this.data.upload.error = undefined;
     }
 
     // Slideshow methods
-    private ensureSlideshow(): NonNullable<CollectionPageData['slideshow']> {
-        if (!this.data.slideshow) {
-            this.data.slideshow = {
-                visible: false,
-                currentImageId: undefined,
-                isPaused: false,
-                imageSequence: [],
-                currentIndex: 0
-            };
-        }
-        return this.data.slideshow;
-    }
-
     isSlideshowVisible(): boolean {
-        return this.data.slideshow?.visible ?? false;
+        return this.data.slideshow.visible;
     }
 
     openSlideshow(): void {
@@ -460,48 +402,48 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         const imageIds = images.map(img => img.id);
         const shuffledIds = this.shuffleArray([...imageIds]);
 
-        const slideshow = this.ensureSlideshow();
-        slideshow.visible = true;
-        slideshow.currentImageId = shuffledIds[0];
-        slideshow.isPaused = false;
-        slideshow.imageSequence = shuffledIds;
-        slideshow.currentIndex = 0;
+        this.data.slideshow = {
+            visible: true,
+            currentImageId: shuffledIds[0],
+            isPaused: false,
+            imageSequence: shuffledIds,
+            currentIndex: 0
+        };
     }
 
     closeSlideshow(): void {
-        const slideshow = this.ensureSlideshow();
-        slideshow.visible = false;
-        slideshow.currentImageId = undefined;
-        slideshow.isPaused = false;
-        slideshow.imageSequence = [];
-        slideshow.currentIndex = 0;
+        this.data.slideshow = {
+            visible: false,
+            currentImageId: undefined,
+            isPaused: false,
+            imageSequence: [],
+            currentIndex: 0
+        };
     }
 
     getCurrentSlideshowImageId(): string | undefined {
-        return this.data.slideshow?.currentImageId;
+        return this.data.slideshow.currentImageId;
     }
 
     isSlideshowPaused(): boolean {
-        return this.data.slideshow?.isPaused ?? false;
+        return this.data.slideshow.isPaused;
     }
 
     pauseSlideshow(): void {
-        const slideshow = this.ensureSlideshow();
-        slideshow.isPaused = true;
+        this.data.slideshow.isPaused = true;
     }
 
     resumeSlideshow(): void {
-        const slideshow = this.ensureSlideshow();
-        slideshow.isPaused = false;
+        this.data.slideshow.isPaused = false;
     }
 
     toggleSlideshowPause(): void {
-        const slideshow = this.ensureSlideshow();
-        slideshow.isPaused = !slideshow.isPaused;
+        this.data.slideshow.isPaused = !this.data.slideshow.isPaused;
     }
 
     advanceSlideshow(): void {
-        const slideshow = this.ensureSlideshow();
+        const slideshow = this.data.slideshow;
+
         if (slideshow.imageSequence.length === 0) {
             return;
         }
@@ -525,7 +467,8 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     skipToNextImage(): void {
-        const slideshow = this.ensureSlideshow();
+        const slideshow = this.data.slideshow;
+
         if (slideshow.imageSequence.length === 0) {
             return;
         }

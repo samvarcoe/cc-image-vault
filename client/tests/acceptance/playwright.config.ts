@@ -5,7 +5,7 @@ export default defineConfig({
   testDir: './specs',
   workers: 1,
   reporter: [
-    ['list']
+    ['dot']
   ],
   use: {
     baseURL: CONFIG.UI_BASE_URL,
