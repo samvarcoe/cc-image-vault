@@ -5,6 +5,8 @@ import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 import { getImageFixture, getUnsupportedFileFixture } from '@/utils/fixtures/image-fixtures';
 import { readFileSync } from 'fs';
 
+const COLLECTION_NAME = 'UploadingImagesCollection';
+
 test.describe('Client - Images - Upload', () => {
 
     test.beforeEach(async () => {
@@ -27,10 +29,10 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given a Collection exists
-        await createCollectionFixture('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
 
         // When the user visits the Collection page
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Then the header displays the "Upload" button
         await ui.collectionPage.header.uploadButton.shouldBeDisplayed();
@@ -46,8 +48,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // When the user clicks the "Upload" button
         await ui.collectionPage.header.uploadButton.click();
@@ -73,8 +75,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the file browser dialog is open
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.header.uploadButton.click();
         await ui.collectionPage.uploadDialog.shouldBeDisplayed();
 
@@ -109,8 +111,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the file browser dialog is open
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.header.uploadButton.click();
         await ui.collectionPage.uploadDialog.shouldBeDisplayed();
 
@@ -134,8 +136,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given files are being uploaded
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Start upload process
         await ui.collectionPage.header.uploadButton.click();
@@ -175,8 +177,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given files are being uploaded
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Mock mixed upload responses (some succeed, some fail)
         let requestCount = 0;
@@ -234,8 +236,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given files are being uploaded
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Mock failed upload responses for error scenario
         await page.route('**/api/images/*', async route => {
@@ -279,8 +281,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given files are being uploaded
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Use route interception to delay upload response for timing control
         await page.route('**/api/images/*', async route => {
@@ -329,8 +331,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the navigation warning dialog is displayed
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Use route interception to delay upload for timing control
         await page.route('**/api/images/*', async route => {
@@ -374,8 +376,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the navigation warning dialog is displayed
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Use route interception to delay upload for timing control
         await page.route('**/api/images/*', async route => {
@@ -411,8 +413,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the user has selected many image files
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Create 15 test images (more than batch size of 10)
         const images = await Promise.all(
@@ -445,8 +447,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the user has submitted a mixture of valid and non-image files
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Create valid image and invalid text file
         const validImage = await getImageFixture({ id: 'valid-image', extension: 'jpg' });

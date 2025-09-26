@@ -2,6 +2,8 @@ import { test, expect, Page } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 
+const EXISTING_COLLECTION_NAME = 'existing-collection';
+
 async function pauseRoute(page: Page, urlPattern: string | RegExp, method?: string) {
     let resume: () => void;
     const ready = new Promise<void>(resolve => { resume = resolve; });
@@ -151,14 +153,14 @@ test.describe('Client - Home Page - Creating Collections', () => {
 
     test('User attempts to create a Collection with a duplicate name', async ({ page }) => {
         // Create an existing collection
-        Collection.create('existing-collection');
+        Collection.create(EXISTING_COLLECTION_NAME);
 
         const ui = new ImageVault(page);
         await ui.homePage.visit();
 
         // Given the user has entered a valid Collection name
         // But a Collection with that name already exists
-        await ui.homePage.collectionsList.creationForm.nameInput.type('existing-collection');
+        await ui.homePage.collectionsList.creationForm.nameInput.type(EXISTING_COLLECTION_NAME);
 
         // When the user attempts to submit the form
         await ui.homePage.collectionsList.creationForm.submitButton.click();

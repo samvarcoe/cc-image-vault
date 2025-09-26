@@ -3,6 +3,9 @@ import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
+const COLLECTION_NAME = 'FullscreenStatusCollection';
+const SINGLE_IMAGE_COLLECTION = 'FullscreenStatusSingleImage';
+
 test.describe('Client - Images - Fullscreen Status Updates', () => {
 
     test.beforeEach(async () => {
@@ -16,7 +19,7 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing an "INBOX" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
         const nextImage = inboxImages[1]!;
@@ -58,7 +61,7 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing an "INBOX" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
         const nextImage = inboxImages[1]!;
@@ -100,7 +103,7 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing a "COLLECTION" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const testImage = collectionImages[0]!;
         const nextImage = collectionImages[1]!;
@@ -142,7 +145,7 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing an "ARCHIVE" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const testImage = archiveImages[0]!;
         const nextImage = archiveImages[1]!;
@@ -184,7 +187,7 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing a fullscreen image
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const inboxImages = await collection.getImages({status: "INBOX"});
 
         await ui.collectionPage.visit('TestCollection', 'INBOX');
@@ -240,7 +243,7 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
 
         // Given the user is viewing a fullscreen image
         // And it is the only image with the current status
-        const collection = await createCollectionFixture('SingleImage', 1);
+        const collection = await createCollectionFixture(SINGLE_IMAGE_COLLECTION, 1);
 
         // Get all INBOX images and make sure only one remains
         const inboxImages = await collection.getImages({status: "INBOX"});
@@ -272,7 +275,7 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing an image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
 
@@ -313,7 +316,7 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given a collection contains a "COLLECTION" image
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const testImage = collectionImages[0]!;
 
@@ -347,7 +350,7 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given the user is viewing an "ARCHIVE" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const testImage = archiveImages[0]!;
 

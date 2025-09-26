@@ -3,6 +3,9 @@ import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
+const COLLECTION_NAME = 'StatusUpdatesCollection';
+const BATCH_COLLECTION_NAME = 'StatusUpdatesBatchCollection';
+
 test.describe('Client - Collection Page - Image Status Updates', () => {
 
     test.beforeEach(async () => {
@@ -13,11 +16,11 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
 
         // And the current status view is "INBOX"
         // And curate mode is active
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the page loads
@@ -38,7 +41,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
 
         // And the current status view is "COLLECTION"
         // And curate mode is active
@@ -63,7 +66,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
 
         // And the current status view is "ARCHIVE"
         // And curate mode is active
@@ -87,12 +90,12 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given multiple "INBOX" images are selected
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const inboxImages = await collection.getImages({status: "INBOX"});
         const firstImage = inboxImages[0]!;
         const secondImage = inboxImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images
@@ -126,12 +129,12 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given multiple "INBOX" images are selected
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const inboxImages = await collection.getImages({status: "INBOX"});
         const firstImage = inboxImages[0]!;
         const secondImage = inboxImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images
@@ -165,7 +168,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given multiple "COLLECTION" images are selected
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
@@ -204,7 +207,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given multiple "ARCHIVE" images are selected
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const firstImage = archiveImages[0]!;
         const secondImage = archiveImages[1]!;
@@ -243,11 +246,11 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given a status change request is initiated
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
 
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select an image and initiate Keep request
@@ -271,11 +274,11 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given a status change request is initiated
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
 
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Mock API failure by intercepting the PATCH request
@@ -319,7 +322,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
 
         const imageCount = 100
 
-        await createCollectionFixture('TestBatchCollection', imageCount);
+        await createCollectionFixture(BATCH_COLLECTION_NAME, imageCount);
 
         await page.goto('/collection/TestBatchCollection?status=INBOX&curate=true');
         await page.waitForLoadState('networkidle');

@@ -3,6 +3,8 @@ import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
+const COLLECTION_NAME = 'SelectingImagesCollection';
+
 test.describe('Client - Collection Page - Selecting Images', () => {
 
     test.beforeEach(async () => {
@@ -13,8 +15,8 @@ test.describe('Client - Collection Page - Selecting Images', () => {
         const ui = new ImageVault(page);
 
         // Given the Collection page is not in curate mode
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.header.curateButton.shouldNotBePressed();
 
         // When the user clicks the "Curate" button
@@ -37,7 +39,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
         const ui = new ImageVault(page);
 
         // Given the Collection page is in curate mode
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
@@ -59,7 +61,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
         const ui = new ImageVault(page);
 
         // Given multiple images are selected
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
@@ -92,7 +94,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
 
         // Given the Collection page is in curate mode
         // And multiple images are displayed
-        await createCollectionFixture('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
         await page.goto('/collection/TestCollection?curate=true');
         await page.waitForLoadState('networkidle');
 
@@ -111,7 +113,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
         const ui = new ImageVault(page);
 
         // Given multiple images are selected
-        await createCollectionFixture('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
         await page.goto('/collection/TestCollection?curate=true');
         await page.waitForLoadState('networkidle');
 
@@ -138,7 +140,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
         const ui = new ImageVault(page);
 
         // Given multiple images are selected
-        await createCollectionFixture('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
         await page.goto('/collection/TestCollection?curate=true');
         await page.waitForLoadState('networkidle');
 
@@ -161,11 +163,11 @@ test.describe('Client - Collection Page - Selecting Images', () => {
         const ui = new ImageVault(page);
 
         // Given the Collection page is not in curate mode
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.header.curateButton.shouldNotBePressed();
 
         // When the user clicks on an image thumbnail

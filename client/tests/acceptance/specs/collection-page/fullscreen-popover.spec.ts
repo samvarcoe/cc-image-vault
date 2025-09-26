@@ -3,6 +3,8 @@ import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
+const COLLECTION_NAME = 'FullscreenPopoverCollection';
+
 test.describe('Client - Collection Page - Fullscreen Popover', () => {
 
     test.beforeEach(async () => {
@@ -12,8 +14,8 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
     test('User clicks thumbnail to open popover', async ({ page }) => {
         const ui = new ImageVault(page);
 
-        // Given a collection exists with name "TestCollection"
-        const collection = await createCollectionFixture('TestCollection');
+        // Given a collection exists with name "[COLLECTION_NAME]"
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
@@ -39,7 +41,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
@@ -65,7 +67,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
@@ -93,7 +95,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         // Given a collection page is open on desktop
         await page.setViewportSize({ width: 1200, height: 800 });
 
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
@@ -116,7 +118,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         // Given a collection page is open on tablet
         await page.setViewportSize({ width: 768, height: 1024 });
 
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
@@ -140,7 +142,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         // Given a collection page is open on mobile
         await page.setViewportSize({ width: 375, height: 667 });
 
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
@@ -161,7 +163,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
@@ -186,7 +188,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
@@ -211,7 +213,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
@@ -236,7 +238,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 

@@ -3,6 +3,10 @@ import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
+const COLLECTION_NAME = 'SlideshowCollection';
+const EMPTY_COLLECTION_NAME = 'SlideshowEmptyCollection';
+const SMALL_COLLECTION_NAME = 'SlideshowSmallCollection';
+
 test.describe('Client - Collection Page - Slideshow', () => {
 
     test.beforeEach(async () => {
@@ -13,10 +17,10 @@ test.describe('Client - Collection Page - Slideshow', () => {
         const ui = new ImageVault(page);
 
         // Given a collection with images exists
-        await createCollectionFixture('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
 
         // When the user views the images on the collection page
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Then the header displays the "Slideshow" button
         await ui.collectionPage.header.slideshowButton.shouldBeDisplayed();
@@ -33,7 +37,7 @@ test.describe('Client - Collection Page - Slideshow', () => {
         const ui = new ImageVault(page);
 
         // Given an empty collection exists
-        await createCollectionFixture('EmptyCollection', 0);
+        await createCollectionFixture(EMPTY_COLLECTION_NAME, 0);
 
         // When the user visits the collection page
         await ui.collectionPage.visit('EmptyCollection');
@@ -55,9 +59,9 @@ test.describe('Client - Collection Page - Slideshow', () => {
         await page.clock.install();
 
         // Given the user is on a collection page with images
-        await createCollectionFixture('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // When the user clicks the "Slideshow" button
         await ui.collectionPage.header.slideshowButton.click();
@@ -90,8 +94,8 @@ test.describe('Client - Collection Page - Slideshow', () => {
         await page.clock.install();
 
         // Given a slideshow is running
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.header.slideshowButton.click();
         await ui.collectionPage.slideshow.shouldBeDisplayed();
 
@@ -124,8 +128,8 @@ test.describe('Client - Collection Page - Slideshow', () => {
         await page.clock.install();
 
         // Given a slideshow is paused
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.header.slideshowButton.click();
         await ui.collectionPage.slideshow.shouldBeDisplayed();
 
@@ -159,8 +163,8 @@ test.describe('Client - Collection Page - Slideshow', () => {
         await page.clock.install();
 
         // Given a slideshow is running
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.header.slideshowButton.click();
         await ui.collectionPage.slideshow.shouldBeDisplayed();
 
@@ -189,8 +193,8 @@ test.describe('Client - Collection Page - Slideshow', () => {
         const ui = new ImageVault(page);
 
         // Given a slideshow is running
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        await createCollectionFixture(COLLECTION_NAME);
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.header.slideshowButton.click();
         await ui.collectionPage.slideshow.shouldBeDisplayed();
 
@@ -213,12 +217,12 @@ test.describe('Client - Collection Page - Slideshow', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a collection page with curate mode active
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Activate curate mode
         await ui.collectionPage.header.curateButton.click();
@@ -258,9 +262,9 @@ test.describe('Client - Collection Page - Slideshow', () => {
         await page.clock.install();
 
         // Given a slideshow is running
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = await createCollectionFixture(COLLECTION_NAME);
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         let requestCount = 0;
         let failedImageId: string;
@@ -304,7 +308,7 @@ test.describe('Client - Collection Page - Slideshow', () => {
         await page.clock.install();
 
         // Create a collection with fewer images to test cycling more easily
-        const collection = await createCollectionFixture('SmallCollection', 3);
+        const collection = await createCollectionFixture(SMALL_COLLECTION_NAME, 3);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
 
         await ui.collectionPage.visit('SmallCollection');

@@ -2,6 +2,10 @@ import { test } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
 
+const VACATION_COLLECTION = 'vacation-photos';
+const FAMILY_COLLECTION = 'family-events';
+const WORK_COLLECTION = 'work-projects';
+
 test.describe('Client - Home Page - Viewing Collections', () => {
 
     test.beforeEach(async () => {
@@ -10,9 +14,9 @@ test.describe('Client - Home Page - Viewing Collections', () => {
 
     test('User visits home page and collections exist', async ({ page }) => {
         // Given there are some collections in the system
-        Collection.create('vacation-photos');
-        Collection.create('family-events');
-        Collection.create('work-projects');
+        Collection.create(VACATION_COLLECTION);
+        Collection.create(FAMILY_COLLECTION);
+        Collection.create(WORK_COLLECTION);
 
         const ui = new ImageVault(page);
 
@@ -21,14 +25,14 @@ test.describe('Client - Home Page - Viewing Collections', () => {
 
         // And each collection card shows the collection name
         await ui.homePage.collectionsList.collection().shouldHaveCount(3);
-        await ui.homePage.collectionsList.collection('vacation-photos').title.shouldHaveText('vacation-photos');
-        await ui.homePage.collectionsList.collection('family-events').title.shouldHaveText('family-events');
-        await ui.homePage.collectionsList.collection('work-projects').title.shouldHaveText('work-projects');
+        await ui.homePage.collectionsList.collection(VACATION_COLLECTION).title.shouldHaveText(VACATION_COLLECTION);
+        await ui.homePage.collectionsList.collection(FAMILY_COLLECTION).title.shouldHaveText(FAMILY_COLLECTION);
+        await ui.homePage.collectionsList.collection(WORK_COLLECTION).title.shouldHaveText(WORK_COLLECTION);
 
         // And each collection card links to the collection's main page
-        await ui.homePage.collectionsList.collection('vacation-photos').link.shouldHaveHref('/collection/vacation-photos');
-        await ui.homePage.collectionsList.collection('family-events').link.shouldHaveHref('/collection/family-events');
-        await ui.homePage.collectionsList.collection('work-projects').link.shouldHaveHref('/collection/work-projects');
+        await ui.homePage.collectionsList.collection(VACATION_COLLECTION).link.shouldHaveHref(`/collection/${VACATION_COLLECTION}`);
+        await ui.homePage.collectionsList.collection(FAMILY_COLLECTION).link.shouldHaveHref(`/collection/${FAMILY_COLLECTION}`);
+        await ui.homePage.collectionsList.collection(WORK_COLLECTION).link.shouldHaveHref(`/collection/${WORK_COLLECTION}`);
 
         // Verify no errors occurred during the interaction
         await ui.shouldHaveNoConsoleErrors();
@@ -36,15 +40,15 @@ test.describe('Client - Home Page - Viewing Collections', () => {
     });
 
     test('User navigates to a collection from the home page', async ({ page }) => {
-        Collection.create('vacation-photos');
+        Collection.create(VACATION_COLLECTION);
 
         const ui = new ImageVault(page);
 
         await ui.homePage.visit();
 
-        await ui.homePage.collectionsList.collection('vacation-photos').link.click();
+        await ui.homePage.collectionsList.collection(VACATION_COLLECTION).link.click();
 
-        await ui.shouldHaveUrl('/collection/vacation-photos');
+        await ui.shouldHaveUrl(`/collection/${VACATION_COLLECTION}`);
     });
 
     test('User visits home page and no collections exist', async ({ page }) => {
