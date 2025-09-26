@@ -1,8 +1,49 @@
 import { View } from '../../mvc.js';
+const IMAGE_THUMBNAIL_WIDTH = 400;
 export default class CollectionPageView extends View {
     constructor(model) {
         super(model, 'collection');
         this.model = model;
+    }
+    combineClasses(...classes) {
+        return classes.filter(Boolean).join(' ');
+    }
+    createButton(options) {
+        const { dataId, text, baseClasses, stateClasses, additionalClasses, disabled, attributes = {} } = options;
+        const allClasses = this.combineClasses(baseClasses, stateClasses, additionalClasses);
+        const disabledAttr = disabled ? 'disabled' : '';
+        const additionalAttrs = Object.entries(attributes)
+            .map(([key, value]) => typeof value === 'boolean' ? (value ? key : '') : `${key}="${value}"`)
+            .filter(Boolean)
+            .join(' ');
+        return `
+            <button
+                data-id="${dataId}"
+                class="${allClasses}"
+                ${disabledAttr}
+                ${additionalAttrs}
+            >
+                ${text}
+            </button>
+        `;
+    }
+    createLink(options) {
+        const { href, dataId, text, baseClasses, stateClasses, attributes = {} } = options;
+        const allClasses = this.combineClasses(baseClasses, stateClasses);
+        const additionalAttrs = Object.entries(attributes)
+            .map(([key, value]) => typeof value === 'boolean' ? (value ? key : '') : `${key}="${value}"`)
+            .filter(Boolean)
+            .join(' ');
+        return `
+            <a
+                href="${href}"
+                data-id="${dataId}"
+                class="${allClasses}"
+                ${additionalAttrs}
+            >
+                ${text}
+            </a>
+        `;
     }
     title() {
         const collectionName = this.model.getCollectionName();
@@ -56,32 +97,29 @@ export default class CollectionPageView extends View {
             ? 'bg-slate-700 text-white dark:bg-slate-600'
             : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600';
         const curateParam = this.model.isCurateMode() ? 'true' : 'false';
-        return `
-            <a
-                href="/collection/${collectionName}?status=${status}&curate=${curateParam}"
-                data-id="status-button-${status}"
-                aria-pressed="${isSelected}"
-                class="${baseClasses} ${stateClasses}"
-            >
-                ${status}
-            </a>
-        `;
+        return this.createLink({
+            href: `/collection/${collectionName}?status=${status}&curate=${curateParam}`,
+            dataId: `status-button-${status}`,
+            text: status,
+            baseClasses,
+            stateClasses,
+            attributes: { 'aria-pressed': isSelected.toString() }
+        });
     }
     uploadButton() {
         const isUploading = this.model.isUploading();
         const baseClasses = 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer';
         const stateClasses = 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600';
         const disabledClasses = isUploading ? 'opacity-50 cursor-not-allowed' : '';
-        return `
-            <button
-                data-id="upload-button"
-                data-loading="${isUploading}"
-                class="${baseClasses} ${stateClasses} ${disabledClasses}"
-                ${isUploading ? 'disabled' : ''}
-            >
-                ${isUploading ? '⏳' : 'Upload'}
-            </button>
-        `;
+        return this.createButton({
+            dataId: 'upload-button',
+            text: isUploading ? '⏳' : 'Upload',
+            baseClasses,
+            stateClasses,
+            additionalClasses: disabledClasses,
+            disabled: isUploading,
+            attributes: { 'data-loading': isUploading.toString() }
+        });
     }
     slideshowButton() {
         const hasImages = this.model.hasImages();
@@ -268,7 +306,7 @@ export default class CollectionPageView extends View {
     }
     imageCard(image, collectionName) {
         const thumbnailUrl = `/api/images/${collectionName}/${image.id}/thumbnail`;
-        const imageWidth = 400;
+        const imageWidth = IMAGE_THUMBNAIL_WIDTH;
         const imageHeight = Math.round(imageWidth / image.aspect);
         const isSelected = this.model.isImageSelected(image.id);
         const isHidden = this.model.isImageHidden(image.id);

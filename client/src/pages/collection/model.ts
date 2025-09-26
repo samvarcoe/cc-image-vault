@@ -80,15 +80,27 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     getCollectionName(): string {
-        return this.data.name || '';
+        return this.data.name ?? '';
     }
 
     getCurrentStatus(): ImageStatus {
-        return this.data.status || 'COLLECTION';
+        return this.data.status ?? 'COLLECTION';
     }
 
     getImages(): ImageMetadata[] {
-        return this.data.images || [];
+        return this.data.images ?? [];
+    }
+
+    private ensurePopover(): NonNullable<CollectionPageData['popover']> {
+        if (!this.data.popover) {
+            this.data.popover = {
+                visible: false,
+                selectedImageId: undefined,
+                error: undefined,
+                statusMessage: undefined
+            };
+        }
+        return this.data.popover;
     }
 
     hasImages(): boolean {
@@ -108,7 +120,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     isPopoverVisible(): boolean {
-        return this.data.popover?.visible || false;
+        return this.data.popover?.visible ?? false;
     }
 
     getSelectedImageId(): string | undefined {
@@ -130,15 +142,13 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     setPopoverStatusMessage(message: string): void {
-        if (this.data.popover) {
-            this.data.popover.statusMessage = message;
-        }
+        const popover = this.ensurePopover();
+        popover.statusMessage = message;
     }
 
     clearPopoverStatusMessage(): void {
-        if (this.data.popover) {
-            this.data.popover.statusMessage = undefined;
-        }
+        const popover = this.ensurePopover();
+        popover.statusMessage = undefined;
     }
 
     openPopover(imageId: string): void {
@@ -334,56 +344,78 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         this.data.processingImageIds = [];
     }
 
-    // Confirmation dialog methods
+    // Dialog management
+    private ensureConfirmationDialog(): NonNullable<CollectionPageData['confirmationDialog']> {
+        if (!this.data.confirmationDialog) {
+            this.data.confirmationDialog = {
+                visible: false,
+                message: undefined
+            };
+        }
+        return this.data.confirmationDialog;
+    }
+
+    private ensureUploadDialog(): NonNullable<CollectionPageData['uploadDialog']> {
+        if (!this.data.uploadDialog) {
+            this.data.uploadDialog = {
+                visible: false
+            };
+        }
+        return this.data.uploadDialog;
+    }
+
     isConfirmationDialogVisible(): boolean {
-        return this.data.confirmationDialog?.visible || false;
+        return this.data.confirmationDialog?.visible ?? false;
     }
 
     getConfirmationDialogMessage(): string {
-        return this.data.confirmationDialog?.message || '';
+        return this.data.confirmationDialog?.message ?? '';
     }
 
     showConfirmationDialog(message: string): void {
-        this.data.confirmationDialog = {
-            visible: true,
-            message: message
-        };
+        const dialog = this.ensureConfirmationDialog();
+        dialog.visible = true;
+        dialog.message = message;
     }
 
     hideConfirmationDialog(): void {
-        this.data.confirmationDialog = {
-            visible: false,
-            message: undefined
-        };
+        const dialog = this.ensureConfirmationDialog();
+        dialog.visible = false;
+        dialog.message = undefined;
     }
 
-    // Upload dialog methods
     isUploadDialogVisible(): boolean {
-        return this.data.uploadDialog?.visible || false;
+        return this.data.uploadDialog?.visible ?? false;
     }
 
     showUploadDialog(): void {
-        this.data.uploadDialog = {
-            visible: true
-        };
+        const dialog = this.ensureUploadDialog();
+        dialog.visible = true;
     }
 
     hideUploadDialog(): void {
-        this.data.uploadDialog = {
-            visible: false
-        };
+        const dialog = this.ensureUploadDialog();
+        dialog.visible = false;
     }
 
-    // Upload state methods
+    // Upload state management
+    private ensureUpload(): NonNullable<CollectionPageData['upload']> {
+        if (!this.data.upload) {
+            this.data.upload = {
+                isUploading: false,
+                error: undefined
+            };
+        }
+        return this.data.upload;
+    }
+
     isUploading(): boolean {
-        return this.data.upload?.isUploading || false;
+        return this.data.upload?.isUploading ?? false;
     }
 
     setUploading(isUploading: boolean): void {
-        this.data.upload = {
-            isUploading: isUploading,
-            error: this.data.upload?.error
-        };
+        const upload = this.ensureUpload();
+        upload.isUploading = isUploading;
     }
 
     getUploadError(): string | undefined {
@@ -391,22 +423,31 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     setUploadError(error: string): void {
-        this.data.upload = {
-            isUploading: this.data.upload?.isUploading || false,
-            error: error
-        };
+        const upload = this.ensureUpload();
+        upload.error = error;
     }
 
     clearUploadError(): void {
-        this.data.upload = {
-            isUploading: this.data.upload?.isUploading || false,
-            error: undefined
-        };
+        const upload = this.ensureUpload();
+        upload.error = undefined;
     }
 
     // Slideshow methods
+    private ensureSlideshow(): NonNullable<CollectionPageData['slideshow']> {
+        if (!this.data.slideshow) {
+            this.data.slideshow = {
+                visible: false,
+                currentImageId: undefined,
+                isPaused: false,
+                imageSequence: [],
+                currentIndex: 0
+            };
+        }
+        return this.data.slideshow;
+    }
+
     isSlideshowVisible(): boolean {
-        return this.data.slideshow?.visible || false;
+        return this.data.slideshow?.visible ?? false;
     }
 
     openSlideshow(): void {
@@ -419,23 +460,21 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         const imageIds = images.map(img => img.id);
         const shuffledIds = this.shuffleArray([...imageIds]);
 
-        this.data.slideshow = {
-            visible: true,
-            currentImageId: shuffledIds[0],
-            isPaused: false,
-            imageSequence: shuffledIds,
-            currentIndex: 0
-        };
+        const slideshow = this.ensureSlideshow();
+        slideshow.visible = true;
+        slideshow.currentImageId = shuffledIds[0];
+        slideshow.isPaused = false;
+        slideshow.imageSequence = shuffledIds;
+        slideshow.currentIndex = 0;
     }
 
     closeSlideshow(): void {
-        this.data.slideshow = {
-            visible: false,
-            currentImageId: undefined,
-            isPaused: false,
-            imageSequence: [],
-            currentIndex: 0
-        };
+        const slideshow = this.ensureSlideshow();
+        slideshow.visible = false;
+        slideshow.currentImageId = undefined;
+        slideshow.isPaused = false;
+        slideshow.imageSequence = [];
+        slideshow.currentIndex = 0;
     }
 
     getCurrentSlideshowImageId(): string | undefined {
@@ -443,75 +482,74 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
     }
 
     isSlideshowPaused(): boolean {
-        return this.data.slideshow?.isPaused || false;
+        return this.data.slideshow?.isPaused ?? false;
     }
 
     pauseSlideshow(): void {
-        if (this.data.slideshow) {
-            this.data.slideshow.isPaused = true;
-        }
+        const slideshow = this.ensureSlideshow();
+        slideshow.isPaused = true;
     }
 
     resumeSlideshow(): void {
-        if (this.data.slideshow) {
-            this.data.slideshow.isPaused = false;
-        }
+        const slideshow = this.ensureSlideshow();
+        slideshow.isPaused = false;
     }
 
     toggleSlideshowPause(): void {
-        if (this.data.slideshow) {
-            this.data.slideshow.isPaused = !this.data.slideshow.isPaused;
-        }
+        const slideshow = this.ensureSlideshow();
+        slideshow.isPaused = !slideshow.isPaused;
     }
 
     advanceSlideshow(): void {
-        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+        const slideshow = this.ensureSlideshow();
+        if (slideshow.imageSequence.length === 0) {
             return;
         }
 
-        const nextIndex = this.data.slideshow.currentIndex + 1;
+        const nextIndex = slideshow.currentIndex + 1;
 
-        if (nextIndex >= this.data.slideshow.imageSequence.length) {
+        if (nextIndex >= slideshow.imageSequence.length) {
             // End of sequence - create new shuffled sequence and restart
             const images = this.getImages();
             const imageIds = images.map(img => img.id);
             const shuffledIds = this.shuffleArray([...imageIds]);
 
-            this.data.slideshow.imageSequence = shuffledIds;
-            this.data.slideshow.currentIndex = 0;
-            this.data.slideshow.currentImageId = shuffledIds[0];
+            slideshow.imageSequence = shuffledIds;
+            slideshow.currentIndex = 0;
+            slideshow.currentImageId = shuffledIds[0];
         } else {
             // Advance to next image in sequence
-            this.data.slideshow.currentIndex = nextIndex;
-            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[nextIndex];
+            slideshow.currentIndex = nextIndex;
+            slideshow.currentImageId = slideshow.imageSequence[nextIndex];
         }
     }
 
     skipToNextImage(): void {
-        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+        const slideshow = this.ensureSlideshow();
+        if (slideshow.imageSequence.length === 0) {
             return;
         }
 
         // Remove the current failing image from the sequence
-        const currentImageId = this.data.slideshow.currentImageId;
-        this.data.slideshow.imageSequence = this.data.slideshow.imageSequence.filter(id => id !== currentImageId);
+        const currentImageId = slideshow.currentImageId;
+        slideshow.imageSequence = slideshow.imageSequence.filter(id => id !== currentImageId);
 
         // If no images left in sequence, create new sequence
-        if (this.data.slideshow.imageSequence.length === 0) {
+        if (slideshow.imageSequence.length === 0) {
             const images = this.getImages();
             const imageIds = images.map(img => img.id).filter(id => id !== currentImageId);
-            this.data.slideshow.imageSequence = this.shuffleArray([...imageIds]);
-            this.data.slideshow.currentIndex = 0;
+            slideshow.imageSequence = this.shuffleArray([...imageIds]);
+            slideshow.currentIndex = 0;
         } else {
             // Adjust index if needed
-            if (this.data.slideshow.currentIndex >= this.data.slideshow.imageSequence.length) {
-                this.data.slideshow.currentIndex = 0;
+            if (slideshow.currentIndex >= slideshow.imageSequence.length) {
+                slideshow.currentIndex = 0;
             }
         }
 
         // Set the new current image
-        if (this.data.slideshow.imageSequence.length > 0) {
-            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[this.data.slideshow.currentIndex];
+        if (slideshow.imageSequence.length > 0) {
+            slideshow.currentImageId = slideshow.imageSequence[slideshow.currentIndex];
         }
     }
 

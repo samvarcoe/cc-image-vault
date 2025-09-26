@@ -23,13 +23,27 @@ export default class CollectionPageModel extends Model {
             } }, initialData));
     }
     getCollectionName() {
-        return this.data.name || '';
+        var _a;
+        return (_a = this.data.name) !== null && _a !== void 0 ? _a : '';
     }
     getCurrentStatus() {
-        return this.data.status || 'COLLECTION';
+        var _a;
+        return (_a = this.data.status) !== null && _a !== void 0 ? _a : 'COLLECTION';
     }
     getImages() {
-        return this.data.images || [];
+        var _a;
+        return (_a = this.data.images) !== null && _a !== void 0 ? _a : [];
+    }
+    ensurePopover() {
+        if (!this.data.popover) {
+            this.data.popover = {
+                visible: false,
+                selectedImageId: undefined,
+                error: undefined,
+                statusMessage: undefined
+            };
+        }
+        return this.data.popover;
     }
     hasImages() {
         return (this.data.images || []).length > 0;
@@ -44,8 +58,8 @@ export default class CollectionPageModel extends Model {
         return this.data.loading || false;
     }
     isPopoverVisible() {
-        var _a;
-        return ((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.visible) || false;
+        var _a, _b;
+        return (_b = (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.visible) !== null && _b !== void 0 ? _b : false;
     }
     getSelectedImageId() {
         var _a;
@@ -66,14 +80,12 @@ export default class CollectionPageModel extends Model {
         return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.statusMessage;
     }
     setPopoverStatusMessage(message) {
-        if (this.data.popover) {
-            this.data.popover.statusMessage = message;
-        }
+        const popover = this.ensurePopover();
+        popover.statusMessage = message;
     }
     clearPopoverStatusMessage() {
-        if (this.data.popover) {
-            this.data.popover.statusMessage = undefined;
-        }
+        const popover = this.ensurePopover();
+        popover.statusMessage = undefined;
     }
     openPopover(imageId) {
         this.data.popover = {
@@ -227,72 +239,97 @@ export default class CollectionPageModel extends Model {
     clearProcessingImageIds() {
         this.data.processingImageIds = [];
     }
+    ensureConfirmationDialog() {
+        if (!this.data.confirmationDialog) {
+            this.data.confirmationDialog = {
+                visible: false,
+                message: undefined
+            };
+        }
+        return this.data.confirmationDialog;
+    }
+    ensureUploadDialog() {
+        if (!this.data.uploadDialog) {
+            this.data.uploadDialog = {
+                visible: false
+            };
+        }
+        return this.data.uploadDialog;
+    }
     isConfirmationDialogVisible() {
-        var _a;
-        return ((_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.visible) || false;
+        var _a, _b;
+        return (_b = (_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.visible) !== null && _b !== void 0 ? _b : false;
     }
     getConfirmationDialogMessage() {
-        var _a;
-        return ((_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.message) || '';
+        var _a, _b;
+        return (_b = (_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.message) !== null && _b !== void 0 ? _b : '';
     }
     showConfirmationDialog(message) {
-        this.data.confirmationDialog = {
-            visible: true,
-            message: message
-        };
+        const dialog = this.ensureConfirmationDialog();
+        dialog.visible = true;
+        dialog.message = message;
     }
     hideConfirmationDialog() {
-        this.data.confirmationDialog = {
-            visible: false,
-            message: undefined
-        };
+        const dialog = this.ensureConfirmationDialog();
+        dialog.visible = false;
+        dialog.message = undefined;
     }
     isUploadDialogVisible() {
-        var _a;
-        return ((_a = this.data.uploadDialog) === null || _a === void 0 ? void 0 : _a.visible) || false;
+        var _a, _b;
+        return (_b = (_a = this.data.uploadDialog) === null || _a === void 0 ? void 0 : _a.visible) !== null && _b !== void 0 ? _b : false;
     }
     showUploadDialog() {
-        this.data.uploadDialog = {
-            visible: true
-        };
+        const dialog = this.ensureUploadDialog();
+        dialog.visible = true;
     }
     hideUploadDialog() {
-        this.data.uploadDialog = {
-            visible: false
-        };
+        const dialog = this.ensureUploadDialog();
+        dialog.visible = false;
+    }
+    ensureUpload() {
+        if (!this.data.upload) {
+            this.data.upload = {
+                isUploading: false,
+                error: undefined
+            };
+        }
+        return this.data.upload;
     }
     isUploading() {
-        var _a;
-        return ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false;
+        var _a, _b;
+        return (_b = (_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) !== null && _b !== void 0 ? _b : false;
     }
     setUploading(isUploading) {
-        var _a;
-        this.data.upload = {
-            isUploading: isUploading,
-            error: (_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.error
-        };
+        const upload = this.ensureUpload();
+        upload.isUploading = isUploading;
     }
     getUploadError() {
         var _a;
         return (_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.error;
     }
     setUploadError(error) {
-        var _a;
-        this.data.upload = {
-            isUploading: ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false,
-            error: error
-        };
+        const upload = this.ensureUpload();
+        upload.error = error;
     }
     clearUploadError() {
-        var _a;
-        this.data.upload = {
-            isUploading: ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false,
-            error: undefined
-        };
+        const upload = this.ensureUpload();
+        upload.error = undefined;
+    }
+    ensureSlideshow() {
+        if (!this.data.slideshow) {
+            this.data.slideshow = {
+                visible: false,
+                currentImageId: undefined,
+                isPaused: false,
+                imageSequence: [],
+                currentIndex: 0
+            };
+        }
+        return this.data.slideshow;
     }
     isSlideshowVisible() {
-        var _a;
-        return ((_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.visible) || false;
+        var _a, _b;
+        return (_b = (_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.visible) !== null && _b !== void 0 ? _b : false;
     }
     openSlideshow() {
         const images = this.getImages();
@@ -301,83 +338,80 @@ export default class CollectionPageModel extends Model {
         }
         const imageIds = images.map(img => img.id);
         const shuffledIds = this.shuffleArray([...imageIds]);
-        this.data.slideshow = {
-            visible: true,
-            currentImageId: shuffledIds[0],
-            isPaused: false,
-            imageSequence: shuffledIds,
-            currentIndex: 0
-        };
+        const slideshow = this.ensureSlideshow();
+        slideshow.visible = true;
+        slideshow.currentImageId = shuffledIds[0];
+        slideshow.isPaused = false;
+        slideshow.imageSequence = shuffledIds;
+        slideshow.currentIndex = 0;
     }
     closeSlideshow() {
-        this.data.slideshow = {
-            visible: false,
-            currentImageId: undefined,
-            isPaused: false,
-            imageSequence: [],
-            currentIndex: 0
-        };
+        const slideshow = this.ensureSlideshow();
+        slideshow.visible = false;
+        slideshow.currentImageId = undefined;
+        slideshow.isPaused = false;
+        slideshow.imageSequence = [];
+        slideshow.currentIndex = 0;
     }
     getCurrentSlideshowImageId() {
         var _a;
         return (_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.currentImageId;
     }
     isSlideshowPaused() {
-        var _a;
-        return ((_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.isPaused) || false;
+        var _a, _b;
+        return (_b = (_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.isPaused) !== null && _b !== void 0 ? _b : false;
     }
     pauseSlideshow() {
-        if (this.data.slideshow) {
-            this.data.slideshow.isPaused = true;
-        }
+        const slideshow = this.ensureSlideshow();
+        slideshow.isPaused = true;
     }
     resumeSlideshow() {
-        if (this.data.slideshow) {
-            this.data.slideshow.isPaused = false;
-        }
+        const slideshow = this.ensureSlideshow();
+        slideshow.isPaused = false;
     }
     toggleSlideshowPause() {
-        if (this.data.slideshow) {
-            this.data.slideshow.isPaused = !this.data.slideshow.isPaused;
-        }
+        const slideshow = this.ensureSlideshow();
+        slideshow.isPaused = !slideshow.isPaused;
     }
     advanceSlideshow() {
-        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+        const slideshow = this.ensureSlideshow();
+        if (slideshow.imageSequence.length === 0) {
             return;
         }
-        const nextIndex = this.data.slideshow.currentIndex + 1;
-        if (nextIndex >= this.data.slideshow.imageSequence.length) {
+        const nextIndex = slideshow.currentIndex + 1;
+        if (nextIndex >= slideshow.imageSequence.length) {
             const images = this.getImages();
             const imageIds = images.map(img => img.id);
             const shuffledIds = this.shuffleArray([...imageIds]);
-            this.data.slideshow.imageSequence = shuffledIds;
-            this.data.slideshow.currentIndex = 0;
-            this.data.slideshow.currentImageId = shuffledIds[0];
+            slideshow.imageSequence = shuffledIds;
+            slideshow.currentIndex = 0;
+            slideshow.currentImageId = shuffledIds[0];
         }
         else {
-            this.data.slideshow.currentIndex = nextIndex;
-            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[nextIndex];
+            slideshow.currentIndex = nextIndex;
+            slideshow.currentImageId = slideshow.imageSequence[nextIndex];
         }
     }
     skipToNextImage() {
-        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+        const slideshow = this.ensureSlideshow();
+        if (slideshow.imageSequence.length === 0) {
             return;
         }
-        const currentImageId = this.data.slideshow.currentImageId;
-        this.data.slideshow.imageSequence = this.data.slideshow.imageSequence.filter(id => id !== currentImageId);
-        if (this.data.slideshow.imageSequence.length === 0) {
+        const currentImageId = slideshow.currentImageId;
+        slideshow.imageSequence = slideshow.imageSequence.filter(id => id !== currentImageId);
+        if (slideshow.imageSequence.length === 0) {
             const images = this.getImages();
             const imageIds = images.map(img => img.id).filter(id => id !== currentImageId);
-            this.data.slideshow.imageSequence = this.shuffleArray([...imageIds]);
-            this.data.slideshow.currentIndex = 0;
+            slideshow.imageSequence = this.shuffleArray([...imageIds]);
+            slideshow.currentIndex = 0;
         }
         else {
-            if (this.data.slideshow.currentIndex >= this.data.slideshow.imageSequence.length) {
-                this.data.slideshow.currentIndex = 0;
+            if (slideshow.currentIndex >= slideshow.imageSequence.length) {
+                slideshow.currentIndex = 0;
             }
         }
-        if (this.data.slideshow.imageSequence.length > 0) {
-            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[this.data.slideshow.currentIndex];
+        if (slideshow.imageSequence.length > 0) {
+            slideshow.currentImageId = slideshow.imageSequence[slideshow.currentIndex];
         }
     }
     shuffleArray(array) {

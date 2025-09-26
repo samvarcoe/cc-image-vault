@@ -1,9 +1,77 @@
 import { View } from '../../mvc.js';
 import CollectionPageModel from './model.js';
 
+// Constants
+const IMAGE_THUMBNAIL_WIDTH = 400;
+
 export default class CollectionPageView extends View<CollectionPageModel> {
     constructor(protected model: CollectionPageModel) {
         super(model, 'collection');
+    }
+
+    // View helper methods
+    private combineClasses(...classes: (string | undefined | null | false)[]): string {
+        return classes.filter(Boolean).join(' ');
+    }
+
+    private createButton(options: {
+        dataId: string;
+        text: string;
+        baseClasses: string;
+        stateClasses: string;
+        additionalClasses?: string;
+        disabled?: boolean;
+        attributes?: Record<string, string | boolean>;
+    }): string {
+        const { dataId, text, baseClasses, stateClasses, additionalClasses, disabled, attributes = {} } = options;
+
+        const allClasses = this.combineClasses(baseClasses, stateClasses, additionalClasses);
+        const disabledAttr = disabled ? 'disabled' : '';
+
+        const additionalAttrs = Object.entries(attributes)
+            .map(([key, value]) => typeof value === 'boolean' ? (value ? key : '') : `${key}="${value}"`)
+            .filter(Boolean)
+            .join(' ');
+
+        return /*html*/`
+            <button
+                data-id="${dataId}"
+                class="${allClasses}"
+                ${disabledAttr}
+                ${additionalAttrs}
+            >
+                ${text}
+            </button>
+        `;
+    }
+
+    private createLink(options: {
+        href: string;
+        dataId: string;
+        text: string;
+        baseClasses: string;
+        stateClasses: string;
+        attributes?: Record<string, string | boolean>;
+    }): string {
+        const { href, dataId, text, baseClasses, stateClasses, attributes = {} } = options;
+
+        const allClasses = this.combineClasses(baseClasses, stateClasses);
+
+        const additionalAttrs = Object.entries(attributes)
+            .map(([key, value]) => typeof value === 'boolean' ? (value ? key : '') : `${key}="${value}"`)
+            .filter(Boolean)
+            .join(' ');
+
+        return /*html*/`
+            <a
+                href="${href}"
+                data-id="${dataId}"
+                class="${allClasses}"
+                ${additionalAttrs}
+            >
+                ${text}
+            </a>
+        `;
     }
 
     title(): string {
@@ -64,16 +132,14 @@ export default class CollectionPageView extends View<CollectionPageModel> {
 
         const curateParam = this.model.isCurateMode() ? 'true' : 'false';
 
-        return /*html*/`
-            <a
-                href="/collection/${collectionName}?status=${status}&curate=${curateParam}"
-                data-id="status-button-${status}"
-                aria-pressed="${isSelected}"
-                class="${baseClasses} ${stateClasses}"
-            >
-                ${status}
-            </a>
-        `;
+        return this.createLink({
+            href: `/collection/${collectionName}?status=${status}&curate=${curateParam}`,
+            dataId: `status-button-${status}`,
+            text: status,
+            baseClasses,
+            stateClasses,
+            attributes: { 'aria-pressed': isSelected.toString() }
+        });
     }
 
     private uploadButton(): string {
@@ -82,16 +148,15 @@ export default class CollectionPageView extends View<CollectionPageModel> {
         const stateClasses = 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600';
         const disabledClasses = isUploading ? 'opacity-50 cursor-not-allowed' : '';
 
-        return /*html*/`
-            <button
-                data-id="upload-button"
-                data-loading="${isUploading}"
-                class="${baseClasses} ${stateClasses} ${disabledClasses}"
-                ${isUploading ? 'disabled' : ''}
-            >
-                ${isUploading ? '⏳' : 'Upload'}
-            </button>
-        `;
+        return this.createButton({
+            dataId: 'upload-button',
+            text: isUploading ? '⏳' : 'Upload',
+            baseClasses,
+            stateClasses,
+            additionalClasses: disabledClasses,
+            disabled: isUploading,
+            attributes: { 'data-loading': isUploading.toString() }
+        });
     }
 
     private slideshowButton(): string {
@@ -299,7 +364,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
 
     private imageCard(image: ImageMetadata, collectionName: string): string {
         const thumbnailUrl = `/api/images/${collectionName}/${image.id}/thumbnail`;
-        const imageWidth = 400;
+        const imageWidth = IMAGE_THUMBNAIL_WIDTH;
         const imageHeight = Math.round(imageWidth / image.aspect);
 
         const isSelected = this.model.isImageSelected(image.id);
