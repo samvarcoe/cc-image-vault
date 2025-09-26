@@ -23,33 +23,31 @@ export default class CollectionPageModel extends Model {
             } }, initialData));
     }
     getCollectionName() {
-        return this.data.name || '';
+        return this.data.name;
     }
     getCurrentStatus() {
-        return this.data.status || 'COLLECTION';
+        return this.data.status;
     }
     getImages() {
-        return this.data.images || [];
+        return this.data.images;
     }
     hasImages() {
-        return (this.data.images || []).length > 0;
+        return this.data.images.length > 0;
     }
     hasError() {
         return !!this.data.error;
     }
     getErrorMessage() {
-        return this.data.error || '';
+        return this.data.error;
     }
     isLoading() {
-        return this.data.loading || false;
+        return this.data.loading;
     }
     isPopoverVisible() {
-        var _a;
-        return ((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.visible) || false;
+        return this.data.popover.visible;
     }
     getSelectedImageId() {
-        var _a;
-        return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId;
+        return this.data.popover.selectedImageId;
     }
     getSelectedImage() {
         const selectedId = this.getSelectedImageId();
@@ -58,22 +56,16 @@ export default class CollectionPageModel extends Model {
         return this.getImages().find(img => img.id === selectedId);
     }
     getPopoverError() {
-        var _a;
-        return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.error;
+        return this.data.popover.error;
     }
     getPopoverStatusMessage() {
-        var _a;
-        return (_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.statusMessage;
+        return this.data.popover.statusMessage;
     }
     setPopoverStatusMessage(message) {
-        if (this.data.popover) {
-            this.data.popover.statusMessage = message;
-        }
+        this.data.popover.statusMessage = message;
     }
     clearPopoverStatusMessage() {
-        if (this.data.popover) {
-            this.data.popover.statusMessage = undefined;
-        }
+        this.data.popover.statusMessage = undefined;
     }
     openPopover(imageId) {
         this.data.popover = {
@@ -92,13 +84,10 @@ export default class CollectionPageModel extends Model {
         };
     }
     setPopoverError(message) {
-        if (this.data.popover) {
-            this.data.popover.error = message;
-        }
+        this.data.popover.error = message;
     }
     advancePopoverToNext() {
-        var _a;
-        if (!this.isPopoverVisible() || !((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId)) {
+        if (!this.isPopoverVisible() || !this.data.popover.selectedImageId) {
             return;
         }
         const images = this.getImages();
@@ -126,8 +115,7 @@ export default class CollectionPageModel extends Model {
         }
     }
     advancePopoverToPrevious() {
-        var _a;
-        if (!this.isPopoverVisible() || !((_a = this.data.popover) === null || _a === void 0 ? void 0 : _a.selectedImageId)) {
+        if (!this.isPopoverVisible() || !this.data.popover.selectedImageId) {
             return;
         }
         const currentImageId = this.data.popover.selectedImageId;
@@ -145,7 +133,7 @@ export default class CollectionPageModel extends Model {
         }
     }
     isCurateMode() {
-        return this.data.curate || false;
+        return this.data.curate;
     }
     setCurateMode(curate) {
         this.data.curate = curate;
@@ -157,7 +145,7 @@ export default class CollectionPageModel extends Model {
         }
     }
     getSelectedImageIds() {
-        return this.data.selectedImageIds || [];
+        return this.data.selectedImageIds;
     }
     isImageSelected(imageId) {
         return this.getSelectedImageIds().includes(imageId);
@@ -191,7 +179,7 @@ export default class CollectionPageModel extends Model {
         return this.getSelectedImageIds().length > 0;
     }
     getStatusUpdateError() {
-        return this.data.statusUpdateError || '';
+        return this.data.statusUpdateError;
     }
     setStatusUpdateError(error) {
         this.data.statusUpdateError = error;
@@ -200,7 +188,7 @@ export default class CollectionPageModel extends Model {
         this.data.statusUpdateError = '';
     }
     getHiddenImageIds() {
-        return this.data.hiddenImageIds || [];
+        return this.data.hiddenImageIds;
     }
     isImageHidden(imageId) {
         return this.getHiddenImageIds().includes(imageId);
@@ -214,12 +202,12 @@ export default class CollectionPageModel extends Model {
         this.data.hiddenImageIds = hiddenIds.filter(id => !imageIds.includes(id));
     }
     removeImages(imageIds) {
-        this.data.images = (this.data.images || []).filter(img => !imageIds.includes(img.id));
-        this.data.hiddenImageIds = (this.data.hiddenImageIds || []).filter(id => !imageIds.includes(id));
-        this.data.selectedImageIds = (this.data.selectedImageIds || []).filter(id => !imageIds.includes(id));
+        this.data.images = this.data.images.filter(img => !imageIds.includes(img.id));
+        this.data.hiddenImageIds = this.data.hiddenImageIds.filter(id => !imageIds.includes(id));
+        this.data.selectedImageIds = this.data.selectedImageIds.filter(id => !imageIds.includes(id));
     }
     getProcessingImageIds() {
-        return this.data.processingImageIds || [];
+        return this.data.processingImageIds;
     }
     setProcessingImageIds(imageIds) {
         this.data.processingImageIds = imageIds;
@@ -228,12 +216,11 @@ export default class CollectionPageModel extends Model {
         this.data.processingImageIds = [];
     }
     isConfirmationDialogVisible() {
-        var _a;
-        return ((_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.visible) || false;
+        return this.data.confirmationDialog.visible;
     }
     getConfirmationDialogMessage() {
         var _a;
-        return ((_a = this.data.confirmationDialog) === null || _a === void 0 ? void 0 : _a.message) || '';
+        return (_a = this.data.confirmationDialog.message) !== null && _a !== void 0 ? _a : '';
     }
     showConfirmationDialog(message) {
         this.data.confirmationDialog = {
@@ -248,51 +235,31 @@ export default class CollectionPageModel extends Model {
         };
     }
     isUploadDialogVisible() {
-        var _a;
-        return ((_a = this.data.uploadDialog) === null || _a === void 0 ? void 0 : _a.visible) || false;
+        return this.data.uploadDialog.visible;
     }
     showUploadDialog() {
-        this.data.uploadDialog = {
-            visible: true
-        };
+        this.data.uploadDialog.visible = true;
     }
     hideUploadDialog() {
-        this.data.uploadDialog = {
-            visible: false
-        };
+        this.data.uploadDialog.visible = false;
     }
     isUploading() {
-        var _a;
-        return ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false;
+        return this.data.upload.isUploading;
     }
     setUploading(isUploading) {
-        var _a;
-        this.data.upload = {
-            isUploading: isUploading,
-            error: (_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.error
-        };
+        this.data.upload.isUploading = isUploading;
     }
     getUploadError() {
-        var _a;
-        return (_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.error;
+        return this.data.upload.error;
     }
     setUploadError(error) {
-        var _a;
-        this.data.upload = {
-            isUploading: ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false,
-            error: error
-        };
+        this.data.upload.error = error;
     }
     clearUploadError() {
-        var _a;
-        this.data.upload = {
-            isUploading: ((_a = this.data.upload) === null || _a === void 0 ? void 0 : _a.isUploading) || false,
-            error: undefined
-        };
+        this.data.upload.error = undefined;
     }
     isSlideshowVisible() {
-        var _a;
-        return ((_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.visible) || false;
+        return this.data.slideshow.visible;
     }
     openSlideshow() {
         const images = this.getImages();
@@ -319,65 +286,59 @@ export default class CollectionPageModel extends Model {
         };
     }
     getCurrentSlideshowImageId() {
-        var _a;
-        return (_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.currentImageId;
+        return this.data.slideshow.currentImageId;
     }
     isSlideshowPaused() {
-        var _a;
-        return ((_a = this.data.slideshow) === null || _a === void 0 ? void 0 : _a.isPaused) || false;
+        return this.data.slideshow.isPaused;
     }
     pauseSlideshow() {
-        if (this.data.slideshow) {
-            this.data.slideshow.isPaused = true;
-        }
+        this.data.slideshow.isPaused = true;
     }
     resumeSlideshow() {
-        if (this.data.slideshow) {
-            this.data.slideshow.isPaused = false;
-        }
+        this.data.slideshow.isPaused = false;
     }
     toggleSlideshowPause() {
-        if (this.data.slideshow) {
-            this.data.slideshow.isPaused = !this.data.slideshow.isPaused;
-        }
+        this.data.slideshow.isPaused = !this.data.slideshow.isPaused;
     }
     advanceSlideshow() {
-        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+        const slideshow = this.data.slideshow;
+        if (slideshow.imageSequence.length === 0) {
             return;
         }
-        const nextIndex = this.data.slideshow.currentIndex + 1;
-        if (nextIndex >= this.data.slideshow.imageSequence.length) {
+        const nextIndex = slideshow.currentIndex + 1;
+        if (nextIndex >= slideshow.imageSequence.length) {
             const images = this.getImages();
             const imageIds = images.map(img => img.id);
             const shuffledIds = this.shuffleArray([...imageIds]);
-            this.data.slideshow.imageSequence = shuffledIds;
-            this.data.slideshow.currentIndex = 0;
-            this.data.slideshow.currentImageId = shuffledIds[0];
+            slideshow.imageSequence = shuffledIds;
+            slideshow.currentIndex = 0;
+            slideshow.currentImageId = shuffledIds[0];
         }
         else {
-            this.data.slideshow.currentIndex = nextIndex;
-            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[nextIndex];
+            slideshow.currentIndex = nextIndex;
+            slideshow.currentImageId = slideshow.imageSequence[nextIndex];
         }
     }
     skipToNextImage() {
-        if (!this.data.slideshow || this.data.slideshow.imageSequence.length === 0) {
+        const slideshow = this.data.slideshow;
+        if (slideshow.imageSequence.length === 0) {
             return;
         }
-        const currentImageId = this.data.slideshow.currentImageId;
-        this.data.slideshow.imageSequence = this.data.slideshow.imageSequence.filter(id => id !== currentImageId);
-        if (this.data.slideshow.imageSequence.length === 0) {
+        const currentImageId = slideshow.currentImageId;
+        slideshow.imageSequence = slideshow.imageSequence.filter(id => id !== currentImageId);
+        if (slideshow.imageSequence.length === 0) {
             const images = this.getImages();
             const imageIds = images.map(img => img.id).filter(id => id !== currentImageId);
-            this.data.slideshow.imageSequence = this.shuffleArray([...imageIds]);
-            this.data.slideshow.currentIndex = 0;
+            slideshow.imageSequence = this.shuffleArray([...imageIds]);
+            slideshow.currentIndex = 0;
         }
         else {
-            if (this.data.slideshow.currentIndex >= this.data.slideshow.imageSequence.length) {
-                this.data.slideshow.currentIndex = 0;
+            if (slideshow.currentIndex >= slideshow.imageSequence.length) {
+                slideshow.currentIndex = 0;
             }
         }
-        if (this.data.slideshow.imageSequence.length > 0) {
-            this.data.slideshow.currentImageId = this.data.slideshow.imageSequence[this.data.slideshow.currentIndex];
+        if (slideshow.imageSequence.length > 0) {
+            slideshow.currentImageId = slideshow.imageSequence[slideshow.currentIndex];
         }
     }
     shuffleArray(array) {

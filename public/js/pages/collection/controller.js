@@ -1,70 +1,142 @@
+const SLIDESHOW_INTERVAL_MS = 5000;
+const STATUS_MESSAGE_DISPLAY_DURATION_MS = 500;
+const BATCH_SIZE = 10;
 export default class CollectionPageController {
+    async apiUpdateImageStatus(collectionName, imageId, status) {
+        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status })
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to update image ${imageId}`);
+        }
+    }
+    async apiDeleteImage(collectionName, imageId) {
+        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to delete image ${imageId}`);
+        }
+    }
+    async apiUploadImage(collectionName, file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch(`/api/images/${collectionName}`, {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to upload file ${file.name}`);
+        }
+    }
     constructor(model, view) {
         this.model = model;
         this.view = view;
         this.lastFocusedElement = null;
         this.slideshowTimer = null;
+        this.eventListeners = [];
         this.init();
     }
     init() {
         this.attachEventListeners();
+        this.attachUnloadHandler();
+    }
+    cleanup() {
+        this.stopSlideshowTimer();
+        this.removeAllEventListeners();
+    }
+    removeAllEventListeners() {
+        this.eventListeners.forEach(({ element, type, handler }) => {
+            element.removeEventListener(type, handler);
+        });
+        this.eventListeners = [];
+    }
+    addEventListener(element, type, handler, options) {
+        element.addEventListener(type, handler, options);
+        this.eventListeners.push({ element, type, handler });
+    }
+    getImageIdFromElement(element) {
+        const imageCard = element === null || element === void 0 ? void 0 : element.closest('[data-image-id]');
+        return (imageCard === null || imageCard === void 0 ? void 0 : imageCard.dataset.imageId) || null;
+    }
+    getButtonElement(target, selector) {
+        var _a;
+        return ((_a = target === null || target === void 0 ? void 0 : target.closest) === null || _a === void 0 ? void 0 : _a.call(target, selector)) || null;
+    }
+    attachUnloadHandler() {
+        this.addEventListener(window, 'beforeunload', (event) => {
+            if (this.model.isUploading()) {
+                const message = 'Upload currently in progress, pending image uploads will be canceled if you leave the page';
+                event.preventDefault();
+                event.returnValue = message;
+                return message;
+            }
+            return undefined;
+        });
+        this.addEventListener(window, 'unload', () => {
+            this.cleanup();
+        });
     }
     attachEventListeners() {
-        document.addEventListener('click', (event) => {
-            const slideshowButton = event.target.closest('[data-id="slideshow-button"]');
+        this.addEventListener(document, 'click', (event) => {
+            const slideshowButton = this.getButtonElement(event.target, '[data-id="slideshow-button"]');
             if (slideshowButton && !slideshowButton.hasAttribute('disabled')) {
                 this.handleSlideshowButtonClick();
             }
         });
-        document.addEventListener('click', (event) => {
-            const uploadButton = event.target.closest('[data-id="upload-button"]');
+        this.addEventListener(document, 'click', (event) => {
+            const uploadButton = this.getButtonElement(event.target, '[data-id="upload-button"]');
             if (uploadButton && !uploadButton.hasAttribute('disabled')) {
                 this.handleUploadButtonClick();
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const curateButton = event.target.closest('[data-id="curate-button"]');
             if (curateButton) {
                 this.toggleCurateMode();
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const selectAllButton = event.target.closest('[data-id="select-all-button"]');
             if (selectAllButton) {
                 this.selectAllImages();
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const clearButton = event.target.closest('[data-id="clear-button"]');
             if (clearButton) {
                 this.clearSelection();
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const keepButton = event.target.closest('[data-id="keep-button"]');
             if (keepButton && !keepButton.hasAttribute('disabled')) {
                 this.handleKeepImages();
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const discardButton = event.target.closest('[data-id="discard-button"]');
             if (discardButton && !discardButton.hasAttribute('disabled')) {
                 this.handleDiscardImages();
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const restoreButton = event.target.closest('[data-id="restore-button"]');
             if (restoreButton && !restoreButton.hasAttribute('disabled')) {
                 this.handleRestoreImages();
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const deleteButton = event.target.closest('[data-id="delete-button"]');
             if (deleteButton && !deleteButton.hasAttribute('disabled')) {
                 this.handleDeleteButtonClick();
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const cancelButton = event.target.closest('[data-id="cancel-button"]');
             const confirmDeleteButton = event.target.closest('[data-id="confirm-delete-button"]');
             if (cancelButton) {
@@ -80,34 +152,33 @@ export default class CollectionPageController {
                 this.handleConfirmDelete();
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const addButton = event.target.closest('[data-id="add-button"]');
             if (addButton) {
                 this.handleUploadAdd();
             }
         });
-        document.addEventListener('click', (event) => {
-            const imageCard = event.target.closest('[data-image-id]');
-            if (imageCard) {
-                const imageId = imageCard.dataset.imageId;
-                if (imageId) {
-                    if (this.model.isCurateMode()) {
-                        this.toggleImageSelection(imageId);
-                    }
-                    else {
-                        this.openPopover(imageId, imageCard);
-                    }
+        this.addEventListener(document, 'click', (event) => {
+            const imageId = this.getImageIdFromElement(event.target);
+            if (imageId) {
+                const imageCard = event.target.closest('[data-image-id]');
+                if (this.model.isCurateMode()) {
+                    this.toggleImageSelection(imageId);
+                }
+                else if (imageCard) {
+                    this.openPopover(imageId, imageCard);
                 }
             }
         });
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const popover = event.target.closest('[data-id="fullscreen-popover"]');
             if (popover) {
                 this.closePopover();
             }
         });
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
+        this.addEventListener(document, 'keydown', (event) => {
+            const keyboardEvent = event;
+            if (keyboardEvent.key === 'Escape') {
                 if (this.model.isSlideshowVisible()) {
                     this.closeSlideshowAndCleanup();
                 }
@@ -115,33 +186,33 @@ export default class CollectionPageController {
                     this.closePopover();
                 }
             }
-            else if (event.key === ' ' && this.model.isSlideshowVisible()) {
-                event.preventDefault();
+            else if (keyboardEvent.key === ' ' && this.model.isSlideshowVisible()) {
+                keyboardEvent.preventDefault();
                 this.model.toggleSlideshowPause();
                 this.view.update();
             }
-            else if (event.key === 'Enter') {
+            else if (keyboardEvent.key === 'Enter') {
                 if (this.model.isSlideshowVisible()) {
-                    event.preventDefault();
+                    keyboardEvent.preventDefault();
                     this.model.advanceSlideshow();
                     this.view.update();
                 }
                 else if (this.model.isPopoverVisible()) {
-                    event.preventDefault();
+                    keyboardEvent.preventDefault();
                     this.model.advancePopoverToNext();
                     this.view.update();
                 }
             }
-            else if (event.key === 'Tab' && this.model.isPopoverVisible()) {
-                event.preventDefault();
+            else if (keyboardEvent.key === 'Tab' && this.model.isPopoverVisible()) {
+                keyboardEvent.preventDefault();
                 this.handlePopoverTabKeyPress();
             }
-            else if (event.key === 'Backspace' && this.model.isPopoverVisible()) {
-                event.preventDefault();
+            else if (keyboardEvent.key === 'Backspace' && this.model.isPopoverVisible()) {
+                keyboardEvent.preventDefault();
                 this.handlePopoverBackspaceKeyPress();
             }
         });
-        document.addEventListener('error', (event) => {
+        this.addEventListener(document, 'error', (event) => {
             const image = event.target;
             if (image && image.closest('[data-id="popover-image"]')) {
                 this.handleImageLoadError();
@@ -149,33 +220,25 @@ export default class CollectionPageController {
             else if (image && image.closest('[data-id="slideshow-image"]')) {
                 this.handleSlideshowImageLoadError();
             }
-        }, true);
-        document.addEventListener('wheel', (event) => {
+        }, { capture: true });
+        this.addEventListener(document, 'wheel', (event) => {
+            const wheelEvent = event;
             if (!this.model.isPopoverVisible()) {
                 return;
             }
-            const popover = event.target.closest('[data-id="fullscreen-popover"]');
+            const popover = wheelEvent.target.closest('[data-id="fullscreen-popover"]');
             if (popover) {
-                event.preventDefault();
-                if (event.deltaY > 0) {
+                wheelEvent.preventDefault();
+                if (wheelEvent.deltaY > 0) {
                     this.model.advancePopoverToNext();
                     this.view.update();
                 }
-                else if (event.deltaY < 0) {
+                else if (wheelEvent.deltaY < 0) {
                     this.model.advancePopoverToPrevious();
                     this.view.update();
                 }
             }
         }, { passive: false });
-        window.addEventListener('beforeunload', (event) => {
-            if (this.model.isUploading()) {
-                const message = 'Upload currently in progress, pending image uploads will be canceled if you leave the page';
-                event.preventDefault();
-                event.returnValue = message;
-                return message;
-            }
-            return undefined;
-        });
     }
     openPopover(imageId, clickedElement) {
         this.lastFocusedElement = clickedElement;
@@ -239,11 +302,11 @@ export default class CollectionPageController {
         this.model.hideSelectedImages();
         this.view.update();
         const collectionName = this.model.getCollectionName();
-        const batchSize = 10;
+        const batchSize = BATCH_SIZE;
         const allResults = [];
         for (let i = 0; i < selectedImageIds.length; i += batchSize) {
             const batch = selectedImageIds.slice(i, i + batchSize);
-            const batchPromises = batch.map(imageId => this.sendStatusUpdateRequest(collectionName, imageId, newStatus)
+            const batchPromises = batch.map(imageId => this.apiUpdateImageStatus(collectionName, imageId, newStatus)
                 .then(() => ({ imageId, success: true }))
                 .catch(() => ({ imageId, success: false })));
             const batchResults = await Promise.all(batchPromises);
@@ -259,18 +322,6 @@ export default class CollectionPageController {
             this.model.setStatusUpdateError('Unable to complete update for all Images');
         }
         this.view.update();
-    }
-    async sendStatusUpdateRequest(collectionName, imageId, status) {
-        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ status })
-        });
-        if (!response.ok) {
-            throw new Error(`Failed to update image ${imageId}`);
-        }
     }
     handleDeleteButtonClick() {
         const selectedImageIds = this.model.getSelectedImageIds();
@@ -294,11 +345,11 @@ export default class CollectionPageController {
         this.model.hideSelectedImages();
         this.view.update();
         const collectionName = this.model.getCollectionName();
-        const batchSize = 10;
+        const batchSize = BATCH_SIZE;
         const allResults = [];
         for (let i = 0; i < selectedImageIds.length; i += batchSize) {
             const batch = selectedImageIds.slice(i, i + batchSize);
-            const batchPromises = batch.map(imageId => this.sendDeleteRequest(collectionName, imageId)
+            const batchPromises = batch.map(imageId => this.apiDeleteImage(collectionName, imageId)
                 .then(() => ({ imageId, success: true }))
                 .catch(() => ({ imageId, success: false })));
             const batchResults = await Promise.all(batchPromises);
@@ -320,14 +371,6 @@ export default class CollectionPageController {
         }
         this.view.update();
     }
-    async sendDeleteRequest(collectionName, imageId) {
-        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
-            method: 'DELETE'
-        });
-        if (!response.ok) {
-            throw new Error(`Failed to delete image ${imageId}`);
-        }
-    }
     handleUploadButtonClick() {
         this.model.showUploadDialog();
         this.view.update();
@@ -347,11 +390,11 @@ export default class CollectionPageController {
         this.model.clearUploadError();
         this.view.update();
         const collectionName = this.model.getCollectionName();
-        const batchSize = 10;
+        const batchSize = BATCH_SIZE;
         const allResults = [];
         for (let i = 0; i < files.length; i += batchSize) {
             const batch = files.slice(i, i + batchSize);
-            const batchPromises = batch.map(file => this.uploadFile(collectionName, file)
+            const batchPromises = batch.map(file => this.apiUploadImage(collectionName, file)
                 .then(() => ({ file, success: true }))
                 .catch(() => ({ file, success: false })));
             const batchResults = await Promise.all(batchPromises);
@@ -365,17 +408,6 @@ export default class CollectionPageController {
         this.view.update();
         if (allResults.some(r => r.success) && failedFiles.length === 0) {
             window.location.reload();
-        }
-    }
-    async uploadFile(collectionName, file) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const response = await fetch(`/api/images/${collectionName}`, {
-            method: 'POST',
-            body: formData
-        });
-        if (!response.ok) {
-            throw new Error(`Failed to upload file ${file.name}`);
         }
     }
     handleSlideshowButtonClick() {
@@ -394,10 +426,10 @@ export default class CollectionPageController {
                 this.model.advanceSlideshow();
                 this.view.update();
             }
-        }, 5000);
+        }, SLIDESHOW_INTERVAL_MS);
     }
     stopSlideshowTimer() {
-        if (this.slideshowTimer) {
+        if (this.slideshowTimer !== null) {
             clearInterval(this.slideshowTimer);
             this.slideshowTimer = null;
         }
@@ -436,7 +468,7 @@ export default class CollectionPageController {
         const imageId = selectedImage.id;
         this.model.clearPopoverStatusMessage();
         try {
-            await this.sendStatusUpdateRequest(collectionName, imageId, newStatus);
+            await this.apiUpdateImageStatus(collectionName, imageId, newStatus);
             const successMessage = newStatus === 'COLLECTION' ? 'Image moved to COLLECTION' : 'Image moved to ARCHIVE';
             this.model.setPopoverStatusMessage(successMessage);
             this.view.update();
@@ -446,7 +478,7 @@ export default class CollectionPageController {
                 this.model.removeImages([imageId]);
                 this.model.advancePopoverToNext();
                 this.view.update();
-            }, 500);
+            }, STATUS_MESSAGE_DISPLAY_DURATION_MS);
         }
         catch (_a) {
             this.model.setPopoverStatusMessage('Unable to update image status');
@@ -454,7 +486,7 @@ export default class CollectionPageController {
             setTimeout(() => {
                 this.model.clearPopoverStatusMessage();
                 this.view.update();
-            }, 500);
+            }, STATUS_MESSAGE_DISPLAY_DURATION_MS);
         }
     }
 }

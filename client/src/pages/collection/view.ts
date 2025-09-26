@@ -1,6 +1,8 @@
 import { View } from '../../mvc.js';
 import CollectionPageModel from './model.js';
 
+const IMAGE_THUMBNAIL_WIDTH = 400;
+
 export default class CollectionPageView extends View<CollectionPageModel> {
     constructor(protected model: CollectionPageModel) {
         super(model, 'collection');
@@ -299,7 +301,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
 
     private imageCard(image: ImageMetadata, collectionName: string): string {
         const thumbnailUrl = `/api/images/${collectionName}/${image.id}/thumbnail`;
-        const imageWidth = 400;
+        const imageWidth = IMAGE_THUMBNAIL_WIDTH;
         const imageHeight = Math.round(imageWidth / image.aspect);
 
         const isSelected = this.model.isImageSelected(image.id);

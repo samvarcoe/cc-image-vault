@@ -1,9 +1,54 @@
 import CollectionPageModel from './model.js';
 import CollectionPageView from './view.js';
 
+// Constants
+const SLIDESHOW_INTERVAL_MS = 5000;
+const STATUS_MESSAGE_DISPLAY_DURATION_MS = 500;
+const BATCH_SIZE = 10;
+
 export default class CollectionPageController {
     private lastFocusedElement: HTMLElement | null = null;
     private slideshowTimer: NodeJS.Timeout | null = null;
+    private eventListeners: Array<{ element: EventTarget; type: string; handler: EventListener }> = [];
+
+    // API Methods
+    private async apiUpdateImageStatus(collectionName: string, imageId: string, status: ImageStatus): Promise<void> {
+        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to update image ${imageId}`);
+        }
+    }
+
+    private async apiDeleteImage(collectionName: string, imageId: string): Promise<void> {
+        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete image ${imageId}`);
+        }
+    }
+
+    private async apiUploadImage(collectionName: string, file: File): Promise<void> {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`/api/images/${collectionName}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to upload file ${file.name}`);
+        }
+    }
 
     constructor(
         private model: CollectionPageModel,
@@ -14,27 +59,71 @@ export default class CollectionPageController {
 
     private init(): void {
         this.attachEventListeners();
+        this.attachUnloadHandler();
+    }
+
+    public cleanup(): void {
+        this.stopSlideshowTimer();
+        this.removeAllEventListeners();
+    }
+
+    private removeAllEventListeners(): void {
+        this.eventListeners.forEach(({ element, type, handler }) => {
+            element.removeEventListener(type, handler);
+        });
+        this.eventListeners = [];
+    }
+
+    private addEventListener(element: EventTarget, type: string, handler: EventListener, options?: AddEventListenerOptions): void {
+        element.addEventListener(type, handler, options);
+        this.eventListeners.push({ element, type, handler });
+    }
+
+    private getImageIdFromElement(element: Element | null): string | null {
+        const imageCard = element?.closest('[data-image-id]') as HTMLElement;
+        return imageCard?.dataset.imageId || null;
+    }
+
+    private getButtonElement(target: EventTarget | null, selector: string): Element | null {
+        return (target as Element)?.closest?.(selector) || null;
+    }
+
+    private attachUnloadHandler(): void {
+        this.addEventListener(window, 'beforeunload', (event) => {
+            if (this.model.isUploading()) {
+                const message = 'Upload currently in progress, pending image uploads will be canceled if you leave the page';
+                event.preventDefault();
+                (event as BeforeUnloadEvent).returnValue = message;
+                return message;
+            }
+            return undefined;
+        });
+
+        // Cleanup on page unload
+        this.addEventListener(window, 'unload', () => {
+            this.cleanup();
+        });
     }
 
     private attachEventListeners(): void {
         // Handle slideshow button clicks
-        document.addEventListener('click', (event) => {
-            const slideshowButton = (event.target as Element).closest('[data-id="slideshow-button"]');
+        this.addEventListener(document, 'click', (event) => {
+            const slideshowButton = this.getButtonElement(event.target, '[data-id="slideshow-button"]');
             if (slideshowButton && !slideshowButton.hasAttribute('disabled')) {
                 this.handleSlideshowButtonClick();
             }
         });
 
         // Handle upload button clicks
-        document.addEventListener('click', (event) => {
-            const uploadButton = (event.target as Element).closest('[data-id="upload-button"]');
+        this.addEventListener(document, 'click', (event) => {
+            const uploadButton = this.getButtonElement(event.target, '[data-id="upload-button"]');
             if (uploadButton && !uploadButton.hasAttribute('disabled')) {
                 this.handleUploadButtonClick();
             }
         });
 
         // Handle curate button clicks
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const curateButton = (event.target as Element).closest('[data-id="curate-button"]');
             if (curateButton) {
                 this.toggleCurateMode();
@@ -42,7 +131,7 @@ export default class CollectionPageController {
         });
 
         // Handle Select All button clicks
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const selectAllButton = (event.target as Element).closest('[data-id="select-all-button"]');
             if (selectAllButton) {
                 this.selectAllImages();
@@ -50,7 +139,7 @@ export default class CollectionPageController {
         });
 
         // Handle Clear button clicks
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const clearButton = (event.target as Element).closest('[data-id="clear-button"]');
             if (clearButton) {
                 this.clearSelection();
@@ -58,7 +147,7 @@ export default class CollectionPageController {
         });
 
         // Handle Keep button clicks
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const keepButton = (event.target as Element).closest('[data-id="keep-button"]');
             if (keepButton && !keepButton.hasAttribute('disabled')) {
                 this.handleKeepImages();
@@ -66,7 +155,7 @@ export default class CollectionPageController {
         });
 
         // Handle Discard button clicks
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const discardButton = (event.target as Element).closest('[data-id="discard-button"]');
             if (discardButton && !discardButton.hasAttribute('disabled')) {
                 this.handleDiscardImages();
@@ -74,7 +163,7 @@ export default class CollectionPageController {
         });
 
         // Handle Restore button clicks
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const restoreButton = (event.target as Element).closest('[data-id="restore-button"]');
             if (restoreButton && !restoreButton.hasAttribute('disabled')) {
                 this.handleRestoreImages();
@@ -82,7 +171,7 @@ export default class CollectionPageController {
         });
 
         // Handle Delete button clicks
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const deleteButton = (event.target as Element).closest('[data-id="delete-button"]');
             if (deleteButton && !deleteButton.hasAttribute('disabled')) {
                 this.handleDeleteButtonClick();
@@ -90,7 +179,7 @@ export default class CollectionPageController {
         });
 
         // Handle confirmation dialog button clicks
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const cancelButton = (event.target as Element).closest('[data-id="cancel-button"]');
             const confirmDeleteButton = (event.target as Element).closest('[data-id="confirm-delete-button"]');
 
@@ -108,7 +197,7 @@ export default class CollectionPageController {
         });
 
         // Handle upload dialog add button clicks
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const addButton = (event.target as Element).closest('[data-id="add-button"]');
             if (addButton) {
                 this.handleUploadAdd();
@@ -116,22 +205,20 @@ export default class CollectionPageController {
         });
 
         // Handle image card clicks to open popover (only if not in curate mode) or toggle selection (if in curate mode)
-        document.addEventListener('click', (event) => {
-            const imageCard = (event.target as Element).closest('[data-image-id]') as HTMLElement;
-            if (imageCard) {
-                const imageId = imageCard.dataset.imageId;
-                if (imageId) {
-                    if (this.model.isCurateMode()) {
-                        this.toggleImageSelection(imageId);
-                    } else {
-                        this.openPopover(imageId, imageCard);
-                    }
+        this.addEventListener(document, 'click', (event) => {
+            const imageId = this.getImageIdFromElement(event.target as Element);
+            if (imageId) {
+                const imageCard = (event.target as Element).closest('[data-image-id]') as HTMLElement;
+                if (this.model.isCurateMode()) {
+                    this.toggleImageSelection(imageId);
+                } else if (imageCard) {
+                    this.openPopover(imageId, imageCard);
                 }
             }
         });
 
         // Handle popover clicks to close popover (but not on the image)
-        document.addEventListener('click', (event) => {
+        this.addEventListener(document, 'click', (event) => {
             const popover = (event.target as Element).closest('[data-id="fullscreen-popover"]');
             // Close if clicking on popover but not on the image itself
             if (popover) {
@@ -140,80 +227,71 @@ export default class CollectionPageController {
         });
 
         // Handle keyboard events
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
+        this.addEventListener(document, 'keydown', (event) => {
+            const keyboardEvent = event as KeyboardEvent;
+            if (keyboardEvent.key === 'Escape') {
                 if (this.model.isSlideshowVisible()) {
                     this.closeSlideshowAndCleanup();
                 } else if (this.model.isPopoverVisible()) {
                     this.closePopover();
                 }
-            } else if (event.key === ' ' && this.model.isSlideshowVisible()) {
-                event.preventDefault(); // Prevent page scroll
+            } else if (keyboardEvent.key === ' ' && this.model.isSlideshowVisible()) {
+                keyboardEvent.preventDefault(); // Prevent page scroll
                 this.model.toggleSlideshowPause();
                 this.view.update();
-            } else if (event.key === 'Enter') {
+            } else if (keyboardEvent.key === 'Enter') {
                 if (this.model.isSlideshowVisible()) {
-                    event.preventDefault();
+                    keyboardEvent.preventDefault();
                     this.model.advanceSlideshow();
                     this.view.update();
                 } else if (this.model.isPopoverVisible()) {
-                    event.preventDefault();
+                    keyboardEvent.preventDefault();
                     this.model.advancePopoverToNext();
                     this.view.update();
                 }
-            } else if (event.key === 'Tab' && this.model.isPopoverVisible()) {
-                event.preventDefault();
+            } else if (keyboardEvent.key === 'Tab' && this.model.isPopoverVisible()) {
+                keyboardEvent.preventDefault();
                 this.handlePopoverTabKeyPress();
-            } else if (event.key === 'Backspace' && this.model.isPopoverVisible()) {
-                event.preventDefault();
+            } else if (keyboardEvent.key === 'Backspace' && this.model.isPopoverVisible()) {
+                keyboardEvent.preventDefault();
                 this.handlePopoverBackspaceKeyPress();
             }
         });
 
         // Handle image load errors
-        document.addEventListener('error', (event) => {
+        this.addEventListener(document, 'error', (event) => {
             const image = event.target as HTMLImageElement;
             if (image && image.closest('[data-id="popover-image"]')) {
                 this.handleImageLoadError();
             } else if (image && image.closest('[data-id="slideshow-image"]')) {
                 this.handleSlideshowImageLoadError();
             }
-        }, true);
+        }, { capture: true });
 
         // Handle mouse wheel events on popover
-        document.addEventListener('wheel', (event) => {
+        this.addEventListener(document, 'wheel', (event) => {
+            const wheelEvent = event as WheelEvent;
             // Only handle wheel events when popover is visible
             if (!this.model.isPopoverVisible()) {
                 return;
             }
 
             // Check if the wheel event is on the popover element
-            const popover = (event.target as Element).closest('[data-id="fullscreen-popover"]');
+            const popover = (wheelEvent.target as Element).closest('[data-id="fullscreen-popover"]');
             if (popover) {
-                event.preventDefault(); // Prevent page scrolling
+                wheelEvent.preventDefault(); // Prevent page scrolling
 
-                if (event.deltaY > 0) {
+                if (wheelEvent.deltaY > 0) {
                     // Wheel down - advance to next image
                     this.model.advancePopoverToNext();
                     this.view.update();
-                } else if (event.deltaY < 0) {
+                } else if (wheelEvent.deltaY < 0) {
                     // Wheel up - go to previous image
                     this.model.advancePopoverToPrevious();
                     this.view.update();
                 }
             }
         }, { passive: false }); // Not passive so we can preventDefault
-
-        // Handle navigation warning during upload
-        window.addEventListener('beforeunload', (event) => {
-            if (this.model.isUploading()) {
-                const message = 'Upload currently in progress, pending image uploads will be canceled if you leave the page';
-                event.preventDefault();
-                event.returnValue = message;
-                return message;
-            }
-            return undefined;
-        });
     }
 
     private openPopover(imageId: string, clickedElement: HTMLElement): void {
@@ -299,15 +377,15 @@ export default class CollectionPageController {
         this.model.hideSelectedImages();
         this.view.update();
 
-        // Batch the requests (max 10 concurrent)
+        // Batch the requests (max concurrent)
         const collectionName = this.model.getCollectionName();
-        const batchSize = 10;
+        const batchSize = BATCH_SIZE;
         const allResults: Array<{ imageId: string; success: boolean }> = [];
 
         for (let i = 0; i < selectedImageIds.length; i += batchSize) {
             const batch = selectedImageIds.slice(i, i + batchSize);
             const batchPromises = batch.map(imageId =>
-                this.sendStatusUpdateRequest(collectionName, imageId, newStatus)
+                this.apiUpdateImageStatus(collectionName, imageId, newStatus)
                     .then(() => ({ imageId, success: true }))
                     .catch(() => ({ imageId, success: false }))
             );
@@ -335,19 +413,6 @@ export default class CollectionPageController {
         this.view.update();
     }
 
-    private async sendStatusUpdateRequest(collectionName: string, imageId: string, status: ImageStatus): Promise<void> {
-        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ status })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to update image ${imageId}`);
-        }
-    }
 
     private handleDeleteButtonClick(): void {
         const selectedImageIds = this.model.getSelectedImageIds();
@@ -382,15 +447,15 @@ export default class CollectionPageController {
         this.model.hideSelectedImages();
         this.view.update();
 
-        // Batch the delete requests (max 10 concurrent)
+        // Batch the delete requests (max concurrent)
         const collectionName = this.model.getCollectionName();
-        const batchSize = 10;
+        const batchSize = BATCH_SIZE;
         const allResults: Array<{ imageId: string; success: boolean }> = [];
 
         for (let i = 0; i < selectedImageIds.length; i += batchSize) {
             const batch = selectedImageIds.slice(i, i + batchSize);
             const batchPromises = batch.map(imageId =>
-                this.sendDeleteRequest(collectionName, imageId)
+                this.apiDeleteImage(collectionName, imageId)
                     .then(() => ({ imageId, success: true }))
                     .catch(() => ({ imageId, success: false }))
             );
@@ -424,15 +489,6 @@ export default class CollectionPageController {
         this.view.update();
     }
 
-    private async sendDeleteRequest(collectionName: string, imageId: string): Promise<void> {
-        const response = await fetch(`/api/images/${collectionName}/${imageId}`, {
-            method: 'DELETE'
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to delete image ${imageId}`);
-        }
-    }
 
     private handleUploadButtonClick(): void {
         this.model.showUploadDialog();
@@ -458,15 +514,15 @@ export default class CollectionPageController {
         this.model.clearUploadError();
         this.view.update();
 
-        // Process uploads in batches of 10
+        // Process uploads in batches
         const collectionName = this.model.getCollectionName();
-        const batchSize = 10;
+        const batchSize = BATCH_SIZE;
         const allResults: Array<{ file: File; success: boolean }> = [];
 
         for (let i = 0; i < files.length; i += batchSize) {
             const batch = files.slice(i, i + batchSize);
             const batchPromises = batch.map(file =>
-                this.uploadFile(collectionName, file)
+                this.apiUploadImage(collectionName, file)
                     .then(() => ({ file, success: true }))
                     .catch(() => ({ file, success: false }))
             );
@@ -493,19 +549,6 @@ export default class CollectionPageController {
         }
     }
 
-    private async uploadFile(collectionName: string, file: File): Promise<void> {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await fetch(`/api/images/${collectionName}`, {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to upload file ${file.name}`);
-        }
-    }
 
     private handleSlideshowButtonClick(): void {
         this.model.openSlideshow();
@@ -526,11 +569,11 @@ export default class CollectionPageController {
                 this.model.advanceSlideshow();
                 this.view.update();
             }
-        }, 5000);
+        }, SLIDESHOW_INTERVAL_MS);
     }
 
     private stopSlideshowTimer(): void {
-        if (this.slideshowTimer) {
+        if (this.slideshowTimer !== null) {
             clearInterval(this.slideshowTimer);
             this.slideshowTimer = null;
         }
@@ -583,7 +626,7 @@ export default class CollectionPageController {
 
         try {
             // Make the API call
-            await this.sendStatusUpdateRequest(collectionName, imageId, newStatus);
+            await this.apiUpdateImageStatus(collectionName, imageId, newStatus);
 
             // Update was successful
             const successMessage = newStatus === 'COLLECTION' ? 'Image moved to COLLECTION' : 'Image moved to ARCHIVE';
@@ -593,24 +636,24 @@ export default class CollectionPageController {
             // Update the image status in the model
             selectedImage.status = newStatus;
 
-            // Wait 500ms, then remove updated image and advance to next
+            // Wait for status message display, then remove updated image and advance to next
             setTimeout(() => {
                 this.model.clearPopoverStatusMessage();
                 this.model.removeImages([imageId]);
                 this.model.advancePopoverToNext();
                 this.view.update();
-            }, 500);
+            }, STATUS_MESSAGE_DISPLAY_DURATION_MS);
 
         } catch {
             // Update failed
             this.model.setPopoverStatusMessage('Unable to update image status');
             this.view.update();
 
-            // Hide error message after 500ms (no advance)
+            // Hide error message after display duration (no advance)
             setTimeout(() => {
                 this.model.clearPopoverStatusMessage();
                 this.view.update();
-            }, 500);
+            }, STATUS_MESSAGE_DISPLAY_DURATION_MS);
         }
     }
 }
