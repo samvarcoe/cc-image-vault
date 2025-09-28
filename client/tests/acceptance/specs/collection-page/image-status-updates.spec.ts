@@ -45,7 +45,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
 
         // And the current status view is "COLLECTION"
         // And curate mode is active
-        await page.goto('/collection/TestCollection?status=COLLECTION&curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?status=COLLECTION&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the page loads
@@ -70,7 +70,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
 
         // And the current status view is "ARCHIVE"
         // And curate mode is active
-        await page.goto('/collection/TestCollection?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the page loads
@@ -104,7 +104,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
         
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${COLLECTION_NAME}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Then the selected images are immediately hidden
                 // Assertions triggered when the request is caught
@@ -143,7 +143,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
 
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${COLLECTION_NAME}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Then the selected images are immediately hidden
                 // Assertions triggered when the request is caught
@@ -173,7 +173,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=COLLECTION&curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?status=COLLECTION&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images
@@ -182,7 +182,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
 
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${COLLECTION_NAME}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Then the selected images are immediately hidden
                 // Assertions triggered when the request is caught
@@ -212,7 +212,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const firstImage = archiveImages[0]!;
         const secondImage = archiveImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images
@@ -221,7 +221,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
 
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${COLLECTION_NAME}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Then the selected images are immediately hidden
                 // Assertions triggered when the request is caught
@@ -282,7 +282,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await page.waitForLoadState('networkidle');
 
         // Mock API failure by intercepting the PATCH request
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${COLLECTION_NAME}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Verify the image was hidden when the request was made
                 await ui.collectionPage.imageGrid.image(testImage.id).shouldBeHidden();
@@ -324,14 +324,14 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
 
         await createCollectionFixture(BATCH_COLLECTION_NAME, imageCount);
 
-        await page.goto('/collection/TestBatchCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${BATCH_COLLECTION_NAME}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         await ui.collectionPage.imageGrid.image().shouldHaveCount(imageCount);
 
         // Track API requests to verify batching
         const apiCalls: string[] = [];
-        await page.route('**/api/images/TestBatchCollection/*', (route) => {
+        await page.route(`**/api/images/${BATCH_COLLECTION_NAME}/*`, (route) => {
             if (route.request().method() === 'PATCH') {
                 apiCalls.push(route.request().url());
                 route.continue();

@@ -43,7 +43,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await page.goto('/collection/TestCollection?curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the user clicks on an image thumbnail
@@ -66,7 +66,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await page.goto('/collection/TestCollection?curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images first
@@ -95,7 +95,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
         // Given the Collection page is in curate mode
         // And multiple images are displayed
         await createCollectionFixture(COLLECTION_NAME);
-        await page.goto('/collection/TestCollection?curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the user clicks the "Select All" button
@@ -114,7 +114,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
 
         // Given multiple images are selected
         await createCollectionFixture(COLLECTION_NAME);
-        await page.goto('/collection/TestCollection?curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select all images first
@@ -141,7 +141,7 @@ test.describe('Client - Collection Page - Selecting Images', () => {
 
         // Given multiple images are selected
         await createCollectionFixture(COLLECTION_NAME);
-        await page.goto('/collection/TestCollection?curate=true');
+        await page.goto(`/collection/${COLLECTION_NAME}?curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select all images first

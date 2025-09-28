@@ -150,7 +150,7 @@ test.describe('Client - Images - Upload', () => {
         // When all upload requests complete successfully
         await page.waitForResponse(response =>
             response.url().includes('/api/images/') &&
-            response.url().includes('TestCollection') &&
+            response.url().includes(COLLECTION_NAME) &&
             response.status() === 201
         );
 
@@ -364,7 +364,7 @@ test.describe('Client - Images - Upload', () => {
 
         // Then the warning dialog closes
         // And the user remains on the current page
-        expect(page.url()).toContain('/collection/TestCollection');
+        expect(page.url()).toContain(`/collection/${COLLECTION_NAME}`);
 
         // And the upload process continues
         await ui.collectionPage.header.uploadButton.shouldHaveAttribute('data-loading', 'true');

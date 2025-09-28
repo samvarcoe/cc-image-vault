@@ -44,7 +44,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
         // And "?curate=false" is set in the URL
         // When the page loads
-        await page.goto('/collection/TestCollection?curate=false');
+        await page.goto(`/collection/${COLLECTION_NAME}?curate=false`);
         await page.waitForLoadState('networkidle');
 
         // Then the "Curate" button displays in unselected state
@@ -221,7 +221,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         await createCollectionFixture(COLLECTION_NAME);
 
         // And the page is not in curate mode
-        await page.goto('/collection/TestCollection?curate=false');
+        await page.goto(`/collection/${COLLECTION_NAME}?curate=false`);
         await page.waitForLoadState('networkidle');
 
         // When the user clicks on a Status toggle button
@@ -272,7 +272,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
         await createCollectionFixture(COLLECTION_NAME);
 
         // And the page is not in curate mode
-        await page.goto('/collection/TestCollection?curate=false');
+        await page.goto(`/collection/${COLLECTION_NAME}?curate=false`);
         await page.waitForLoadState('networkidle');
 
         // When the user refreshes the page

@@ -197,7 +197,7 @@ test.describe('Client - Collection Page - Viewing Images', () => {
     test('User views Collection with no images for a specific Status', async ({ page }) => {
         const ui = new ImageVault(page);
 
-        // Given a Collection exists with name "EmptyCollection"
+        // Given a Collection exists with name "[EMPTY_COLLECTION_NAME]"
         Collection.create(EMPTY_COLLECTION_NAME);
 
         // And the Collection contains no images with a specific Status

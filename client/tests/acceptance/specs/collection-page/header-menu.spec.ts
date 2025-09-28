@@ -97,12 +97,12 @@ test.describe('Client - Collection Page - Header Menu', () => {
 
         // Given the user is on a Collection page
         await createCollectionFixture(COLLECTION_NAME);
-        await ui.collectionPage.visit('TestCollection', 'COLLECTION');
+        await ui.collectionPage.visit(COLLECTION_NAME, 'COLLECTION');
 
         // When the user clicks on a Status toggle button
         await ui.collectionPage.header.statusToggle.inboxButton.click();
 
-        // Then the user is navigated to "/collection/TestCollection?status=[STATUS]"
+        // Then the user is navigated to "/collection/[COLLECTION_NAME]?status=[STATUS]"
         expect(page.url()).toContain('status=INBOX');
 
         // And the correct button shows as selected

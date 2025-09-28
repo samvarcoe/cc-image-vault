@@ -20,8 +20,8 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const firstImage = collectionImages[0]!;
 
         // And the collection contains images with "COLLECTION" status
-        // When the user visits the collection page "/collection/TestCollection"
-        await ui.collectionPage.visit('TestCollection');
+        // When the user visits the collection page "/collection/[COLLECTION_NAME]"
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // And the user clicks on a thumbnail image
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
@@ -45,7 +45,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
 
@@ -71,7 +71,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
 
@@ -99,7 +99,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // When the user clicks on a thumbnail image
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
@@ -122,7 +122,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // When the user clicks on a thumbnail image
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
@@ -146,7 +146,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // When the user clicks on a thumbnail image
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
@@ -168,7 +168,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(firstImage.id, collection.name);
@@ -193,7 +193,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(firstImage.id, collection.name);
@@ -218,7 +218,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
         await ui.collectionPage.imageGrid.image(secondImage.id).click(); // Start with second image
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(secondImage.id, collection.name);
@@ -242,7 +242,7 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(COLLECTION_NAME);
 
         // Mock the original image request to fail
         const originalImageUrl = `/api/images/${collection.name}/${firstImage.id}`;

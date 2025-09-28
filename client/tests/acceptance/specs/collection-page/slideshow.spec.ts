@@ -40,7 +40,7 @@ test.describe('Client - Collection Page - Slideshow', () => {
         await createCollectionFixture(EMPTY_COLLECTION_NAME, 0);
 
         // When the user visits the collection page
-        await ui.collectionPage.visit('EmptyCollection');
+        await ui.collectionPage.visit(EMPTY_COLLECTION_NAME);
 
         // Then the header displays the "Slideshow" button
         await ui.collectionPage.header.slideshowButton.shouldBeDisplayed();
@@ -71,7 +71,7 @@ test.describe('Client - Collection Page - Slideshow', () => {
 
         // And the first random image is displayed
         await ui.collectionPage.slideshow.image.shouldBeDisplayed();
-        await ui.collectionPage.slideshow.shouldShowImageFromCollection('TestCollection');
+        await ui.collectionPage.slideshow.shouldShowImageFromCollection(COLLECTION_NAME);
 
         // Store the current image ID for comparison
         const firstImageId = await ui.collectionPage.slideshow.getCurrentImageId();
@@ -311,7 +311,7 @@ test.describe('Client - Collection Page - Slideshow', () => {
         const collection = await createCollectionFixture(SMALL_COLLECTION_NAME, 3);
         const collectionImages = await collection.getImages({status: "COLLECTION"});
 
-        await ui.collectionPage.visit('SmallCollection');
+        await ui.collectionPage.visit(SMALL_COLLECTION_NAME);
         await ui.collectionPage.header.slideshowButton.click();
         await ui.collectionPage.slideshow.shouldBeDisplayed();
 
