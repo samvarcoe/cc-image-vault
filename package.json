@@ -14,7 +14,7 @@
     "domain:tests": "npx mocha --config domain/tests/acceptance/.mocharc.json",
     "client:tests": "npx playwright test --config client/tests/acceptance/playwright.config.ts",
     "tests:all": "npm run domain:tests && npm run api:tests && npm run client:tests",
-    "check": "npm run tests:all && npm run lint && npm run build"
+    "checks": "npm run build && npm run tests:all && npm run lint"
   },
   "repository": {
     "type": "git",
@@ -33,6 +33,8 @@
     "@playwright/test": "1.55.0",
     "@sinonjs/fake-timers": "^14.0.0",
     "@tailwindcss/cli": "^4.1.13",
+    "@types/adm-zip": "^0.5.7",
+    "@types/archiver": "^6.0.3",
     "@types/better-sqlite3": "^7.6.13",
     "@types/chai": "^5.2.2",
     "@types/chai-match-pattern": "^1.3.4",
@@ -61,6 +63,8 @@
     "typescript-eslint": "^8.40.0"
   },
   "dependencies": {
+    "adm-zip": "^0.5.16",
+    "archiver": "^7.0.1",
     "better-sqlite3": "^12.2.0",
     "compression": "^1.8.1",
     "dotenv": "^17.2.1",

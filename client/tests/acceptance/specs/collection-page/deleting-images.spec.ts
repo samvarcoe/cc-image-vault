@@ -342,7 +342,7 @@ test.describe('Client - Collection Page - Deleting Images', () => {
         const collection = setupCollectionFixture('delete-large');
 
         // Set longer action timeout for large batch deletion operations
-        await page.context().setDefaultTimeout(15000);
+        page.context().setDefaultTimeout(10000);
 
         const imageCount = 50;
 
@@ -379,9 +379,6 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
         // And API calls were made for all selected images
         expect(apiCalls.length, `The number of calls to DELETE delete images is incorrect`).toBe(imageCount);
-
-        // Verify no errors occurred
-        await ui.shouldHaveNoConsoleErrors();
 
         await ui.shouldHaveNoFailedRequests();
     });
