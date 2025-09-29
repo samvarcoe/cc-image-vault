@@ -1,25 +1,26 @@
 import { test, expect } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
-import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 import { corruptCollectionDB } from '@/utils';
 
 test.describe('Client - Collection Page - Viewing Images', () => {
 
-    test.beforeEach(async () => {
-        Collection.clear();
+    test.beforeAll(async () => {
+        await createCollectionFixture({name: 'view-standard', inboxCount: 2, collectionCount: 3, archiveCount: 2});
+        await createCollectionFixture({name: 'view-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
     });
 
     test('User views the Collection page with no Status set', async ({ page }) => {
         const ui = new ImageVault(page);
 
-        // Given a Collection exists with name "TestCollection"
-        await createCollectionFixture('TestCollection');
+        // Given a Collection exists
+        const collection = setupCollectionFixture('view-standard');
 
         // When the user visits the Collection page without a Status set in the URL
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
 
-        // Then the user is redirected to "/collection/TestCollection?status=COLLECTION"
+        // Then the user is redirected to "/collection/[COLLECTION]?status=COLLECTION"
         expect(page.url()).toContain('status=COLLECTION');
 
         // Verify no errors occurred
@@ -30,13 +31,13 @@ test.describe('Client - Collection Page - Viewing Images', () => {
     test('User views Collection images on the Collection page', async ({ page }) => {
         const ui = new ImageVault(page);
 
-        // Given a Collection exists with name "TestCollection"
+        // Given a Collection exists
         // And the Collection contains images with multiple statuses
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('view-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
 
-        // When the user visits the Collection page "/collection/TestCollection?status=COLLECTION"
-        await ui.collectionPage.visit('TestCollection', 'COLLECTION');
+        // When the user visits the Collection page
+        await ui.collectionPage.visit(collection.name, 'COLLECTION');
 
         // Then all "Collection" images are shown as thumbnails
         // And no other images are displayed
@@ -63,13 +64,13 @@ test.describe('Client - Collection Page - Viewing Images', () => {
     test('User views INBOX images on the Collection page', async ({ page }) => {
         const ui = new ImageVault(page);
 
-        // Given a Collection exists with name "TestCollection"
+        // Given a Collection exists
         // And the Collection contains images with multiple statuses
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('view-standard');
         const inboxImages = await collection.getImages({status: "INBOX"});
 
-        // When the user visits the Collection page "/collection/TestCollection?status=INBOX"
-        await ui.collectionPage.visit('TestCollection', 'INBOX');
+        // When the user visits the Collection page
+        await ui.collectionPage.visit(collection.name, 'INBOX');
 
         // Then all "INBOX" images are shown as thumbnails
         // And no other images are displayed
@@ -96,13 +97,13 @@ test.describe('Client - Collection Page - Viewing Images', () => {
     test('User views ARCHIVE images on the Collection page', async ({ page }) => {
         const ui = new ImageVault(page);
 
-        // Given a Collection exists with name "TestCollection"
+        // Given a Collection exists
         // And the Collection contains images with multiple statuses
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('view-standard');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
 
-        // When the user visits the Collection page "/collection/TestCollection?status=ARCHIVE"
-        await ui.collectionPage.visit('TestCollection', 'ARCHIVE');
+        // When the user visits the Collection page
+        await ui.collectionPage.visit(collection.name, 'ARCHIVE');
 
         // Then all "ARCHIVE" images are shown as thumbnails
         // And no other images are displayed
@@ -133,12 +134,12 @@ test.describe('Client - Collection Page - Viewing Images', () => {
         // Set desktop viewport (> 1024px)
         await page.setViewportSize({ width: 1200, height: 800 });
 
-        // Given a Collection exists with name "TestCollection"
+        // Given a Collection exists
         // And the Collection contains images with "Collection" status
-        await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('view-standard');
 
         // When the user visits the Collection page
-        await ui.collectionPage.visit('TestCollection', 'COLLECTION');
+        await ui.collectionPage.visit(collection.name, 'COLLECTION');
 
         // Then the page displays images in a 3-column grid layout
         await ui.collectionPage.imageGrid.shouldHaveColumnCount(3);
@@ -154,12 +155,12 @@ test.describe('Client - Collection Page - Viewing Images', () => {
         // Set tablet viewport (768-1024px)
         await page.setViewportSize({ width: 768, height: 1024 });
 
-        // Given a Collection exists with name "TestCollection"
+        // Given a Collection exists
         // And the Collection contains images
-        await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('view-standard');
 
         // When the user visits the Collection page
-        await ui.collectionPage.visit('TestCollection', 'COLLECTION');
+        await ui.collectionPage.visit(collection.name, 'COLLECTION');
 
         // Then the page displays images in a 2-column grid layout
         await ui.collectionPage.imageGrid.shouldHaveColumnCount(2);
@@ -175,12 +176,12 @@ test.describe('Client - Collection Page - Viewing Images', () => {
         // Set mobile viewport (< 768px)
         await page.setViewportSize({ width: 375, height: 667 });
 
-        // Given a Collection exists with name "TestCollection"
+        // Given a Collection exists
         // And the Collection contains images
-        await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('view-standard');
 
         // When the user visits the Collection page
-        await ui.collectionPage.visit('TestCollection', 'COLLECTION');
+        await ui.collectionPage.visit(collection.name, 'COLLECTION');
 
         // Then the page displays images in a 1-column grid layout
         await ui.collectionPage.imageGrid.shouldHaveColumnCount(1);
@@ -193,14 +194,14 @@ test.describe('Client - Collection Page - Viewing Images', () => {
     test('User views Collection with no images for a specific Status', async ({ page }) => {
         const ui = new ImageVault(page);
 
-        // Given a Collection exists with name "EmptyCollection"
-        Collection.create('EmptyCollection');
+        // Given a Collection exists with no images
+        const collection = setupCollectionFixture('view-empty');
 
         // And the Collection contains no images with a specific Status
         const testStatus = 'COLLECTION';
 
         // When the user visits the Collection page with that Status
-        await ui.collectionPage.visit('EmptyCollection', testStatus);
+        await ui.collectionPage.visit(collection.name, testStatus);
 
         // Then the page displays the message "This Collection has no images with \"[STATUS]\" status"
         await ui.collectionPage.emptyMessage.shouldHaveText(`This Collection has no images with "${testStatus}" status`);
@@ -216,8 +217,8 @@ test.describe('Client - Collection Page - Viewing Images', () => {
     test('Error occurs when retrieving Collection images', async ({ page }) => {
         const ui = new ImageVault(page);
 
-        // Given a Collection exists with name "TestCollection"
-        const collection = Collection.create('ErrorCollection');
+        // Given a Collection exists with corrupted data
+        const collection = Collection.create(`error-${Date.now()}`);
         corruptCollectionDB(collection);
 
         // When the user visits the Collection page

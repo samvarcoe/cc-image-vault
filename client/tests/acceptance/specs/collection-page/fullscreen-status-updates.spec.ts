@@ -1,12 +1,12 @@
 import { expect, test } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
-import { Collection } from '@/domain';
-import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
 test.describe('Client - Images - Fullscreen Status Updates', () => {
 
-    test.beforeEach(async () => {
-        Collection.clear();
+    test.beforeAll(async () => {
+        await createCollectionFixture({name: 'fullscreen-mixed', inboxCount: 3, collectionCount: 3, archiveCount: 3});
+        await createCollectionFixture({name: 'fullscreen-single', inboxCount: 1, collectionCount: 0, archiveCount: 0});
     });
 
     test('User successfully keeps an INBOX image', async ({ page }) => {
@@ -16,12 +16,12 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing an "INBOX" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('fullscreen-mixed');
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
         const nextImage = inboxImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection', 'INBOX');
+        await ui.collectionPage.visit(collection.name, 'INBOX');
         await ui.collectionPage.imageGrid.image(testImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(testImage.id, collection.name);
@@ -58,12 +58,12 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing an "INBOX" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('fullscreen-mixed');
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
         const nextImage = inboxImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection', 'INBOX');
+        await ui.collectionPage.visit(collection.name, 'INBOX');
         await ui.collectionPage.imageGrid.image(testImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(testImage.id, collection.name);
@@ -100,12 +100,12 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing a "COLLECTION" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('fullscreen-mixed');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const testImage = collectionImages[0]!;
         const nextImage = collectionImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection', 'COLLECTION');
+        await ui.collectionPage.visit(collection.name, 'COLLECTION');
         await ui.collectionPage.imageGrid.image(testImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(testImage.id, collection.name);
@@ -142,12 +142,12 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing an "ARCHIVE" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('fullscreen-mixed');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const testImage = archiveImages[0]!;
         const nextImage = archiveImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection', 'ARCHIVE');
+        await ui.collectionPage.visit(collection.name, 'ARCHIVE');
         await ui.collectionPage.imageGrid.image(testImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(testImage.id, collection.name);
@@ -184,10 +184,10 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing a fullscreen image
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('fullscreen-mixed');
         const inboxImages = await collection.getImages({status: "INBOX"});
 
-        await ui.collectionPage.visit('TestCollection', 'INBOX');
+        await ui.collectionPage.visit(collection.name, 'INBOX');
 
         // Capture the first image ID from what's actually displayed in the popover
         const firstImageId = inboxImages[0]!.id;
@@ -240,13 +240,13 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
 
         // Given the user is viewing a fullscreen image
         // And it is the only image with the current status
-        const collection = await createCollectionFixture('SingleImage', 1);
+        const collection = setupCollectionFixture('fullscreen-single');
 
         // Get all INBOX images and make sure only one remains
         const inboxImages = await collection.getImages({status: "INBOX"});
         const lastImage = inboxImages[0]!;
 
-        await ui.collectionPage.visit('SingleImage', 'INBOX');
+        await ui.collectionPage.visit(collection.name, 'INBOX');
         await ui.collectionPage.imageGrid.image(lastImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(lastImage.id, collection.name);
@@ -272,11 +272,11 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         await page.clock.install();
 
         // Given the user is viewing an image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('fullscreen-mixed');
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection', 'INBOX');
+        await ui.collectionPage.visit(collection.name, 'INBOX');
         await ui.collectionPage.imageGrid.image(testImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(testImage.id, collection.name);
@@ -313,11 +313,11 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given a collection contains a "COLLECTION" image
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('fullscreen-mixed');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const testImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection', 'COLLECTION');
+        await ui.collectionPage.visit(collection.name, 'COLLECTION');
 
         // When the user views the image in fullscreen
         await ui.collectionPage.imageGrid.image(testImage.id).click();
@@ -347,11 +347,11 @@ test.describe('Client - Images - Fullscreen Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given the user is viewing an "ARCHIVE" image in fullscreen
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('fullscreen-mixed');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const testImage = archiveImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection', 'ARCHIVE');
+        await ui.collectionPage.visit(collection.name, 'ARCHIVE');
 
         // When the user views the image
         await ui.collectionPage.imageGrid.image(testImage.id).click();

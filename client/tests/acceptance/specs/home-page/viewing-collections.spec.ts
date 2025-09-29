@@ -1,8 +1,16 @@
 import { test } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
 import { Collection } from '@/domain';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
 test.describe('Client - Home Page - Viewing Collections', () => {
+
+    test.beforeAll(async () => {
+        await createCollectionFixture({name: 'home-list-1', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        await createCollectionFixture({name: 'home-list-2', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        await createCollectionFixture({name: 'home-list-3', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        await createCollectionFixture({name: 'home-navigation', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+    });
 
     test.beforeEach(async () => {
         Collection.clear();
@@ -10,9 +18,9 @@ test.describe('Client - Home Page - Viewing Collections', () => {
 
     test('User visits home page and collections exist', async ({ page }) => {
         // Given there are some collections in the system
-        Collection.create('vacation-photos');
-        Collection.create('family-events');
-        Collection.create('work-projects');
+        const collection1 = setupCollectionFixture('home-list-1');
+        const collection2 = setupCollectionFixture('home-list-2');
+        const collection3 = setupCollectionFixture('home-list-3');
 
         const ui = new ImageVault(page);
 
@@ -21,14 +29,14 @@ test.describe('Client - Home Page - Viewing Collections', () => {
 
         // And each collection card shows the collection name
         await ui.homePage.collectionsList.collection().shouldHaveCount(3);
-        await ui.homePage.collectionsList.collection('vacation-photos').title.shouldHaveText('vacation-photos');
-        await ui.homePage.collectionsList.collection('family-events').title.shouldHaveText('family-events');
-        await ui.homePage.collectionsList.collection('work-projects').title.shouldHaveText('work-projects');
+        await ui.homePage.collectionsList.collection(collection1.name).title.shouldHaveText(collection1.name);
+        await ui.homePage.collectionsList.collection(collection2.name).title.shouldHaveText(collection2.name);
+        await ui.homePage.collectionsList.collection(collection3.name).title.shouldHaveText(collection3.name);
 
         // And each collection card links to the collection's main page
-        await ui.homePage.collectionsList.collection('vacation-photos').link.shouldHaveHref('/collection/vacation-photos');
-        await ui.homePage.collectionsList.collection('family-events').link.shouldHaveHref('/collection/family-events');
-        await ui.homePage.collectionsList.collection('work-projects').link.shouldHaveHref('/collection/work-projects');
+        await ui.homePage.collectionsList.collection(collection1.name).link.shouldHaveHref(`/collection/${collection1.name}`);
+        await ui.homePage.collectionsList.collection(collection2.name).link.shouldHaveHref(`/collection/${collection2.name}`);
+        await ui.homePage.collectionsList.collection(collection3.name).link.shouldHaveHref(`/collection/${collection3.name}`);
 
         // Verify no errors occurred during the interaction
         await ui.shouldHaveNoConsoleErrors();
@@ -36,15 +44,15 @@ test.describe('Client - Home Page - Viewing Collections', () => {
     });
 
     test('User navigates to a collection from the home page', async ({ page }) => {
-        Collection.create('vacation-photos');
+        const collection = setupCollectionFixture('home-navigation');
 
         const ui = new ImageVault(page);
 
         await ui.homePage.visit();
 
-        await ui.homePage.collectionsList.collection('vacation-photos').link.click();
+        await ui.homePage.collectionsList.collection(collection.name).link.click();
 
-        await ui.shouldHaveUrl('/collection/vacation-photos');
+        await ui.shouldHaveUrl(`/collection/${collection.name}`);
     });
 
     test('User visits home page and no collections exist', async ({ page }) => {

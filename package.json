@@ -9,10 +9,12 @@
     "server:watch": "tsx watch server.ts",
     "dev": "concurrently \"npm run css:watch\" \"npm run ts:watch\" \"npm run server:watch\"",
     "lint": "npx eslint",
+    "build": "npx tsc --noEmit",
     "api:tests": "npx mocha --config api/tests/acceptance/.mocharc.json",
     "domain:tests": "npx mocha --config domain/tests/acceptance/.mocharc.json",
     "client:tests": "npx playwright test --config client/tests/acceptance/playwright.config.ts",
-    "tests:all": "npm run domain:tests && npm run api:tests && npm run client:tests"
+    "tests:all": "npm run domain:tests && npm run api:tests && npm run client:tests",
+    "check": "npm run tests:all && npm run lint && npm run build"
   },
   "repository": {
     "type": "git",

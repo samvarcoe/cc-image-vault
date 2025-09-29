@@ -1,23 +1,22 @@
 import { test, expect } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
-import { Collection } from '@/domain';
-import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
 test.describe('Client - Collection Page - Deleting Images', () => {
 
-    test.beforeEach(async () => {
-        Collection.clear();
+    test.beforeAll(async () => {
+        await createCollectionFixture({name: 'delete-standard', inboxCount: 2, collectionCount: 2, archiveCount: 3});
+        await createCollectionFixture({name: 'delete-large', inboxCount: 0, collectionCount: 0, archiveCount: 50});
     });
 
     test('User views ARCHIVE images with curate mode active', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-standard');
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
-
         // And the current status view is "ARCHIVE"
         // And curate mode is active
-        await page.goto('/collection/TestCollection?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the page loads
@@ -32,13 +31,12 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
     test('User views COLLECTION images with curate mode active', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-standard');
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
-
         // And the current status view is "COLLECTION"
         // And curate mode is active
-        await page.goto('/collection/TestCollection?status=COLLECTION&curate=true');
+        await page.goto(`/collection/${collection.name}?status=COLLECTION&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the page loads
@@ -53,13 +51,12 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
     test('User views INBOX images with curate mode active', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-standard');
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
-
         // And the current status view is "INBOX"
         // And curate mode is active
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${collection.name}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the page loads
@@ -74,14 +71,14 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
     test('User initiates delete operation', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-standard');
 
         // Given multiple "ARCHIVE" images are selected
-        const collection = await createCollectionFixture('TestCollection');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const firstImage = archiveImages[0]!;
         const secondImage = archiveImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images
@@ -110,15 +107,15 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
     test('User cancels delete operation', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-standard');
 
         // Given the delete confirmation dialog is displayed
         // And multiple images are selected
-        const collection = await createCollectionFixture('TestCollection');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const firstImage = archiveImages[0]!;
         const secondImage = archiveImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select images and open confirmation dialog
@@ -129,7 +126,7 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
         // Track that no deletion request is made
         let deleteRequestMade = false;
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, async (route) => {
             if (route.request().method() === 'DELETE') {
                 deleteRequestMade = true;
             }
@@ -156,15 +153,15 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
     test('User confirms delete operation', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-standard');
 
         // Given the delete confirmation dialog is displayed
         // And multiple images are selected
-        const collection = await createCollectionFixture('TestCollection');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const firstImage = archiveImages[0]!;
         const secondImage = archiveImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select images and open confirmation dialog
@@ -173,7 +170,7 @@ test.describe('Client - Collection Page - Deleting Images', () => {
         await ui.collectionPage.curationMenu.deleteButton.click();
         await ui.collectionPage.confirmationDialog.shouldBeDisplayed();
 
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, async (route) => {
             if (route.request().method() === 'DELETE') {
                 // Then the selected images are immediately hidden
                 // Assertions triggered when the request is caught
@@ -200,17 +197,17 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
     test('Delete operation completes successfully', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-standard');
 
         // Set longer action timeout for deletion operations that may take more than 1 second
         // page.context().setDefaultTimeout(10000);
 
         // Given a delete request is initiated
-        const collection = await createCollectionFixture('TestCollectionDeleteSuccess');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const firstImage = archiveImages[0]!;
         const secondImage = archiveImages[1]!;
 
-        await page.goto('/collection/TestCollectionDeleteSuccess?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select images, confirm delete operation
@@ -240,20 +237,20 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
     test('Delete operation fails partially', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-standard');
 
         // Given a delete request is initiated for multiple images
-        const collection = await createCollectionFixture('TestCollectionDeletePartial');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const firstImage = archiveImages[0]!;
         const secondImage = archiveImages[1]!;
         const thirdImage = archiveImages[2]!;
 
-        await page.goto('/collection/TestCollectionDeletePartial?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Mock partial API failure - first image succeeds, second fails, third succeeds
         let requestCount = 0;
-        await page.route('**/api/images/TestCollectionDeletePartial/*', async (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, async (route) => {
             if (route.request().method() === 'DELETE') {
                 requestCount++;
                 if (requestCount === 2) { // Second request fails
@@ -296,18 +293,18 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
     test('Delete operation fails completely', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-standard');
 
         // Given a delete request is initiated
-        const collection = await createCollectionFixture('TestCollectionDeleteFail');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const firstImage = archiveImages[0]!;
         const secondImage = archiveImages[1]!;
 
-        await page.goto('/collection/TestCollectionDeleteFail?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Mock API failure by intercepting all DELETE requests
-        await page.route('**/api/images/TestCollectionDeleteFail/*', async (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, async (route) => {
             if (route.request().method() === 'DELETE') {
                 route.fulfill({
                     status: 500,
@@ -342,6 +339,7 @@ test.describe('Client - Collection Page - Deleting Images', () => {
 
     test('User deletes a large number of images', async ({ page }) => {
         const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('delete-large');
 
         // Set longer action timeout for large batch deletion operations
         await page.context().setDefaultTimeout(15000);
@@ -349,16 +347,14 @@ test.describe('Client - Collection Page - Deleting Images', () => {
         const imageCount = 50;
 
         // Given many "ARCHIVE" images are selected
-        await createCollectionFixture('TestBatchDeleteLarge', imageCount);
-
-        await page.goto('/collection/TestBatchDeleteLarge?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         await ui.collectionPage.imageGrid.image().shouldHaveCount(imageCount);
 
         // Track API requests to verify batching
         const apiCalls: string[] = [];
-        await page.route('**/api/images/TestBatchDeleteLarge/*', (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, (route) => {
             if (route.request().method() === 'DELETE') {
                 apiCalls.push(route.request().url());
                 route.continue();

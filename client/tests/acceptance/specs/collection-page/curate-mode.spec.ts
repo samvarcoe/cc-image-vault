@@ -1,17 +1,18 @@
 import { test, expect } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
-import { Collection } from '@/domain';
-import { buildCollectionFixture, createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
 test.describe('Client - Collection Page - Curate Mode', () => {
 
-    test.beforeEach(async () => {
-        Collection.clear();
+    test.beforeAll(async () => {
+        await createCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        await createCollectionFixture({name: 'curate-mode-large', inboxCount: 0, collectionCount: 24, archiveCount: 0});
+        await createCollectionFixture({name: 'curate-mode-small', inboxCount: 0, collectionCount: 3, archiveCount: 0});
     });
 
     test('User navigates to a Collection page with "?curate=true" set', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-empty');
 
         // Given the user navigates to a Collection page
         // And "?curate=true" is set in the URL
@@ -34,7 +35,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User navigates to a Collection page with "?curate=false" set', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-empty');
 
         // Given the user navigates to a Collection page
         // And "?curate=false" is set in the URL
@@ -57,7 +58,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User navigates to a Collection page without "?curate" set', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-empty');
 
         // Given the user navigates to a Collection page
         // And "?curate" is not set in the URL
@@ -81,7 +82,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User activates curate mode', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-empty');
 
         // Given the user is viewing a Collection page
         await ui.collectionPage.visit(collection.name);
@@ -108,7 +109,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User deactivates curate mode', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-empty');
 
         // Given the user is viewing a Collection page
         // And the page is in curate mode
@@ -135,7 +136,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User scrolls the Collection page', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-large', inboxCount: 0, collectionCount: 24, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-large');
 
         // Given the user is on a Collection page with many images
         // And the page is in curate mode
@@ -160,7 +161,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User clicks on an image with curate mode activated', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-small', inboxCount: 0, collectionCount: 3, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-small');
 
         // Given the user is on a Collection page with curate mode active
         const collectionImages = await collection.getImages({status: "COLLECTION"});
@@ -182,7 +183,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User navigates between status views with curate mode activated', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-empty');
 
         // Given the user is viewing a Collection page
         // And the page is in curate mode
@@ -206,7 +207,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User navigates between status views without curate mode activated', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-empty');
 
         // Given the user is viewing a Collection page
         // And the page is not in curate mode
@@ -230,7 +231,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User refreshes the Collection page with curate mode activated', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-empty');
 
         // Given the user is viewing a Collection page
         // And the page is in curate mode
@@ -255,7 +256,7 @@ test.describe('Client - Collection Page - Curate Mode', () => {
 
     test('User refreshes the Collection page without curate mode activated', async ({ page }) => {
         const ui = new ImageVault(page);
-        const collection = await buildCollectionFixture({name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0});
+        const collection = setupCollectionFixture('curate-mode-empty');
 
         // Given the user is viewing a Collection page
         // And the page is not in curate mode

@@ -1,23 +1,23 @@
 import { test, expect } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
-import { Collection } from '@/domain';
-import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
 test.describe('Client - Collection Page - Image Status Updates', () => {
 
-    test.beforeEach(async () => {
-        Collection.clear();
+    test.beforeAll(async () => {
+        await createCollectionFixture({name: 'status-standard', inboxCount: 2, collectionCount: 2, archiveCount: 2});
+        await createCollectionFixture({name: 'status-batch', inboxCount: 100, collectionCount: 0, archiveCount: 0});
     });
 
     test('User views INBOX images with curate mode active', async ({ page }) => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('status-standard');
 
         // And the current status view is "INBOX"
         // And curate mode is active
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${collection.name}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the page loads
@@ -38,11 +38,11 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('status-standard');
 
         // And the current status view is "COLLECTION"
         // And curate mode is active
-        await page.goto('/collection/TestCollection?status=COLLECTION&curate=true');
+        await page.goto(`/collection/${collection.name}?status=COLLECTION&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the page loads
@@ -63,11 +63,11 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('status-standard');
 
         // And the current status view is "ARCHIVE"
         // And curate mode is active
-        await page.goto('/collection/TestCollection?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // When the page loads
@@ -87,12 +87,12 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given multiple "INBOX" images are selected
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('status-standard');
         const inboxImages = await collection.getImages({status: "INBOX"});
         const firstImage = inboxImages[0]!;
         const secondImage = inboxImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${collection.name}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images
@@ -100,8 +100,8 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(secondImage.id).click();
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
-        
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+
+        await page.route(`**/api/images/${collection.name}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Then the selected images are immediately hidden
                 // Assertions triggered when the request is caught
@@ -126,12 +126,12 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given multiple "INBOX" images are selected
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('status-standard');
         const inboxImages = await collection.getImages({status: "INBOX"});
         const firstImage = inboxImages[0]!;
         const secondImage = inboxImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${collection.name}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images
@@ -140,7 +140,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
 
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Then the selected images are immediately hidden
                 // Assertions triggered when the request is caught
@@ -165,12 +165,12 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given multiple "COLLECTION" images are selected
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('status-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=COLLECTION&curate=true');
+        await page.goto(`/collection/${collection.name}?status=COLLECTION&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images
@@ -179,7 +179,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
 
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Then the selected images are immediately hidden
                 // Assertions triggered when the request is caught
@@ -204,12 +204,12 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given multiple "ARCHIVE" images are selected
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('status-standard');
         const archiveImages = await collection.getImages({status: "ARCHIVE"});
         const firstImage = archiveImages[0]!;
         const secondImage = archiveImages[1]!;
 
-        await page.goto('/collection/TestCollection?status=ARCHIVE&curate=true');
+        await page.goto(`/collection/${collection.name}?status=ARCHIVE&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select multiple images
@@ -218,7 +218,7 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         await ui.collectionPage.imageGrid.image(firstImage.id).shouldBeSelected();
         await ui.collectionPage.imageGrid.image(secondImage.id).shouldBeSelected();
 
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Then the selected images are immediately hidden
                 // Assertions triggered when the request is caught
@@ -243,11 +243,11 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given a status change request is initiated
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('status-standard');
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
 
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${collection.name}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Select an image and initiate Keep request
@@ -271,15 +271,15 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
         const ui = new ImageVault(page);
 
         // Given a status change request is initiated
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('status-standard');
         const inboxImages = await collection.getImages({status: "INBOX"});
         const testImage = inboxImages[0]!;
 
-        await page.goto('/collection/TestCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${collection.name}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         // Mock API failure by intercepting the PATCH request
-        await page.route('**/api/images/TestCollection/*', async (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, async (route) => {
             if (route.request().method() === 'PATCH') {
                 // Verify the image was hidden when the request was made
                 await ui.collectionPage.imageGrid.image(testImage.id).shouldBeHidden();
@@ -319,16 +319,16 @@ test.describe('Client - Collection Page - Image Status Updates', () => {
 
         const imageCount = 100
 
-        await createCollectionFixture('TestBatchCollection', imageCount);
+        const collection = setupCollectionFixture('status-batch');
 
-        await page.goto('/collection/TestBatchCollection?status=INBOX&curate=true');
+        await page.goto(`/collection/${collection.name}?status=INBOX&curate=true`);
         await page.waitForLoadState('networkidle');
 
         await ui.collectionPage.imageGrid.image().shouldHaveCount(imageCount);
 
         // Track API requests to verify batching
         const apiCalls: string[] = [];
-        await page.route('**/api/images/TestBatchCollection/*', (route) => {
+        await page.route(`**/api/images/${collection.name}/*`, (route) => {
             if (route.request().method() === 'PATCH') {
                 apiCalls.push(route.request().url());
                 route.continue();
