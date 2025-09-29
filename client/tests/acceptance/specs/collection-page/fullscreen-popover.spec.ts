@@ -1,25 +1,25 @@
 import { test } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
-import { Collection } from '@/domain';
-import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
 test.describe('Client - Collection Page - Fullscreen Popover', () => {
 
-    test.beforeEach(async () => {
-        Collection.clear();
+    test.beforeAll(async () => {
+        await createCollectionFixture({name: 'popover-standard', inboxCount: 0, collectionCount: 5, archiveCount: 0});
+        await createCollectionFixture({name: 'popover-navigation', inboxCount: 0, collectionCount: 5, archiveCount: 0});
     });
 
     test('User clicks thumbnail to open popover', async ({ page }) => {
         const ui = new ImageVault(page);
 
         // Given a collection exists with name "TestCollection"
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
         // And the collection contains images with "COLLECTION" status
         // When the user visits the collection page "/collection/TestCollection"
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
 
         // And the user clicks on a thumbnail image
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
@@ -39,11 +39,11 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
 
@@ -65,11 +65,11 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
 
@@ -93,11 +93,11 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         // Given a collection page is open on desktop
         await page.setViewportSize({ width: 1200, height: 800 });
 
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
 
         // When the user clicks on a thumbnail image
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
@@ -116,11 +116,11 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         // Given a collection page is open on tablet
         await page.setViewportSize({ width: 768, height: 1024 });
 
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
 
         // When the user clicks on a thumbnail image
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
@@ -140,11 +140,11 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         // Given a collection page is open on mobile
         await page.setViewportSize({ width: 375, height: 667 });
 
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
 
         // When the user clicks on a thumbnail image
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
@@ -161,12 +161,12 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-navigation');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(firstImage.id, collection.name);
@@ -186,12 +186,12 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-navigation');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
         await ui.collectionPage.imageGrid.image(firstImage.id).click();
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(firstImage.id, collection.name);
@@ -211,12 +211,12 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open with an image popover displayed
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-navigation');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
         const secondImage = collectionImages[1]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
         await ui.collectionPage.imageGrid.image(secondImage.id).click(); // Start with second image
         await ui.collectionPage.popover.shouldBeDisplayed();
         await ui.collectionPage.popover.shouldShowImage(secondImage.id, collection.name);
@@ -236,11 +236,11 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         const ui = new ImageVault(page);
 
         // Given a collection page is open
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('popover-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
 
         // Mock the original image request to fail
         const originalImageUrl = `/api/images/${collection.name}/${firstImage.id}`;
@@ -258,6 +258,6 @@ test.describe('Client - Collection Page - Fullscreen Popover', () => {
         await page.keyboard.press('Escape');
         await ui.collectionPage.popover.shouldNotBeDisplayed();
 
-        LOGGER.log('✓ Popover handles image load failure gracefully');
+        // Error case handled gracefully
     });
 });

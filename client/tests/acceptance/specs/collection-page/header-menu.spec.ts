@@ -1,22 +1,21 @@
 import { test, expect } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
-import { Collection } from '@/domain';
-import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 
 test.describe('Client - Collection Page - Header Menu', () => {
 
-    test.beforeEach(async () => {
-        Collection.clear();
+    test.beforeAll(async () => {
+        await createCollectionFixture({name: 'header-standard', inboxCount: 2, collectionCount: 3, archiveCount: 2});
     });
 
     test('User navigates to the Collection page', async ({ page }) => {
         const ui = new ImageVault(page);
 
         // Given a Collection exists
-        await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('header-standard');
 
         // When the user visits the Collection page
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
 
         // Then the page displays the header menu at the top of the page
         await ui.collectionPage.header.shouldBeDisplayed();
@@ -47,8 +46,8 @@ test.describe('Client - Collection Page - Header Menu', () => {
         const ui = new ImageVault(page);
 
         // Given is on a Collection page
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('header-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // When the user clicks the "Image Vault" link in the header
         await ui.collectionPage.header.imageVaultLink.click();
@@ -68,8 +67,8 @@ test.describe('Client - Collection Page - Header Menu', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page with many images
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('header-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // Get initial header position for comparison
         const initialHeaderBounds = await ui.collectionPage.header.getBoundingBox();
@@ -94,13 +93,13 @@ test.describe('Client - Collection Page - Header Menu', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection', 'COLLECTION');
+        const collection = setupCollectionFixture('header-standard');
+        await ui.collectionPage.visit(collection.name, 'COLLECTION');
 
         // When the user clicks on a Status toggle button
         await ui.collectionPage.header.statusToggle.inboxButton.click();
 
-        // Then the user is navigated to "/collection/TestCollection?status=[STATUS]"
+        // Then the user is navigated to "/collection/[COLLECTION]?status=[STATUS]"
         expect(page.url()).toContain('status=INBOX');
 
         // And the correct button shows as selected
@@ -126,11 +125,11 @@ test.describe('Client - Collection Page - Header Menu', () => {
         const ui = new ImageVault(page);
 
         // Given user is on a Collection page
-        const collection = await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('header-standard');
         const collectionImages = await collection.getImages({status: "COLLECTION"});
         const firstImage = collectionImages[0]!;
 
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
 
         // When the user opens a fullscreen image popover
         await ui.collectionPage.imageGrid.image(firstImage.id).click();

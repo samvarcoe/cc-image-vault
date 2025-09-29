@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import AdmZip from 'adm-zip';
 
 export class AssertableResponse<ResponseBody> {
     public raw: Response;
@@ -219,6 +220,57 @@ export class AssertableResponse<ResponseBody> {
             LOGGER.log(`\tResponse has Content-Type: ${contentType} (matches expected: ${expectedMime})`);
         } else {
             LOGGER.log(`\tResponse has valid image Content-Type: ${contentType}`);
+        }
+
+        return this;
+    }
+
+    shouldHaveContentDispositionAttachment(expectedFilename?: string): AssertableResponse<ResponseBody> {
+        const contentDisposition = this.raw.headers.get('Content-Disposition');
+        expect(contentDisposition, 'Response does not have Content-Disposition header').to.not.equal(null);
+
+        expect(contentDisposition, 'Content-Disposition header does not contain "attachment"').to.include('attachment');
+        LOGGER.log(`\tResponse has Content-Disposition header with attachment directive`);
+
+        if (expectedFilename) {
+            expect(contentDisposition, `Content-Disposition header does not contain expected filename`).to.include(`filename="${expectedFilename}"`);
+            LOGGER.log(`\tResponse has Content-Disposition with filename: "${expectedFilename}"`);
+        }
+
+        return this;
+    }
+
+    shouldHaveZipContent(expectedFiles: { name: string, content: Buffer }[]): AssertableResponse<ResponseBody> {
+        expect(this.buffer, 'Response does not contain binary content for ZIP').to.not.equal(undefined);
+        expect(this.buffer!.byteLength, 'ZIP content is empty').to.be.greaterThan(0);
+
+        // Extract ZIP contents for validation
+        const extractedFiles: { name: string, content: Buffer }[] = [];
+
+        const zip = new AdmZip(Buffer.from(this.buffer!));
+        const zipEntries = zip.getEntries();
+
+        for (const entry of zipEntries) {
+            if (!entry.isDirectory) {
+                extractedFiles.push({
+                    name: entry.entryName,
+                    content: entry.getData()
+                });
+            }
+        }
+
+        // Validate we have the expected number of files
+        expect(extractedFiles.length, `ZIP archive contains ${extractedFiles.length} files, expected ${expectedFiles.length}`).to.equal(expectedFiles.length);
+        LOGGER.log(`\tZIP archive contains ${extractedFiles.length} file(s)`);
+
+        // Validate each expected file exists with correct content
+        for (const expectedFile of expectedFiles) {
+            const actualFile = extractedFiles.find(f => f.name === expectedFile.name);
+            expect(actualFile, `ZIP archive does not contain expected file: "${expectedFile.name}"`).to.not.equal(undefined);
+
+            const contentMatches = actualFile!.content.equals(expectedFile.content);
+            expect(contentMatches, `File "${expectedFile.name}" content does not match expected data`).to.be.true;
+            LOGGER.log(`\tZIP contains file "${expectedFile.name}" with correct content (${expectedFile.content.length} bytes)`);
         }
 
         return this;

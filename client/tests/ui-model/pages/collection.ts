@@ -44,7 +44,7 @@ export class CollectionPage extends PageObject {
     async visit(collectionName: string, status?: ImageStatus): Promise<void> {
         const searchParams = status ? `?status=${status}` : '';
         await this.page.goto(`${this.url}/${collectionName}${searchParams}`);
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
     };
 }
 

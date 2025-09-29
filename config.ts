@@ -17,7 +17,7 @@ export const CONFIG = {
     COLLECTIONS_DIRECTORY: process.env.COLLECTIONS_DIRECTORY || '/workspace/projects/image-vault/private',
     THUMBNAIL_WIDTH: 400,
     MODE: 'DEV',
-    LOGGING_ENABLED: process.env.LOGGING_ENABLED || false,
+    LOGGING_ENABLED: false,
 } as const;
 
 class Logger {

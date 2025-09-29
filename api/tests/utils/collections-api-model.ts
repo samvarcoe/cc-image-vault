@@ -37,4 +37,12 @@ export class CollectionsAPI extends APIModel {
   '/api/images/:collectionId/:imageId/thumbnail' = {
     get: this.request<undefined, ArrayBuffer>('/api/images/:collectionId/:imageId/thumbnail', 'GET'),
   };
+
+  '/api/images/:collectionId/:imageId/download' = {
+    get: this.request<undefined, ArrayBuffer>('/api/images/:collectionId/:imageId/download', 'GET'),
+  };
+
+  '/api/images/:collectionId/download' = {
+    post: this.request<{ imageIds: string[], archiveName: string }, ArrayBuffer>('/api/images/:collectionId/download', 'POST'),
+  };
 }

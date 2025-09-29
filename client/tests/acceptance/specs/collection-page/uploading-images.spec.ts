@@ -1,36 +1,23 @@
 import { test, expect } from '@playwright/test';
 import { ImageVault } from '../../../ui-model/image-vault';
-import { Collection } from '@/domain';
-import { createCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
 import { getImageFixture, getUnsupportedFileFixture } from '@/utils/fixtures/image-fixtures';
 import { readFileSync } from 'fs';
 
 test.describe('Client - Images - Upload', () => {
 
-    test.beforeEach(async () => {
-        // Try to clear collections with retry for file locking issues
-        let retries = 3;
-        while (retries > 0) {
-            try {
-                Collection.clear();
-                break;
-            } catch (error) {
-                retries--;
-                if (retries === 0) throw error;
-                // Wait a bit for any file operations to complete
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-        }
+    test.beforeAll(async () => {
+        await createCollectionFixture({name: 'upload-standard', inboxCount: 2, collectionCount: 3, archiveCount: 2});
     });
 
     test('User views Collection page header', async ({ page }) => {
         const ui = new ImageVault(page);
 
         // Given a Collection exists
-        await createCollectionFixture('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
 
         // When the user visits the Collection page
-        await ui.collectionPage.visit('TestCollection');
+        await ui.collectionPage.visit(collection.name);
 
         // Then the header displays the "Upload" button
         await ui.collectionPage.header.uploadButton.shouldBeDisplayed();
@@ -46,8 +33,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the user is on a Collection page
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // When the user clicks the "Upload" button
         await ui.collectionPage.header.uploadButton.click();
@@ -73,8 +60,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the file browser dialog is open
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
         await ui.collectionPage.header.uploadButton.click();
         await ui.collectionPage.uploadDialog.shouldBeDisplayed();
 
@@ -109,8 +96,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the file browser dialog is open
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
         await ui.collectionPage.header.uploadButton.click();
         await ui.collectionPage.uploadDialog.shouldBeDisplayed();
 
@@ -134,8 +121,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given files are being uploaded
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // Start upload process
         await ui.collectionPage.header.uploadButton.click();
@@ -148,7 +135,7 @@ test.describe('Client - Images - Upload', () => {
         // When all upload requests complete successfully
         await page.waitForResponse(response =>
             response.url().includes('/api/images/') &&
-            response.url().includes('TestCollection') &&
+            response.url().includes(collection.name) &&
             response.status() === 201
         );
 
@@ -175,8 +162,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given files are being uploaded
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // Mock mixed upload responses (some succeed, some fail)
         let requestCount = 0;
@@ -234,8 +221,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given files are being uploaded
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // Mock failed upload responses for error scenario
         await page.route('**/api/images/*', async route => {
@@ -279,8 +266,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given files are being uploaded
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // Use route interception to delay upload response for timing control
         await page.route('**/api/images/*', async route => {
@@ -329,8 +316,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the navigation warning dialog is displayed
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // Use route interception to delay upload for timing control
         await page.route('**/api/images/*', async route => {
@@ -362,7 +349,7 @@ test.describe('Client - Images - Upload', () => {
 
         // Then the warning dialog closes
         // And the user remains on the current page
-        expect(page.url()).toContain('/collection/TestCollection');
+        expect(page.url()).toContain(`/collection/${collection.name}`);
 
         // And the upload process continues
         await ui.collectionPage.header.uploadButton.shouldHaveAttribute('data-loading', 'true');
@@ -374,8 +361,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the navigation warning dialog is displayed
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // Use route interception to delay upload for timing control
         await page.route('**/api/images/*', async route => {
@@ -411,8 +398,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the user has selected many image files
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // Create 15 test images (more than batch size of 10)
         const images = await Promise.all(
@@ -445,8 +432,8 @@ test.describe('Client - Images - Upload', () => {
         const ui = new ImageVault(page);
 
         // Given the user has submitted a mixture of valid and non-image files
-        await createCollectionFixture('TestCollection');
-        await ui.collectionPage.visit('TestCollection');
+        const collection = setupCollectionFixture('upload-standard');
+        await ui.collectionPage.visit(collection.name);
 
         // Create valid image and invalid text file
         const validImage = await getImageFixture({ id: 'valid-image', extension: 'jpg' });
