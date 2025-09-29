@@ -223,4 +223,19 @@ export class AssertableResponse<ResponseBody> {
 
         return this;
     }
+
+    shouldHaveContentDispositionAttachment(expectedFilename?: string): AssertableResponse<ResponseBody> {
+        const contentDisposition = this.raw.headers.get('Content-Disposition');
+        expect(contentDisposition, 'Response does not have Content-Disposition header').to.not.equal(null);
+
+        expect(contentDisposition, 'Content-Disposition header does not contain "attachment"').to.include('attachment');
+        LOGGER.log(`\tResponse has Content-Disposition header with attachment directive`);
+
+        if (expectedFilename) {
+            expect(contentDisposition, `Content-Disposition header does not contain expected filename`).to.include(`filename="${expectedFilename}"`);
+            LOGGER.log(`\tResponse has Content-Disposition with filename: "${expectedFilename}"`);
+        }
+
+        return this;
+    }
 }

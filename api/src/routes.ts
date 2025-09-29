@@ -273,3 +273,34 @@ routes.delete('/images/:collectionId/:imageId', async (req, res) => {
         return res.status(500).json({ message: 'An error occurred whilst deleting the image' });
     }
 });
+
+routes.get('/images/:collectionId/:imageId/download', async (req, res) => {
+    try {
+        const { collectionId, imageId } = req.params;
+
+        const collection = Collection.load(collectionId!);
+        const metadata = await collection.getImage(imageId);
+        const buffer = await collection.getImageData(metadata.id);
+
+        res.set('Content-Type', metadata.mime);
+        res.set('Content-Length', metadata.size.toString());
+        res.set('Content-Disposition', `attachment; filename="${metadata.name}"`);
+
+        return res.status(200).send(buffer);
+
+    } catch (error: unknown) {
+        if (error instanceof CollectionNotFoundError) {
+            return res.status(404).json({ message: 'Collection not found' });
+        }
+
+        if (error instanceof ImageNotFoundError) {
+            return res.status(404).json({ message: 'Image not found' });
+        }
+
+        if (error instanceof ImageRetrievalError && error.cause instanceof Error && error.cause.message === 'Invalid imageID') {
+            return res.status(400).json({ message: 'Invalid image ID format' });
+        }
+
+        return res.status(500).json({ message: 'An error occurred whilst downloading the image' });
+    }
+});
