@@ -180,6 +180,10 @@ class CurationMenu extends Element {
         return this.child(Element, 'Delete Button', '[data-id="delete-button"]');
     }
 
+    get downloadButton(): Element {
+        return this.child(Element, 'Download Button', '[data-id="download-button"]');
+    }
+
     get errorMessage(): Element {
         return this.child(Element, 'Curation Error Message', '[data-id="curation-error-message"]');
     }

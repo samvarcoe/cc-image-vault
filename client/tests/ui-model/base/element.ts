@@ -219,7 +219,6 @@ export class Element {
         expect(actual, `${this.name} has no attribute: "${key}"`).not.toBeNull();
         expect(actual, `${this.name} does not "${key}" equal to "${value}"`).toEqual(value);
         LOGGER.log(`${this.name} has "${key}" equal to "${value}"`);
-
     };
 
     shouldBeFullyVisible = async () => {

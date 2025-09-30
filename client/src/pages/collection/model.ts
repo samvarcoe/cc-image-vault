@@ -28,6 +28,9 @@ export interface CollectionPageData {
         isUploading: boolean;
         error?: string;
     };
+    download: {
+        isDownloading: boolean;
+    };
     slideshow: {
         visible: boolean;
         currentImageId?: string;
@@ -67,6 +70,9 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             upload: {
                 isUploading: false,
                 error: undefined
+            },
+            download: {
+                isDownloading: false
             },
             slideshow: {
                 visible: false,
@@ -385,6 +391,16 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
 
     clearUploadError(): void {
         this.data.upload.error = undefined;
+    }
+
+    // Download state management
+
+    isDownloading(): boolean {
+        return this.data.download.isDownloading;
+    }
+
+    setDownloading(isDownloading: boolean): void {
+        this.data.download.isDownloading = isDownloading;
     }
 
     // Slideshow methods

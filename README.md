@@ -120,6 +120,7 @@ For detailed testing strategies and utilities, see the individual module README 
 - Context-sensitive status update constraints and user messaging
 - Enhanced fullscreen status updates with grid synchronization and auto-close behavior
 - Curate mode with image selection functionality (multi-select, Select All/Clear)
+- Image download capability (single images with original filename, batch as ZIP archives)
 - HTTP API for image uploads with comprehensive validation (JPG/JPEG, PNG, WebP)
 - Robust error handling and user feedback
 - Comprehensive test coverage across all layers
@@ -127,4 +128,4 @@ For detailed testing strategies and utilities, see the individual module README 
 ### 🎯 Next Development Priorities
 - Client-side image upload interface with drag-and-drop
 - Collection creation UI workflow
-- Bulk image operations (status updates, deletion, organization)
+- Additional bulk image operations and organization features
