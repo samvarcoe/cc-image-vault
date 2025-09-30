@@ -36,6 +36,8 @@ import { routes } from './client/src/routes';
 - **Bulk Selection Operations**: Select All and Clear buttons for efficient multi-image operations
 - **Image Status Management**: Keep, Discard, and Restore operations with optimistic UI updates
 - **Image Deletion**: Permanent deletion of ARCHIVE images with confirmation dialog and batched processing
+- **Image Download**: Download selected images to local filesystem - single images with original filename, multiple images as ZIP archive with format `{collection}-{status}-images.zip`
+- **Image Upload**: Upload button with dialog for file selection, batch processing with progress tracking, error handling, and automatic page reload on successful upload
 - **Fullscreen Popover**: Click thumbnails to view original images in modal overlay (disabled in curate mode)
 - **Keyboard Status Updates**: Tab/Backspace shortcuts for efficient image status changes while viewing fullscreen
 - **Slideshow Mode**: Fullscreen slideshow with randomized image sequence, auto-advance every 5 seconds, keyboard controls, and error handling
@@ -44,8 +46,8 @@ import { routes } from './client/src/routes';
 - **Error Handling**: 404 for non-existent collections, server error handling
 
 ### ⏳ Pending Implementation
-- **Image Upload Interface**: Drag-and-drop upload with progress indicators
 - **Settings Page**: User preferences and configuration
+- **Enhanced Upload UX**: Drag-and-drop interface with real-time progress indicators
 
 ## MVC Architecture Implementation
 
@@ -79,7 +81,7 @@ client/src/
 
 ### Model Capabilities
 - **HomePageModel**: Collection CRUD operations, form validation, loading states, error handling
-- **CollectionPageModel**: Image display management, status filtering, curate mode state, image selection management, popover state with enhanced navigation (`advancePopoverToNext()` with auto-close and graceful handling, `advancePopoverToPrevious()`), slideshow state with random sequencing, focus control
+- **CollectionPageModel**: Image display management, status filtering, curate mode state, image selection management, download state management, popover state with enhanced navigation (`advancePopoverToNext()` with auto-close and graceful handling, `advancePopoverToPrevious()`), slideshow state with random sequencing, focus control
 
 ## Responsive Design System
 
@@ -264,6 +266,7 @@ All interactive elements include `data-id` attributes for reliable test automati
 <div data-id="curation-menu">
   <button data-id="select-all-button">Select All</button>
   <button data-id="clear-button">Clear</button>
+  <button data-id="download-button" data-loading="${isDownloading}">Download</button>
   <button data-id="keep-button">Keep</button>
   <button data-id="discard-button">Discard</button>
   <button data-id="restore-button">Restore</button>

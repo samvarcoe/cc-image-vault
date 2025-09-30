@@ -140,6 +140,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
         const currentStatus = this.model.getCurrentStatus();
         const hasSelectedImages = this.model.hasSelectedImages();
         const statusUpdateError = this.model.getStatusUpdateError();
+        const isDownloading = this.model.isDownloading();
 
         return /*html*/`
             <div data-id="curation-menu" class="sticky top-14 z-30 bg-white shadow-sm border-b border-slate-200 dark:bg-slate-800 dark:border-slate-700">
@@ -157,6 +158,14 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                                 class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
                             >
                                 Clear
+                            </button>
+                            <button
+                                data-id="download-button"
+                                data-loading="${isDownloading}"
+                                class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 ${!hasSelectedImages || isDownloading ? 'opacity-50 cursor-not-allowed' : ''}"
+                                ${!hasSelectedImages || isDownloading ? 'disabled' : ''}
+                            >
+                                ${isDownloading ? '⏳' : 'Download'}
                             </button>
                         </div>
                         ${statusUpdateError ? /*html*/`

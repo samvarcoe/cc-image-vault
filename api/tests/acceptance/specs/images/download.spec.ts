@@ -34,7 +34,7 @@ suite('API - Images - Individual Download', () => {
         response
             .shouldHaveStatus(200)
             .shouldHaveImageContent(imageFixture.buffer)
-            .shouldHaveContentDispositionAttachment(imageMetadata.name)
+            .shouldHaveContentDispositionAttachment(`${imageMetadata.name}.${imageMetadata.extension}`)
             .shouldHaveImageMimeType(imageMetadata.mime)
             .shouldHaveContentLength(imageMetadata.size);
     });

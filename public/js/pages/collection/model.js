@@ -14,6 +14,8 @@ export default class CollectionPageModel extends Model {
             }, upload: {
                 isUploading: false,
                 error: undefined
+            }, download: {
+                isDownloading: false
             }, slideshow: {
                 visible: false,
                 currentImageId: undefined,
@@ -257,6 +259,12 @@ export default class CollectionPageModel extends Model {
     }
     clearUploadError() {
         this.data.upload.error = undefined;
+    }
+    isDownloading() {
+        return this.data.download.isDownloading;
+    }
+    setDownloading(isDownloading) {
+        this.data.download.isDownloading = isDownloading;
     }
     isSlideshowVisible() {
         return this.data.slideshow.visible;

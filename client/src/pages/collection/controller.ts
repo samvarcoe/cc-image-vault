@@ -178,6 +178,14 @@ export default class CollectionPageController {
             }
         });
 
+        // Handle Download button clicks
+        this.addEventListener(document, 'click', (event) => {
+            const downloadButton = (event.target as Element).closest('[data-id="download-button"]');
+            if (downloadButton && !downloadButton.hasAttribute('disabled')) {
+                this.handleDownloadImages();
+            }
+        });
+
         // Handle confirmation dialog button clicks
         this.addEventListener(document, 'click', (event) => {
             const cancelButton = (event.target as Element).closest('[data-id="cancel-button"]');
@@ -489,6 +497,96 @@ export default class CollectionPageController {
         this.view.update();
     }
 
+    private async handleDownloadImages(): Promise<void> {
+        const selectedImageIds = this.model.getSelectedImageIds();
+        if (selectedImageIds.length === 0) {
+            return;
+        }
+
+        // Clear any previous errors and set downloading state
+        this.model.clearStatusUpdateError();
+        this.model.setDownloading(true);
+        this.view.update();
+
+        try {
+            const collectionName = this.model.getCollectionName();
+            const currentStatus = this.model.getCurrentStatus();
+
+            if (selectedImageIds.length === 1) {
+                // Single image download
+                const imageId = selectedImageIds[0]!;
+                await this.downloadSingleImage(collectionName, imageId);
+            } else {
+                // Multiple images download
+                const archiveName = `${collectionName}-${currentStatus}-images`;
+                await this.downloadMultipleImages(collectionName, selectedImageIds, archiveName);
+            }
+        } catch (error) {
+            console.error('Download error:', error);
+            this.model.setStatusUpdateError('Unable to download image(s)');
+        } finally {
+            this.model.setDownloading(false);
+            this.view.update();
+        }
+    }
+
+    private async downloadSingleImage(collectionName: string, imageId: string): Promise<void> {
+        const url = `/api/images/${collectionName}/${imageId}/download`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`Download failed with status ${response.status}`);
+        }
+
+        // Extract filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = imageId; // Fallback to imageId if we can't extract filename
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch && filenameMatch[1]) {
+                filename = filenameMatch[1];
+            }
+        }
+
+        const blob = await response.blob();
+        const objectUrl = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        window.URL.revokeObjectURL(objectUrl);
+    }
+
+    private async downloadMultipleImages(collectionName: string, imageIds: string[], archiveName: string): Promise<void> {
+        const url = `/api/images/${collectionName}/download`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ imageIds, archiveName })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Download failed with status ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const objectUrl = window.URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = `${archiveName}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        window.URL.revokeObjectURL(objectUrl);
+    }
 
     private handleUploadButtonClick(): void {
         this.model.showUploadDialog();

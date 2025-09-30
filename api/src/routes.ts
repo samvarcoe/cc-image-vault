@@ -285,7 +285,7 @@ routes.get('/images/:collectionId/:imageId/download', async (req, res) => {
 
         res.set('Content-Type', metadata.mime);
         res.set('Content-Length', metadata.size.toString());
-        res.set('Content-Disposition', `attachment; filename="${metadata.name}"`);
+        res.set('Content-Disposition', `attachment; filename="${metadata.name}.${metadata.extension}"`);
 
         return res.status(200).send(buffer);
 

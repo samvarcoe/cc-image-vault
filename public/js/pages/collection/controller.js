@@ -137,6 +137,12 @@ export default class CollectionPageController {
             }
         });
         this.addEventListener(document, 'click', (event) => {
+            const downloadButton = event.target.closest('[data-id="download-button"]');
+            if (downloadButton && !downloadButton.hasAttribute('disabled')) {
+                this.handleDownloadImages();
+            }
+        });
+        this.addEventListener(document, 'click', (event) => {
             const cancelButton = event.target.closest('[data-id="cancel-button"]');
             const confirmDeleteButton = event.target.closest('[data-id="confirm-delete-button"]');
             if (cancelButton) {
@@ -370,6 +376,81 @@ export default class CollectionPageController {
             }
         }
         this.view.update();
+    }
+    async handleDownloadImages() {
+        const selectedImageIds = this.model.getSelectedImageIds();
+        if (selectedImageIds.length === 0) {
+            return;
+        }
+        this.model.clearStatusUpdateError();
+        this.model.setDownloading(true);
+        this.view.update();
+        try {
+            const collectionName = this.model.getCollectionName();
+            const currentStatus = this.model.getCurrentStatus();
+            if (selectedImageIds.length === 1) {
+                const imageId = selectedImageIds[0];
+                await this.downloadSingleImage(collectionName, imageId);
+            }
+            else {
+                const archiveName = `${collectionName}-${currentStatus}-images`;
+                await this.downloadMultipleImages(collectionName, selectedImageIds, archiveName);
+            }
+        }
+        catch (error) {
+            console.error('Download error:', error);
+            this.model.setStatusUpdateError('Unable to download image(s)');
+        }
+        finally {
+            this.model.setDownloading(false);
+            this.view.update();
+        }
+    }
+    async downloadSingleImage(collectionName, imageId) {
+        const url = `/api/images/${collectionName}/${imageId}/download`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Download failed with status ${response.status}`);
+        }
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = imageId;
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch && filenameMatch[1]) {
+                filename = filenameMatch[1];
+            }
+        }
+        const blob = await response.blob();
+        const objectUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(objectUrl);
+    }
+    async downloadMultipleImages(collectionName, imageIds, archiveName) {
+        const url = `/api/images/${collectionName}/download`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ imageIds, archiveName })
+        });
+        if (!response.ok) {
+            throw new Error(`Download failed with status ${response.status}`);
+        }
+        const blob = await response.blob();
+        const objectUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = `${archiveName}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(objectUrl);
     }
     handleUploadButtonClick() {
         this.model.showUploadDialog();
