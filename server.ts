@@ -26,6 +26,7 @@ const jsonErrorHandler = (err: Error, req: Request, res: Response, next: NextFun
 const app = express()
     .use(express.static('public'))
     .use(express.json())
+    .use(express.urlencoded({ extended: true })) // Parse form-encoded bodies for downloads
     .use(jsonErrorHandler)
     .use(compression())
     .use(forceFSError)

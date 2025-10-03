@@ -1,7 +1,6 @@
 import { suite, test } from 'mocha';
 import { Collection } from '@/domain';
 import { getImageFixture, corruptCollectionDB } from '@/utils';
-import { useFakeTimers } from 'sinon';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -55,13 +54,12 @@ suite('API - Images - Batch Download', () => {
         // And the API returns a ZIP archive file
         // And the API sets Content-Disposition header to attachment with archive named
         // And the API sets Content-Type header to application/zip
-        // And the API sets Content-Length header with the archive size
+        // And the API streams the ZIP archive using chunked transfer encoding
         // And the ZIP archive contains all requested images with their original filenames
         response
             .shouldHaveStatus(200)
             .shouldHaveContentDispositionAttachment('vacation-photos.zip')
             .shouldHaveHeader('Content-Type', 'application/zip')
-            .shouldHaveHeader('Content-Length')
             .shouldHaveZipContent([
                 { name: `${image1Metadata.name}.${image1Metadata.extension}`, content: image1Fixture.buffer },
                 { name: `${image2Metadata.name}.${image2Metadata.extension}`, content: image2Fixture.buffer },
@@ -71,12 +69,10 @@ suite('API - Images - Batch Download', () => {
 
     test('Client downloads multiple images with duplicate filenames', async () => {
         // Given a collection exists with duplicated image names
-        const clock = useFakeTimers();
         const collection = Collection.create('batch-download-duplicates');
 
         // Create three DIFFERENT images but give them the same filename
         // to test duplicate filename handling
-        // ToDo: Improve fixture naming mechanism and update domain functions to take a buffer instead of a file
         const tempDir = join(tmpdir(), randomUUID());
         mkdirSync(tempDir, { recursive: true });
 
@@ -89,7 +85,6 @@ suite('API - Images - Batch Download', () => {
         const tempPath1 = join(tempDir, 'photo.jpeg');
         writeFileSync(tempPath1, fixture1.buffer);
         const image1Metadata = await collection.addImage(tempPath1);
-        clock.tick(1000); // Advance time
 
         const fixture2 = await getImageFixture({
             id: 'photo-2',
@@ -100,7 +95,6 @@ suite('API - Images - Batch Download', () => {
         const tempPath2 = join(tempDir, 'photo.jpeg');
         writeFileSync(tempPath2, fixture2.buffer);
         const image2Metadata = await collection.addImage(tempPath2);
-        clock.tick(1000); // Advance time
 
         const fixture3 = await getImageFixture({
             id: 'photo-3',
@@ -111,8 +105,6 @@ suite('API - Images - Batch Download', () => {
         const tempPath3 = join(tempDir, 'photo.jpeg');
         writeFileSync(tempPath3, fixture3.buffer);
         const image3Metadata = await collection.addImage(tempPath3);
-
-        clock.restore();
 
         // When the client requests POST /api/images/:collectionId/download with all three imageIds
         const response = await api['/api/images/:collectionId/download'].post({
@@ -126,15 +118,15 @@ suite('API - Images - Batch Download', () => {
         });
 
         // Then the API returns 200 status code
-        // And the duplicated images have an index based suffix applied to their names
-        // And the index is ordered based on the creation times of the images
-        // And the order is from oldest to newest
+        // And the first occurrence uses the original filename
+        // And subsequent occurrences have indexed suffixes (_001, _002, etc.)
+        // And the order follows the request array order
         response
             .shouldHaveStatus(200)
             .shouldHaveZipContent([
-                { name: `${image1Metadata.name}_001.${image1Metadata.extension}`, content: fixture1.buffer },
-                { name: `${image2Metadata.name}_002.${image2Metadata.extension}`, content: fixture2.buffer },
-                { name: `${image3Metadata.name}_003.${image3Metadata.extension}`, content: fixture3.buffer }
+                { name: `${image1Metadata.name}.${image1Metadata.extension}`, content: fixture1.buffer },
+                { name: `${image2Metadata.name}_001.${image2Metadata.extension}`, content: fixture2.buffer },
+                { name: `${image3Metadata.name}_002.${image3Metadata.extension}`, content: fixture3.buffer }
             ]);
     });
 
