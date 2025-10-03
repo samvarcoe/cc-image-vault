@@ -13,12 +13,11 @@ suite('API - Images - Serving', () => {
         // Given a collection exists with an image
         const collection = Collection.create('nature-photos');
         const imageFixture = await getImageFixture({
-            id: 'landscape',
+            filename: 'landscape.jpeg',
             width: 800,
-            height: 600,
-            extension: 'jpeg'
+            height: 600
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // When the client requests GET /api/images/:collectionId/:imageId
         const response = await api['/api/images/:collectionId/:imageId'].get({
@@ -45,12 +44,11 @@ suite('API - Images - Serving', () => {
         // Given a collection exists with an image that has a thumbnail
         const collection = Collection.create('portrait-shots');
         const imageFixture = await getImageFixture({
-            id: 'headshot',
+            filename: 'headshot.png',
             width: 1200,
-            height: 1600,
-            extension: 'png'
+            height: 1600
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // Read the actual thumbnail buffer from filesystem
         const thumbnailPath = path.join(

@@ -13,10 +13,10 @@ const testCollectionName = 'test-image-deletion';
 suite('Domain - Images - Delete', () => {
     test('User deletes an image from a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'deletion-test', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'deletion-test.jpg' });
         
         // First add an image to the collection
-        const addedMetadata = await collection.addImage(imageFixture.filePath);
+        const addedMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
         
         // Verify the image files exist before deletion
         await ImageUtils.assertImageFileExists(testCollectionName, `${addedMetadata.id}.jpg`, 'original');
@@ -69,10 +69,10 @@ suite('Domain - Images - Delete', () => {
 
     test('An internal error occurs when deleting an image', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'internal-error-deletion', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'internal-error-deletion.jpg' });
         
         // First add an image to the collection
-        const addedMetadata = await collection.addImage(imageFixture.filePath);
+        const addedMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
         
         // Verify the image files exist before attempting deletion
         await ImageUtils.assertImageFileExists(testCollectionName, `${addedMetadata.id}.jpg`, 'original');

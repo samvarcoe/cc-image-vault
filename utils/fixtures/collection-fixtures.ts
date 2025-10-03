@@ -47,19 +47,19 @@ export const createCollectionFixture = async (options: CollectionFixtureOptions)
         const y = (i: number, count: number) => Math.round(height.max - (i/count) * (height.max - height.min));
 
         for (let i = 0; i < inboxCount; i++) {
-            const inboxImage = await getImageFixture({id: `inbox-${i}`, width: x(i, inboxCount), height: y(i, inboxCount)});
-            await collection.addImage(inboxImage.filePath);
+            const inboxImage = await getImageFixture({filename: `inbox-${i}.jpeg`, width: x(i, inboxCount), height: y(i, inboxCount)});
+            await collection.addImage(inboxImage.filename, inboxImage.buffer);
         }
 
         for (let i = 0; i < collectionCount; i++) {
-            const collectionImage = await getImageFixture({id: `collection-${i}`, width: x(i, collectionCount), height: y(i, collectionCount)});
-            const collectionImageMetaData = await collection.addImage(collectionImage.filePath);
+            const collectionImage = await getImageFixture({filename: `collection-${i}.jpeg`, width: x(i, collectionCount), height: y(i, collectionCount)});
+            const collectionImageMetaData = await collection.addImage(collectionImage.filename, collectionImage.buffer);
             await collection.updateImage(collectionImageMetaData.id, {status: "COLLECTION"});
         }
 
         for (let i = 0; i < archiveCount; i++) {
-            const archiveImage = await getImageFixture({id: `archive-${i}`, width: x(i, archiveCount), height: y(i, archiveCount)});
-            const archiveImageMetaData = await collection.addImage(archiveImage.filePath);
+            const archiveImage = await getImageFixture({filename: `archive-${i}.jpeg`, width: x(i, archiveCount), height: y(i, archiveCount)});
+            const archiveImageMetaData = await collection.addImage(archiveImage.filename, archiveImage.buffer);
             await collection.updateImage(archiveImageMetaData.id, {status: "ARCHIVE"});
         }
 

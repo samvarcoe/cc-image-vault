@@ -12,13 +12,12 @@ suite('API - Images - Updating Image Status', () => {
         // Given a collection exists with an image
         const collection = Collection.create('test-collection');
         const imageFixture = await getImageFixture({
-            id: 'test-image',
+            filename: 'test-image.jpeg',
             width: 600,
-            height: 400,
-            extension: 'jpeg'
+            height: 400
         });
 
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         const updateRequest: ImageUpdateRequest = {
             status: 'COLLECTION'
@@ -129,12 +128,11 @@ suite('API - Images - Updating Image Status', () => {
         // Given a collection exists with an image
         const collection = Collection.create('status-test-collection');
         const imageFixture = await getImageFixture({
-            id: 'status-test-image',
+            filename: 'status-test-image.png',
             width: 400,
-            height: 300,
-            extension: 'png'
+            height: 300
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         const updateRequest: ImageUpdateRequest = {
             status: 'INVALID_STATUS'
@@ -160,12 +158,11 @@ suite('API - Images - Updating Image Status', () => {
         // Given a collection exists with an image
         const collection = Collection.create('body-test-collection');
         const imageFixture = await getImageFixture({
-            id: 'body-test-image',
+            filename: 'body-test-image.webp',
             width: 500,
-            height: 300,
-            extension: 'webp'
+            height: 300
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // When the client requests PATCH /api/images/:collectionId/:imageId with no request body
         const response = await api['/api/images/:collectionId/:imageId'].patch({
@@ -187,12 +184,11 @@ suite('API - Images - Updating Image Status', () => {
         // Given a collection exists with an image
         const collection = Collection.create('malformed-test-collection');
         const imageFixture = await getImageFixture({
-            id: 'malformed-test-image',
+            filename: 'malformed-test-image.jpeg',
             width: 800,
-            height: 600,
-            extension: 'jpeg'
+            height: 600
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // When the client requests PATCH /api/images/:collectionId/:imageId with malformed request body
         // We'll simulate this by sending non-JSON content
@@ -219,12 +215,11 @@ suite('API - Images - Updating Image Status', () => {
         // Given a collection exists with an image
         const collection = Collection.create('missing-field-collection');
         const imageFixture = await getImageFixture({
-            id: 'missing-field-image',
+            filename: 'missing-field-image.png',
             width: 300,
-            height: 400,
-            extension: 'png'
+            height: 400
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // When the client requests PATCH /api/images/:collectionId/:imageId with body missing status field
         const response = await api['/api/images/:collectionId/:imageId'].patch({
@@ -246,12 +241,11 @@ suite('API - Images - Updating Image Status', () => {
         // Given a collection exists with an image
         const collection = Collection.create('error-test-collection');
         const imageFixture = await getImageFixture({
-            id: 'error-test-image',
+            filename: 'error-test-image.jpeg',
             width: 600,
-            height: 400,
-            extension: 'jpeg'
+            height: 400
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // Corrupt the database to simulate internal error
         corruptCollectionDB(collection);

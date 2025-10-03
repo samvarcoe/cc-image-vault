@@ -155,43 +155,40 @@ export class Collection implements CollectionInstance {
     /**
      * Add an image to this Collection
      */
-    async addImage(filePath: string): Promise<ImageMetadata> {
+    async addImage(filename: string, buffer: Buffer): Promise<ImageMetadata> {
         try {
             // Validate and normalize file format first
-            const { extension, mime } = this.validateAndNormalizeFormat(filePath);
+            const { extension, mime } = this.validateAndNormalizeFormat(filename);
 
-            const filename = this.extractFilename(filePath);
-            
+            const filenameWithoutExtension = this.extractFilename(filename);
+
             // Validate filename safety and length
-            this.validateFilename(filename);
-            
-            // Validate file exists and is a file
-            await this.validateFileExists(filePath);
-            
+            this.validateFilename(filenameWithoutExtension);
+
             // Calculate image hash for duplicate detection
-            const hash = await this.calculateImageHash(filePath);
-            
+            const hash = await this.calculateImageHash(buffer);
+
             // Check for duplicates
             await this.validateNoDuplicate(hash);
-            
+
             // Validate image integrity and get metadata
-            const imageInfo = await this.validateAndGetImageInfo(filePath);
-            
+            const imageInfo = await this.validateAndGetImageInfo(buffer);
+
             // Generate unique image ID and name
             const imageId = randomUUID();
-            
+
             // Process and store image files
-            await this.processAndStoreImage(filePath, imageId, extension);
-            
+            await this.processAndStoreImage(buffer, imageId, extension);
+
             // Create image metadata
             const now = new Date();
             const metadata: ImageMetadata = {
                 id: imageId,
                 collection: this.name,
-                name: filename,
+                name: filenameWithoutExtension,
                 extension: extension as 'jpg' | 'png' | 'webp',
                 mime: mime as 'image/jpeg' | 'image/png' | 'image/webp',
-                size: (await fsOps.stat(filePath)).size,
+                size: buffer.length,
                 hash,
                 width: imageInfo.width!,
                 height: imageInfo.height!,
@@ -200,12 +197,12 @@ export class Collection implements CollectionInstance {
                 created: now,
                 updated: now
             };
-            
+
             // Store metadata in database
             await this.storeImageMetadata(metadata);
-            
+
             return metadata;
-            
+
         } catch (error: unknown) {
             throw new ImageAdditionError(this.name, error);
         }
@@ -510,23 +507,9 @@ export class Collection implements CollectionInstance {
         }
     }
 
-    private async validateFileExists(filePath: string): Promise<void> {
-        try {
-            const stats = await fsOps.stat(filePath);
-            if (!stats.isFile()) {
-                throw new Error(`"${filePath}" is not a file`);
-            }
-        } catch (error: unknown) {
-            if ((error as NodeJS.ErrnoException)?.code === 'ENOENT') {
-                throw new Error(`"${filePath}" is not a file`);
-            }
-            throw error;
-        }
-    }
+    private validateAndNormalizeFormat(filename: string): { extension: string; mime: string } {
+        const ext = path.extname(filename).toLowerCase();
 
-    private validateAndNormalizeFormat(filePath: string): { extension: string; mime: string } {
-        const ext = path.extname(filePath).toLowerCase();
-        
         switch (ext) {
             case '.jpg':
                 return { extension: 'jpg', mime: 'image/jpeg' };
@@ -541,9 +524,8 @@ export class Collection implements CollectionInstance {
         }
     }
 
-    private extractFilename(filepath: string): string {
-        const filename = path.basename(filepath);
-        const extension = path.extname(filepath);
+    private extractFilename(filename: string): string {
+        const extension = path.extname(filename);
         return filename.slice(0, filename.length - extension.length);
     }
 
@@ -569,8 +551,7 @@ export class Collection implements CollectionInstance {
 
     }
 
-    private async calculateImageHash(filePath: string): Promise<string> {
-        const buffer = await fsOps.readFile(filePath);
+    private async calculateImageHash(buffer: Buffer): Promise<string> {
         return crypto.createHash('sha256').update(buffer).digest('hex');
     }
 
@@ -587,32 +568,31 @@ export class Collection implements CollectionInstance {
         }
     }
 
-    private async validateAndGetImageInfo(filePath: string): Promise<sharp.Metadata> {
+    private async validateAndGetImageInfo(buffer: Buffer): Promise<sharp.Metadata> {
         try {
-            const imageInfo = await sharp(filePath).metadata();
-            
+            const imageInfo = await sharp(buffer).metadata();
+
             if (!imageInfo.width || !imageInfo.height) {
                 throw new Error('Invalid or corrupted image file');
             }
-            
+
             return imageInfo;
         } catch {
             throw new Error('Invalid or corrupted image file');
         }
     }
 
-    private async processAndStoreImage(sourceFilePath: string, imageID: string, extension: string): Promise<void> {
+    private async processAndStoreImage(buffer: Buffer, imageID: string, extension: string): Promise<void> {
         const collectionPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, this.name);
         const originalPath = path.join(collectionPath, 'images', 'original', `${imageID}.${extension}`);
         const thumbnailPath = path.join(collectionPath, 'images', 'thumbnails', `${imageID}.${extension}`);
-        
-        // Copy original image - use fsOps for mockable operations
-        const sourceBuffer = await fsOps.readFile(sourceFilePath);
-        await fsOps.writeFile(originalPath, sourceBuffer);
-        
+
+        // Write original image
+        await fsOps.writeFile(originalPath, buffer);
+
         // Generate thumbnail
-        await sharp(sourceFilePath)
-            .resize(CONFIG.THUMBNAIL_WIDTH, null, { 
+        await sharp(buffer)
+            .resize(CONFIG.THUMBNAIL_WIDTH, null, {
                 withoutEnlargement: true,
                 fit: 'inside'
             })

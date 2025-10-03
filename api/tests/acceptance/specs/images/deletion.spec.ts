@@ -11,13 +11,12 @@ suite('API - Images - Delete', () => {
         // Given a collection exists with an image
         const collection = Collection.create('test-collection');
         const imageFixture = await getImageFixture({
-            id: 'test-image',
+            filename: 'test-image.jpeg',
             width: 600,
-            height: 400,
-            extension: 'jpeg'
+            height: 400
         });
 
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // When the client requests DELETE /api/images/:collectionId/:imageId
         const deleteResponse = await api['/api/images/:collectionId/:imageId'].delete({
@@ -104,12 +103,11 @@ suite('API - Images - Delete', () => {
         // Given a collection exists with an image
         const collection = Collection.create('error-test-collection');
         const imageFixture = await getImageFixture({
-            id: 'error-test-image',
+            filename: 'error-test-image.jpeg',
             width: 600,
-            height: 400,
-            extension: 'jpeg'
+            height: 400
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // Corrupt the database to simulate internal error
         corruptCollectionDB(collection);

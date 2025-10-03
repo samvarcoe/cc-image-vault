@@ -11,12 +11,11 @@ suite('API - Images - Individual Download', () => {
         // Given a collection exists with an image
         const collection = Collection.create('vacation-photos');
         const imageFixture = await getImageFixture({
-            id: 'sunset-beach',
+            filename: 'sunset-beach.jpeg',
             width: 1920,
-            height: 1080,
-            extension: 'jpeg'
+            height: 1080
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // When the client requests GET /api/images/:collectionId/:imageId/download
         const response = await api['/api/images/:collectionId/:imageId/download'].get({
@@ -100,12 +99,11 @@ suite('API - Images - Individual Download', () => {
         // Given a collection exists with an image
         const collection = Collection.create('error-test-collection');
         const imageFixture = await getImageFixture({
-            id: 'error-image',
+            filename: 'error-image.png',
             width: 800,
-            height: 600,
-            extension: 'png'
+            height: 600
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // Corrupt the database to cause an internal error when reading image metadata
         corruptCollectionDB(collection);

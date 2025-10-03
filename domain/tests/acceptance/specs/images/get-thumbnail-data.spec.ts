@@ -15,11 +15,11 @@ const testCollectionName = 'test-get-thumbnail-data';
 suite('Domain - Images - Get Thumbnail Data', () => {
     test('User retrieves thumbnail data using a valid ID', async () => {
         const collection = Collection.create(testCollectionName);
-        const image = await getImageFixture({ id: 'get-thumbnail-data-test', extension: 'jpg' });
+        const image = await getImageFixture({ filename: 'get-thumbnail-data-test.jpg' });
 
-        const metadata = await collection.addImage(image.filePath);
+        const metadata = await collection.addImage(image.filename, image.buffer);
 
-        const thumbnailBuffer = await sharp(image.filePath)
+        const thumbnailBuffer = await sharp(image.buffer)
             .resize(CONFIG.THUMBNAIL_WIDTH, null, { 
                 withoutEnlargement: true,
                 fit: 'inside'
@@ -59,10 +59,10 @@ suite('Domain - Images - Get Thumbnail Data', () => {
 
     test('An internal error occurs when retrieving thumbnail data', async () => {
         const collection = Collection.create(testCollectionName);
-        const image = await getImageFixture({ id: 'internal-error-get-thumbnail', extension: 'jpg' });
+        const image = await getImageFixture({ filename: 'internal-error-get-thumbnail.jpg' });
 
         // First add an image to the collection
-        const metadata = await collection.addImage(image.filePath);
+        const metadata = await collection.addImage(image.filename, image.buffer);
 
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));

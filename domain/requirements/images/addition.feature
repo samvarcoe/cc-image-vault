@@ -2,11 +2,11 @@ Feature: Domain - Images - Addition
     User Story: As a user, I want to add images to my Collection, so that I can manage and organize them effectively.
 
     Acceptance Criteria
-        - AC1: Images are validated for format (jpg/jpeg/png/webp only) and file integrity
+        - AC1: Images are validated for format (jpg/jpeg/png/webp only) based on filename extension and buffer content integrity
         - AC2: Image filenames are sanitised to be filesystem-safe, HTML-safe, JSON-safe and under 256 characters
         - AC3: Images are processed with SHA256 hash calculation for duplicate detection
-        - AC4: Original images are stored in the images/original directory
-        - AC5: Thumbnails are generated using Sharp and stored in images/thumbnails directory
+        - AC4: Original image buffers are stored in the images/original directory
+        - AC5: Thumbnails are generated using Sharp from image buffers and stored in images/thumbnails directory
         - AC6: Images are added with "INBOX" status by default
         - AC7: Image metadata is stored in the Collection database with atomic transactions
         - AC8: Collection class throws specific errors for different failure scenarios
@@ -42,14 +42,6 @@ Feature: Domain - Images - Addition
         And the system generates a thumbnail in the Collection's images/thumbnails directory
         And the system returns the correct image metadata
         And the image status is set to "INBOX"
-
-    Scenario: User attempts to add an image to a Collection using a path that does not exist
-        Given a Collection exists with name: [name]
-        And path: [path] does not point to a file
-        When the user attempts to add an image using [path]
-        Then the system throws "ImageAdditionError: Unable to add image to Collection \"[name]\""
-        And the error cause is: "Error: \"[path]\" is not a file"
-        And no new image files are created
 
     Scenario: User attempts to add a duplicate image to Collection
         Given a Collection exists with name: [name]

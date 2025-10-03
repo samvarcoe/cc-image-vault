@@ -13,10 +13,10 @@ const testCollectionName = 'test-image-retrieval';
 suite('Domain - Images - Retrieval', () => {
     test('User retrieves image using a valid ID', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'retrieval-test', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'retrieval-test.jpg' });
         
         // First add an image to the collection
-        const addedMetadata = await collection.addImage(imageFixture.filePath);
+        const addedMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
         
         // Now retrieve the image using the ID
         const retrievedMetadata = await collection.getImage(addedMetadata.id);
@@ -69,10 +69,10 @@ suite('Domain - Images - Retrieval', () => {
 
     test('An internal error occurs when retrieving an image', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'internal-error-retrieval', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'internal-error-retrieval.jpg' });
         
         // First add an image to the collection
-        const addedMetadata = await collection.addImage(imageFixture.filePath);
+        const addedMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
         
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));
