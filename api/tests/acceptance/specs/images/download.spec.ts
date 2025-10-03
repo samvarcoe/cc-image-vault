@@ -11,10 +11,9 @@ suite('API - Images - Individual Download', () => {
         // Given a collection exists with an image
         const collection = Collection.create('vacation-photos');
         const imageFixture = await getImageFixture({
-            id: 'sunset-beach',
+            filename: 'sunset-beach.jpeg',
             width: 1920,
-            height: 1080,
-            extension: 'jpeg'
+            height: 1080
         });
         const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
@@ -100,10 +99,9 @@ suite('API - Images - Individual Download', () => {
         // Given a collection exists with an image
         const collection = Collection.create('error-test-collection');
         const imageFixture = await getImageFixture({
-            id: 'error-image',
+            filename: 'error-image.png',
             width: 800,
-            height: 600,
-            extension: 'png'
+            height: 600
         });
         const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 

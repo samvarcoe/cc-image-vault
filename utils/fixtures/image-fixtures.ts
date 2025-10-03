@@ -6,10 +6,9 @@ import sharp from 'sharp';
 const CACHE_DIR = 'utils/fixtures/images';
 
 interface ImageFixtureOptions {
-    id: string;
+    filename: string;
     width: number;
     height: number;
-    extension: 'jpg' | 'jpeg' | 'png' | 'webp';
 }
 
 interface ImageFixture {
@@ -20,14 +19,26 @@ interface ImageFixture {
     buffer: Buffer;
 }
 
-const getCacheKey = (options: ImageFixtureOptions): string => {
-    const content = `${options.id}-${options.width}x${options.height}.${options.extension}`;
-    const hash = createHash('md5').update(content).digest('hex');
-    return `_${hash}.(-)`
+type ImageExtension = 'jpg' | 'jpeg' | 'png' | 'webp';
+
+const extractExtension = (filename: string): ImageExtension => {
+    const extension = filename.split('.').pop()?.toLowerCase();
+    const validExtensions: ImageExtension[] = ['jpg', 'jpeg', 'png', 'webp'];
+
+    if (!extension || !validExtensions.includes(extension as ImageExtension)) {
+        throw new Error(`Invalid or missing file extension in filename: ${filename}. Supported extensions: ${validExtensions.join(', ')}`);
+    }
+
+    return extension as ImageExtension;
 }
 
-const createTestImage = (options: ImageFixtureOptions): Promise<Buffer> => {
-    const { id: name, width, height, extension } = options;
+const getCacheKey = (options: ImageFixtureOptions, extension: ImageExtension): string => {
+    const content = `${options.filename}-${options.width}x${options.height}.${extension}`;
+    return createHash('md5').update(content).digest('hex');
+}
+
+const createTestImage = (options: ImageFixtureOptions, extension: ImageExtension): Promise<Buffer> => {
+    const { filename, width, height } = options;
 
     const randomColor1 = Math.floor(Math.random() * 256);
     const randomColor2 = Math.floor(Math.random() * 256);
@@ -45,7 +56,7 @@ const createTestImage = (options: ImageFixtureOptions): Promise<Buffer> => {
             <rect width="100%" height="100%" fill="url(#bg)"/>
             <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.min(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
             <circle cx="${width / 2}" cy="${height / 2}" r="${(Math.max(width, height) / 2) - 2}" fill="#fff" opacity="0.2"/>
-            <text x="${width / 2}" y="${height / 2}" text-anchor="middle" font-family="Arial" font-size="16" fill="#010101ff">${name}</text>
+            <text x="${width / 2}" y="${height / 2}" text-anchor="middle" font-family="Arial" font-size="16" fill="#010101ff">${filename}</text>
             <text x="${width / 2}" y="${(height / 2) + 24}" text-anchor="middle" font-family="Arial" font-size="16" fill="#000000ff">${width}x${height}</text>
         </svg>
     `;
@@ -71,30 +82,32 @@ const createTestImage = (options: ImageFixtureOptions): Promise<Buffer> => {
  */
 export const getImageFixture = async (options: Partial<ImageFixtureOptions> = {}): Promise<ImageFixture> => {
     const {
-        id = `test-image-${Date.now()}`,
+        filename = `test-image-${Date.now()}.jpeg`,
         width = 600,
-        height = 400,
-        extension = 'jpeg'
+        height = 400
     } = options;
 
-    const cacheKey = getCacheKey({ id, width, height, extension });
-    const filename = `${cacheKey}.${extension}`;
-    const filePath = `${CACHE_DIR}/${filename}`;
-    const size = await fs.stat(filePath).then((x) => x.size).catch(() => null);
+    const extension = extractExtension(filename);
+    const filenameWithoutExtension = filename.substring(0, filename.lastIndexOf('.'));
 
-    if (filePath && size) {
-        const buffer = await fs.readFile(filePath);
+    const cacheKey = getCacheKey({ filename: filenameWithoutExtension, width, height }, extension);
+    const cacheFile = `${cacheKey}.${extension}`;
+    const cachePath = `${CACHE_DIR}/${cacheFile}`;
+    const size = await fs.stat(cachePath).then((x) => x.size).catch(() => null);
+
+    if (cachePath && size) {
+        const buffer = await fs.readFile(cachePath);
         return { filename, size, width, height, buffer };
     }
 
     try {
-        const buffer = await createTestImage({ id, width, height, extension });
+        const buffer = await createTestImage({ filename: filenameWithoutExtension, width, height }, extension);
         const size = buffer.length;
-        await fs.writeFile(filePath, buffer);
+        await fs.writeFile(cachePath, buffer);
         return { filename, size, width, height, buffer };
 
     } catch (error: unknown) {
-        throw new Error(`Failed to create or access cached image at ${filePath}: ${(error as Error).message}`);
+        throw new Error(`Failed to create or access cached image at ${cachePath}: ${(error as Error).message}`);
     }
 }
 

@@ -16,26 +16,23 @@ suite('API - Images - Batch Download', () => {
         const collection = Collection.create('batch-download-unique');
 
         const image1Fixture = await getImageFixture({
-            id: 'photo-1',
+            filename: 'photo-1.jpeg',
             width: 1920,
-            height: 1080,
-            extension: 'jpeg'
+            height: 1080
         });
         const image1Metadata = await collection.addImage(image1Fixture.filename, image1Fixture.buffer);
 
         const image2Fixture = await getImageFixture({
-            id: 'photo-2',
+            filename: 'photo-2.png',
             width: 1024,
-            height: 768,
-            extension: 'png'
+            height: 768
         });
         const image2Metadata = await collection.addImage(image2Fixture.filename, image2Fixture.buffer);
 
         const image3Fixture = await getImageFixture({
-            id: 'photo-3',
+            filename: 'photo-3.webp',
             width: 800,
-            height: 600,
-            extension: 'webp'
+            height: 600
         });
         const image3Metadata = await collection.addImage(image3Fixture.filename, image3Fixture.buffer);
 
@@ -77,26 +74,23 @@ suite('API - Images - Batch Download', () => {
         mkdirSync(tempDir, { recursive: true });
 
         const fixture1 = await getImageFixture({
-            id: 'photo-1',
+            filename: 'photo-1.jpeg',
             width: 1920,
-            height: 1080,
-            extension: 'jpeg'
+            height: 1080
         });
         const image1Metadata = await collection.addImage('photo.jpeg', fixture1.buffer);
 
         const fixture2 = await getImageFixture({
-            id: 'photo-2',
+            filename: 'photo-2.jpeg',
             width: 1024,
-            height: 768,
-            extension: 'jpeg'
+            height: 768
         });
         const image2Metadata = await collection.addImage('photo.jpeg', fixture2.buffer);
 
         const fixture3 = await getImageFixture({
-            id: 'photo-3',
+            filename: 'photo-3.jpeg',
             width: 800,
-            height: 600,
-            extension: 'jpeg'
+            height: 600
         });
         const image3Metadata = await collection.addImage('photo.jpeg', fixture3.buffer);
 
@@ -129,10 +123,9 @@ suite('API - Images - Batch Download', () => {
         const collection = Collection.create('batch-download-dedup');
 
         const image1Fixture = await getImageFixture({
-            id: 'unique-image',
+            filename: 'unique-image.jpeg',
             width: 1920,
-            height: 1080,
-            extension: 'jpeg'
+            height: 1080
         });
         const image1Metadata = await collection.addImage(image1Fixture.filename, image1Fixture.buffer);
 
@@ -248,10 +241,9 @@ suite('API - Images - Batch Download', () => {
         // Given a collection exists with images
         const collection = Collection.create('batch-download-invalid-name');
         const imageFixture = await getImageFixture({
-            id: 'test-image',
+            filename: 'test-image.jpeg',
             width: 800,
-            height: 600,
-            extension: 'jpeg'
+            height: 600
         });
         const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
@@ -297,10 +289,9 @@ suite('API - Images - Batch Download', () => {
         const collection = Collection.create('batch-download-missing-archive-name-field');
 
         const imageFixture = await getImageFixture({
-            id: 'photo',
+            filename: 'photo.jpeg',
             width: 1920,
-            height: 1080,
-            extension: 'jpeg'
+            height: 1080
         });
         const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
@@ -346,10 +337,9 @@ suite('API - Images - Batch Download', () => {
         // Given a collection exists with images
         const collection = Collection.create('batch-download-error');
         const imageFixture = await getImageFixture({
-            id: 'error-image',
+            filename: 'error-image.jpeg',
             width: 800,
-            height: 600,
-            extension: 'jpeg'
+            height: 600
         });
         const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 

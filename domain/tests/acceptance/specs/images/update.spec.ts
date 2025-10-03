@@ -13,7 +13,7 @@ const testCollectionName = 'test-image-update-collection';
 suite('Domain - Images - Update', () => {
     test('User updates the status of an image', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test-update-image', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'test-update-image.jpg' });
         
         // Add an image to update
         const originalMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
@@ -70,7 +70,7 @@ suite('Domain - Images - Update', () => {
 
     test('User attempts to update the status of an image using an invalid status value', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test-invalid-status', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'test-invalid-status.jpg' });
         
         // Add an image to update
         const originalMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
@@ -92,7 +92,7 @@ suite('Domain - Images - Update', () => {
 
     test('An internal error occurs when the user attempts to update the status of an image', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test-internal-error', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'test-internal-error.jpg' });
         
         // Add an image to update
         const originalMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);

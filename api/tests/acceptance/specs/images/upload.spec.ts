@@ -11,10 +11,9 @@ suite('API - Images - Upload', () => {
         // Given a collection exists
         Collection.create('test-upload-collection');
         const imageFixture = await getImageFixture({
-            id: 'upload-test',
+            filename: 'upload-test.jpeg',
             width: 800,
-            height: 600,
-            extension: 'jpeg'
+            height: 600
         });
 
         // When the client uploads an image file via POST /api/images/:collectionId
@@ -81,8 +80,7 @@ suite('API - Images - Upload', () => {
         // Given no collection exists with the specified collection ID
         // (Collection.clear() is called in beforeEach hook)
         const imageFixture = await getImageFixture({
-            id: 'nonexistent-collection-test',
-            extension: 'jpg'
+            filename: 'nonexistent-collection-test.jpg'
         });
 
         // When the client uploads an image file via POST /api/images/:collectionId
@@ -157,8 +155,7 @@ suite('API - Images - Upload', () => {
         // Given a collection exists
         const collection = Collection.create('internal-error-collection');
         const imageFixture = await getImageFixture({
-            id: 'internal-error-test',
-            extension: 'png'
+            filename: 'internal-error-test.png'
         });
 
         // Corrupt the collection database to simulate internal error

@@ -15,7 +15,7 @@ const testCollectionName = 'test-get-thumbnail-data';
 suite('Domain - Images - Get Thumbnail Data', () => {
     test('User retrieves thumbnail data using a valid ID', async () => {
         const collection = Collection.create(testCollectionName);
-        const image = await getImageFixture({ id: 'get-thumbnail-data-test', extension: 'jpg' });
+        const image = await getImageFixture({ filename: 'get-thumbnail-data-test.jpg' });
 
         const metadata = await collection.addImage(image.filename, image.buffer);
 
@@ -59,7 +59,7 @@ suite('Domain - Images - Get Thumbnail Data', () => {
 
     test('An internal error occurs when retrieving thumbnail data', async () => {
         const collection = Collection.create(testCollectionName);
-        const image = await getImageFixture({ id: 'internal-error-get-thumbnail', extension: 'jpg' });
+        const image = await getImageFixture({ filename: 'internal-error-get-thumbnail.jpg' });
 
         // First add an image to the collection
         const metadata = await collection.addImage(image.filename, image.buffer);

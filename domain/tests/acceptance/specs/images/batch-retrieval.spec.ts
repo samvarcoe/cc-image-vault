@@ -16,9 +16,9 @@ suite('Domain - Images - Retrieve Batch', () => {
         const collection = Collection.create(testCollectionName);
 
         // Add multiple images with different statuses
-        const imageFixture1 = await getImageFixture({ id: 'batch-test-1', extension: 'jpg' });
-        const imageFixture2 = await getImageFixture({ id: 'batch-test-2', extension: 'png' });
-        const imageFixture3 = await getImageFixture({ id: 'batch-test-3', extension: 'webp' });
+        const imageFixture1 = await getImageFixture({ filename: 'batch-test-1.jpg' });
+        const imageFixture2 = await getImageFixture({ filename: 'batch-test-2.png' });
+        const imageFixture3 = await getImageFixture({ filename: 'batch-test-3.webp' });
 
         const addedMetadata1 = await collection.addImage(imageFixture1.filename, imageFixture1.buffer);
         const addedMetadata2 = await collection.addImage(imageFixture2.filename, imageFixture2.buffer);
@@ -69,9 +69,9 @@ suite('Domain - Images - Retrieve Batch', () => {
         const collection = Collection.create(testCollectionName);
 
         // Add multiple images with different statuses
-        const imageFixture1 = await getImageFixture({ id: 'filtered-test-1', extension: 'jpg' });
-        const imageFixture2 = await getImageFixture({ id: 'filtered-test-2', extension: 'png' });
-        const imageFixture3 = await getImageFixture({ id: 'filtered-test-3', extension: 'webp' });
+        const imageFixture1 = await getImageFixture({ filename: 'filtered-test-1.jpg' });
+        const imageFixture2 = await getImageFixture({ filename: 'filtered-test-2.png' });
+        const imageFixture3 = await getImageFixture({ filename: 'filtered-test-3.webp' });
 
         const addedMetadata1 = await collection.addImage(imageFixture1.filename, imageFixture1.buffer);
         const addedMetadata2 = await collection.addImage(imageFixture2.filename, imageFixture2.buffer);
@@ -117,8 +117,8 @@ suite('Domain - Images - Retrieve Batch', () => {
         const collection = Collection.create(testCollectionName);
 
         // Add images with INBOX status only
-        const imageFixture1 = await getImageFixture({ id: 'no-match-test-1', extension: 'jpg' });
-        const imageFixture2 = await getImageFixture({ id: 'no-match-test-2', extension: 'png' });
+        const imageFixture1 = await getImageFixture({ filename: 'no-match-test-1.jpg' });
+        const imageFixture2 = await getImageFixture({ filename: 'no-match-test-2.png' });
 
         await collection.addImage(imageFixture1.filename, imageFixture1.buffer);
         await collection.addImage(imageFixture2.filename, imageFixture2.buffer);
@@ -151,7 +151,7 @@ suite('Domain - Images - Retrieve Batch', () => {
         const collection = Collection.create(testCollectionName);
 
         // Add an image to the collection
-        const imageFixture = await getImageFixture({ id: 'internal-error-batch', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'internal-error-batch.jpg' });
         await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // Mock database operation to simulate internal error

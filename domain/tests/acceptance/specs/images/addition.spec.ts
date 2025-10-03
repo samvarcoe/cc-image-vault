@@ -22,7 +22,7 @@ const testCollectionName = 'test-image-collection';
 suite('Domain - Images - Addition', () => {
     test('User adds a jpg image to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test-jpg', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'test-jpg.jpg' });
 
         const metadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
@@ -43,7 +43,7 @@ suite('Domain - Images - Addition', () => {
 
     test('User adds a jpg image with "jpeg" extension to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test-jpeg', extension: 'jpeg' });
+        const imageFixture = await getImageFixture({ filename: 'test-jpeg.jpeg' });
 
         const metadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
@@ -65,7 +65,7 @@ suite('Domain - Images - Addition', () => {
 
     test('User adds a png image to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test-png', extension: 'png' });
+        const imageFixture = await getImageFixture({ filename: 'test-png.png' });
 
         const metadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
@@ -86,7 +86,7 @@ suite('Domain - Images - Addition', () => {
 
     test('User adds a webp image to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'test-webp', extension: 'webp' });
+        const imageFixture = await getImageFixture({ filename: 'test-webp.webp' });
 
         const metadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
@@ -106,7 +106,7 @@ suite('Domain - Images - Addition', () => {
 
     test('User attempts to add a duplicate image to Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'duplicate-test', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'duplicate-test.jpg' });
 
         // Add image first time
         await collection.addImage(imageFixture.filename, imageFixture.buffer);
@@ -198,7 +198,7 @@ suite('Domain - Images - Addition', () => {
 
     test('An internal error occurs when adding an image to a Collection', async () => {
         const collection = Collection.create(testCollectionName);
-        const imageFixture = await getImageFixture({ id: 'internal-error-test', extension: 'jpg' });
+        const imageFixture = await getImageFixture({ filename: 'internal-error-test.jpg' });
 
         // Mock filesystem operation to simulate internal error
         sinon.stub(fsOps, 'writeFile').throws(new Error('Filesystem unavailable'));

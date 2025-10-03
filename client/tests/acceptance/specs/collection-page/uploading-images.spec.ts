@@ -66,8 +66,8 @@ test.describe('Client - Images - Upload', () => {
         await ui.collectionPage.uploadDialog.shouldBeDisplayed();
 
         // Create test images
-        const image1 = await getImageFixture({ id: 'test-1', extension: 'jpg' });
-        const image2 = await getImageFixture({ id: 'test-2', extension: 'png' });
+        const image1 = await getImageFixture({ filename: 'test-1.jpg' });
+        const image2 = await getImageFixture({ filename: 'test-2.png' });
 
         // Set files on the file input
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
@@ -126,7 +126,7 @@ test.describe('Client - Images - Upload', () => {
 
         // Start upload process
         await ui.collectionPage.header.uploadButton.click();
-        const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
+        const image = await getImageFixture({ filename: 'test-upload.jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
             { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
@@ -190,8 +190,8 @@ test.describe('Client - Images - Upload', () => {
 
         // Start upload process with multiple files
         await ui.collectionPage.header.uploadButton.click();
-        const image1 = await getImageFixture({ id: 'test-1', extension: 'jpg' });
-        const image2 = await getImageFixture({ id: 'test-2', extension: 'png' });
+        const image1 = await getImageFixture({ filename: 'test-1.jpg' });
+        const image2 = await getImageFixture({ filename: 'test-2.png' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
             { name: image1.filename, mimeType: 'image/jpeg', buffer: image1.buffer },
             { name: image2.filename, mimeType: 'image/png', buffer: image2.buffer }
@@ -237,7 +237,7 @@ test.describe('Client - Images - Upload', () => {
 
         // Start upload process
         await ui.collectionPage.header.uploadButton.click();
-        const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
+        const image = await getImageFixture({ filename: 'test-upload.jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
             { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
@@ -281,7 +281,7 @@ test.describe('Client - Images - Upload', () => {
 
         // Start upload process
         await ui.collectionPage.header.uploadButton.click();
-        const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
+        const image = await getImageFixture({ filename: 'test-upload.jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
             { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
@@ -330,7 +330,7 @@ test.describe('Client - Images - Upload', () => {
 
         // Start upload
         await ui.collectionPage.header.uploadButton.click();
-        const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
+        const image = await getImageFixture({ filename: 'test-upload.jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
             { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
@@ -375,7 +375,7 @@ test.describe('Client - Images - Upload', () => {
 
         // Start upload
         await ui.collectionPage.header.uploadButton.click();
-        const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
+        const image = await getImageFixture({ filename: 'test-upload.jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
             { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
@@ -404,7 +404,7 @@ test.describe('Client - Images - Upload', () => {
         // Create 15 test images (more than batch size of 10)
         const images = await Promise.all(
             Array.from({ length: 15 }, async (_, i) => {
-                const image = await getImageFixture({ id: `batch-test-${i}`, extension: 'jpg' });
+                const image = await getImageFixture({ filename: `batch-test-${i}.jpg` });
                 return { name: image.filename, mimeType: 'image/jpeg' as const, buffer: image.buffer };
             })
         );
@@ -436,7 +436,7 @@ test.describe('Client - Images - Upload', () => {
         await ui.collectionPage.visit(collection.name);
 
         // Create valid image and invalid text file
-        const validImage = await getImageFixture({ id: 'valid-image', extension: 'jpg' });
+        const validImage = await getImageFixture({ filename: 'valid-image.jpg' });
         const invalidFilePath = await getUnsupportedFileFixture();
         const invalidFileBuffer = readFileSync(invalidFilePath);
 
