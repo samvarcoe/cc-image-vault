@@ -562,30 +562,29 @@ export default class CollectionPageController {
     }
 
     private async downloadMultipleImages(collectionName: string, imageIds: string[], archiveName: string): Promise<void> {
-        const url = `/api/images/${collectionName}/download`;
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ imageIds, archiveName })
-        });
+        // Use form submission for native browser streaming
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/api/images/${collectionName}/download`;
 
-        if (!response.ok) {
-            throw new Error(`Download failed with status ${response.status}`);
-        }
+        // Add imageIds as comma-separated string
+        const imageIdsInput = document.createElement('input');
+        imageIdsInput.type = 'hidden';
+        imageIdsInput.name = 'imageIds';
+        imageIdsInput.value = imageIds.join(',');
+        form.appendChild(imageIdsInput);
 
-        const blob = await response.blob();
-        const objectUrl = window.URL.createObjectURL(blob);
+        // Add archive name
+        const archiveNameInput = document.createElement('input');
+        archiveNameInput.type = 'hidden';
+        archiveNameInput.name = 'archiveName';
+        archiveNameInput.value = archiveName;
+        form.appendChild(archiveNameInput);
 
-        const a = document.createElement('a');
-        a.href = objectUrl;
-        a.download = `${archiveName}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        window.URL.revokeObjectURL(objectUrl);
+        // Submit form
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
     }
 
     private handleUploadButtonClick(): void {

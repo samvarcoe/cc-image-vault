@@ -325,7 +325,14 @@ routes.post('/images/:collectionId/download', async (req, res) => {
             return res.status(400).json({ message: 'archive name field is required' });
         }
 
-        const { imageIds, archiveName } = req.body;
+        let { imageIds } = req.body;
+        const { archiveName } = req.body;
+
+        // Normalize imageIds to array (handles both JSON array and form-encoded comma-separated string)
+        if (typeof imageIds === 'string') {
+            // Form-encoded comma-separated list
+            imageIds = imageIds.split(',').map(id => id.trim()).filter(id => id.length > 0);
+        }
 
         // Validate imageIds is an array and not empty
         if (!Array.isArray(imageIds) || imageIds.length === 0) {
@@ -346,75 +353,82 @@ routes.post('/images/:collectionId/download', async (req, res) => {
             }
         }
 
+        console.log(`Preparing to download ${imageIds.length} images from collection ${collectionId} as archive "${archiveName}.zip"`);
+
         // Load collection (throws CollectionNotFoundError if not found)
         const collection = Collection.load(collectionId!);
 
-        // Deduplicate image IDs
+        // Deduplicate image IDs while preserving request order
         const uniqueImageIds = Array.from(new Set(imageIds));
 
-        // Retrieve all image metadata (throws ImageNotFoundError if any image not found)
-        const imagesMetadata = await Promise.all(
-            uniqueImageIds.map(imageId => collection.getImage(imageId))
-        );
-
-        // Sort images by creation time for duplicate filename handling
-        const sortedImages = [...imagesMetadata].sort((a, b) => a.created.getTime() - b.created.getTime());
-
-        // Group images by filename to detect duplicates
-        const filenameGroups = new Map<string, typeof sortedImages>();
-        for (const image of sortedImages) {
-            const filename = `${image.name}.${image.extension}`;
-            if (!filenameGroups.has(filename)) {
-                filenameGroups.set(filename, []);
-            }
-            filenameGroups.get(filename)!.push(image);
-        }
-
-        // Create archive
-        const archive = archiver('zip', {
-            zlib: { level: 9 } // Maximum compression
-        });
-
-        // Collect archive data in chunks
-        const chunks: Buffer[] = [];
-        archive.on('data', (chunk: Buffer) => {
-            chunks.push(chunk);
-        });
-
-        // Add images to archive with duplicate handling
-        for (const [filename, images] of filenameGroups) {
-            if (images.length === 1) {
-                // Single file with this name - use original filename
-                const image = images[0]!;
-                const imageData = await collection.getImageData(image.id);
-                archive.append(imageData, { name: filename });
-            } else {
-                // Multiple files with same name - apply indexed suffixes
-                for (let i = 0; i < images.length; i++) {
-                    const image = images[i]!;
-                    const suffix = String(i + 1).padStart(3, '0');
-                    const indexedFilename = `${image.name}_${suffix}.${image.extension}`;
-                    const imageData = await collection.getImageData(image.id);
-                    archive.append(imageData, { name: indexedFilename });
-                }
-            }
-        }
-
-        // Finalize archive and wait for completion
-        await archive.finalize();
-
-        // Combine all chunks into final buffer
-        const zipBuffer = Buffer.concat(chunks);
-
-        // Set response headers
+        // Set response headers and start streaming immediately
         res.set('Content-Type', 'application/zip');
         res.set('Content-Disposition', `attachment; filename="${archiveName}.zip"`);
-        res.set('Content-Length', zipBuffer.length.toString());
 
-        // Send the buffer
-        return res.status(200).send(zipBuffer);
+        // Create archive and pipe directly to response for immediate streaming
+        const archive = archiver('zip', {
+            zlib: { level: 9 } // Maximum compression for best file size
+        });
+
+        // Pipe archive to response stream - download starts immediately
+        archive.pipe(res);
+
+        // Handle archive errors
+        archive.on('error', (err) => {
+            console.error('Archive error:', err);
+            // If headers not sent yet, send error response
+            if (!res.headersSent) {
+                res.status(500).json({ message: 'An error occurred whilst downloading images' });
+            }
+        });
+
+        // Track seen filenames for duplicate handling
+        const seenFilenames = new Map<string, number>(); // filename -> count
+
+        // Process images sequentially in request order
+        for (const imageId of uniqueImageIds) {
+            // Fetch metadata for this image (throws ImageNotFoundError if not found)
+            const metadata = await collection.getImage(imageId);
+
+            // Determine filename with duplicate handling
+            const baseFilename = `${metadata.name}.${metadata.extension}`;
+            const count = seenFilenames.get(baseFilename) || 0;
+
+            let finalFilename: string;
+            if (count === 0) {
+                // First occurrence - use original filename
+                finalFilename = baseFilename;
+            } else {
+                // Subsequent occurrence - add indexed suffix
+                const suffix = String(count).padStart(3, '0');
+                finalFilename = `${metadata.name}_${suffix}.${metadata.extension}`;
+            }
+
+            // Update seen count
+            seenFilenames.set(baseFilename, count + 1);
+
+            // Fetch image data and append to archive
+            const imageData = await collection.getImageData(metadata.id);
+            archive.append(imageData, { name: finalFilename });
+        }
+
+        // Finalize archive - this will complete the stream
+        await archive.finalize();
+
+        // Response is already being streamed via pipe, no need to send explicitly
+        // The stream will automatically close when finalized
+        return;
 
     } catch (error: unknown) {
+        // If streaming has already started (headers sent), we can't send a JSON error response
+        if (res.headersSent) {
+            console.error('Error during batch download streaming:', error);
+            // The stream will be terminated with an error
+            // Client will receive incomplete data and can detect the error
+            return;
+        }
+
+        // Headers not sent yet - can send normal error responses
         if (error instanceof CollectionNotFoundError) {
             return res.status(404).json({ message: 'Collection not found' });
         }

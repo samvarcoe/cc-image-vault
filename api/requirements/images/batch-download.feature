@@ -7,24 +7,28 @@ Feature: API - Images - Batch Download
       - AC3: API returns ZIP archive with Content-Disposition header set to attachment
       - AC4: API includes archive name in Content-Disposition header with .zip extension
       - AC5: API uses original filenames from metadata for files in the archive
-      - AC6: API appends indexed suffix to images with duplicate original filenames
-      - AC7: Indexed suffixes are ordered by image creation time (earliest first)
+      - AC6: API handles duplicate filenames: first occurrence uses original name, subsequent occurrences get indexed suffix (_001, _002, etc.)
+      - AC7: Images are processed in request array order for optimal streaming performance
       - AC8: API validates archive name contains only alphanumeric characters, dashes, and underscores
       - AC9: API validates imageIds array is not empty
       - AC10: API validates all image IDs have valid UUID v4 format
       - AC11: API validates all image IDs exist in the collection
       - AC12: API validates collection existence before processing download
       - AC13: API returns appropriate HTTP status codes and error messages
-      - AC14: API sets correct Content-Type (application/zip) and Content-Length headers
+      - AC14: API sets correct Content-Type (application/zip) header and streams response using chunked transfer encoding
       - AC15: Downloaded images in archive are identical to original uploaded files
 
     Notes:
       - Indexed suffix format: _001, _002, _003 (three digits, zero-padded, starting from 1)
-      - Suffix is inserted before the file extension: photo_001.jpg, photo_002.jpg
-      - Creation time ordering ensures consistent, predictable naming
+      - Suffix is inserted before the file extension: photo.jpg (first), photo_001.jpg (second), photo_002.jpg (third)
+      - First occurrence of a filename uses the original name with no suffix
+      - Request array order determines which image is "first" for duplicate handling
       - Archive name validation prevents filesystem issues and injection attacks
       - All validation errors return 400 status to fail fast before archive creation
       - Images can be downloaded regardless of their status (INBOX/COLLECTION/ARCHIVE)
+      - ZIP archive is streamed as it's created, enabling immediate download start in the browser
+      - Images are processed sequentially to minimize delay before streaming begins
+      - Chunked transfer encoding is used automatically when no Content-Length header is set
 
     Scenario: Client downloads multiple images with unique filenames
         Given a collection exists with multiple images having unique original filenames
@@ -33,16 +37,16 @@ Feature: API - Images - Batch Download
         And the API returns a ZIP archive file
         And the API sets Content-Disposition header to attachment with archive named
         And the API sets Content-Type header to application/zip
-        And the API sets Content-Length header with the archive size
+        And the API streams the ZIP archive using chunked transfer encoding
         And the ZIP archive contains all requested images with their original filenames
 
     Scenario: Client downloads multiple images with duplicate filenames
         Given a collection exists with duplicated image names
         When the client requests POST /api/images/:collectionId/download with all three imageIds
         Then the API returns 200 status code
-        And the duplicated images have an index based suffix applied to their names
-        And the index is ordered based on the creation times of the images
-        And the order is from oldest to newest
+        And the first occurrence uses the original filename
+        And subsequent occurrences have indexed suffixes (_001, _002, etc.)
+        And the order follows the request array order
 
     Scenario: Client attempts to download with duplicate image IDs in request
         Given a collection exists with images
