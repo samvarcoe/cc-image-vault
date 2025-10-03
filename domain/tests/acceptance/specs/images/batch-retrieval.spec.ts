@@ -20,9 +20,9 @@ suite('Domain - Images - Retrieve Batch', () => {
         const imageFixture2 = await getImageFixture({ id: 'batch-test-2', extension: 'png' });
         const imageFixture3 = await getImageFixture({ id: 'batch-test-3', extension: 'webp' });
 
-        const addedMetadata1 = await collection.addImage(imageFixture1.buffer, `${imageFixture1.filename}.${imageFixture1.extension}`);
-        const addedMetadata2 = await collection.addImage(imageFixture2.buffer, `${imageFixture2.filename}.${imageFixture2.extension}`);
-        const addedMetadata3 = await collection.addImage(imageFixture3.buffer, `${imageFixture3.filename}.${imageFixture3.extension}`);
+        const addedMetadata1 = await collection.addImage(imageFixture1.filename, imageFixture1.buffer);
+        const addedMetadata2 = await collection.addImage(imageFixture2.filename, imageFixture2.buffer);
+        const addedMetadata3 = await collection.addImage(imageFixture3.filename, imageFixture3.buffer);
 
         // Update status of second image to COLLECTION
         await collection.updateImage(addedMetadata2.id, { status: 'COLLECTION' });
@@ -73,9 +73,9 @@ suite('Domain - Images - Retrieve Batch', () => {
         const imageFixture2 = await getImageFixture({ id: 'filtered-test-2', extension: 'png' });
         const imageFixture3 = await getImageFixture({ id: 'filtered-test-3', extension: 'webp' });
 
-        const addedMetadata1 = await collection.addImage(imageFixture1.buffer, `${imageFixture1.filename}.${imageFixture1.extension}`);
-        const addedMetadata2 = await collection.addImage(imageFixture2.buffer, `${imageFixture2.filename}.${imageFixture2.extension}`);
-        const addedMetadata3 = await collection.addImage(imageFixture3.buffer, `${imageFixture3.filename}.${imageFixture3.extension}`);
+        const addedMetadata1 = await collection.addImage(imageFixture1.filename, imageFixture1.buffer);
+        const addedMetadata2 = await collection.addImage(imageFixture2.filename, imageFixture2.buffer);
+        const addedMetadata3 = await collection.addImage(imageFixture3.filename, imageFixture3.buffer);
 
         // Update status of second image to COLLECTION, leave first and third as INBOX
         await collection.updateImage(addedMetadata2.id, { status: 'COLLECTION' });
@@ -120,8 +120,8 @@ suite('Domain - Images - Retrieve Batch', () => {
         const imageFixture1 = await getImageFixture({ id: 'no-match-test-1', extension: 'jpg' });
         const imageFixture2 = await getImageFixture({ id: 'no-match-test-2', extension: 'png' });
 
-        await collection.addImage(imageFixture1.buffer, `${imageFixture1.filename}.${imageFixture1.extension}`);
-        await collection.addImage(imageFixture2.buffer, `${imageFixture2.filename}.${imageFixture2.extension}`);
+        await collection.addImage(imageFixture1.filename, imageFixture1.buffer);
+        await collection.addImage(imageFixture2.filename, imageFixture2.buffer);
 
         // Retrieve images filtered by COLLECTION status (none exist)
         const retrievedImages = await collection.getImages({ status: 'COLLECTION' });
@@ -152,7 +152,7 @@ suite('Domain - Images - Retrieve Batch', () => {
 
         // Add an image to the collection
         const imageFixture = await getImageFixture({ id: 'internal-error-batch', extension: 'jpg' });
-        await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
+        await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));

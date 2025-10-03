@@ -71,8 +71,8 @@ test.describe('Client - Images - Upload', () => {
 
         // Set files on the file input
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
-            { name: `${image1.filename}.${image1.extension}`, mimeType: 'image/jpeg', buffer: image1.buffer },
-            { name: `${image2.filename}.${image2.extension}`, mimeType: 'image/png', buffer: image2.buffer }
+            { name: image1.filename, mimeType: 'image/jpeg', buffer: image1.buffer },
+            { name: image2.filename, mimeType: 'image/png', buffer: image2.buffer }
         ]);
 
         // When the user submits images for upload
@@ -128,7 +128,7 @@ test.describe('Client - Images - Upload', () => {
         await ui.collectionPage.header.uploadButton.click();
         const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
-            { name: `${image.filename}.${image.extension}`, mimeType: 'image/jpeg', buffer: image.buffer }
+            { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
         await ui.collectionPage.uploadDialog.addButton.click();
 
@@ -193,8 +193,8 @@ test.describe('Client - Images - Upload', () => {
         const image1 = await getImageFixture({ id: 'test-1', extension: 'jpg' });
         const image2 = await getImageFixture({ id: 'test-2', extension: 'png' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
-            { name: `${image1.filename}.${image1.extension}`, mimeType: 'image/jpeg', buffer: image1.buffer },
-            { name: `${image2.filename}.${image2.extension}`, mimeType: 'image/png', buffer: image2.buffer }
+            { name: image1.filename, mimeType: 'image/jpeg', buffer: image1.buffer },
+            { name: image2.filename, mimeType: 'image/png', buffer: image2.buffer }
         ]);
         await ui.collectionPage.uploadDialog.addButton.click();
 
@@ -239,7 +239,7 @@ test.describe('Client - Images - Upload', () => {
         await ui.collectionPage.header.uploadButton.click();
         const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
-            { name: `${image.filename}.${image.extension}`, mimeType: 'image/jpeg', buffer: image.buffer }
+            { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
         await ui.collectionPage.uploadDialog.addButton.click();
 
@@ -283,7 +283,7 @@ test.describe('Client - Images - Upload', () => {
         await ui.collectionPage.header.uploadButton.click();
         const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
-            { name: `${image.filename}.${image.extension}`, mimeType: 'image/jpeg', buffer: image.buffer }
+            { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
         await ui.collectionPage.uploadDialog.addButton.click();
 
@@ -332,7 +332,7 @@ test.describe('Client - Images - Upload', () => {
         await ui.collectionPage.header.uploadButton.click();
         const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
-            { name: `${image.filename}.${image.extension}`, mimeType: 'image/jpeg', buffer: image.buffer }
+            { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
         await ui.collectionPage.uploadDialog.addButton.click();
         await ui.collectionPage.header.uploadButton.shouldHaveAttribute('data-loading', 'true');
@@ -377,7 +377,7 @@ test.describe('Client - Images - Upload', () => {
         await ui.collectionPage.header.uploadButton.click();
         const image = await getImageFixture({ id: 'test-upload', extension: 'jpg' });
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
-            { name: `${image.filename}.${image.extension}`, mimeType: 'image/jpeg', buffer: image.buffer }
+            { name: image.filename, mimeType: 'image/jpeg', buffer: image.buffer }
         ]);
         await ui.collectionPage.uploadDialog.addButton.click();
         await ui.collectionPage.header.uploadButton.shouldHaveAttribute('data-loading', 'true');
@@ -405,7 +405,7 @@ test.describe('Client - Images - Upload', () => {
         const images = await Promise.all(
             Array.from({ length: 15 }, async (_, i) => {
                 const image = await getImageFixture({ id: `batch-test-${i}`, extension: 'jpg' });
-                return { name: `${image.filename}.${image.extension}`, mimeType: 'image/jpeg' as const, buffer: image.buffer };
+                return { name: image.filename, mimeType: 'image/jpeg' as const, buffer: image.buffer };
             })
         );
 
@@ -443,7 +443,7 @@ test.describe('Client - Images - Upload', () => {
         // Start upload process
         await ui.collectionPage.header.uploadButton.click();
         await ui.collectionPage.uploadDialog.fileInput.setInputFiles([
-            { name: `${validImage.filename}.${validImage.extension}`, mimeType: 'image/jpeg', buffer: validImage.buffer },
+            { name: validImage.filename, mimeType: 'image/jpeg', buffer: validImage.buffer },
             { name: 'test-file.txt', mimeType: 'text/plain', buffer: invalidFileBuffer }
         ]);
         await ui.collectionPage.uploadDialog.addButton.click();

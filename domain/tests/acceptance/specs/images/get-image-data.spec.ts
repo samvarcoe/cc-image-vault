@@ -16,7 +16,7 @@ suite('Domain - Images - Get Image Data', () => {
         const collection = Collection.create(testCollectionName);
         const image = await getImageFixture({ id: 'get-image-data-test', extension: 'jpg' });
 
-        const metadata = await collection.addImage(image.buffer, `${image.filename}.${image.extension}`);
+        const metadata = await collection.addImage(image.filename, image.buffer);
 
         const imageData = await collection.getImageData(metadata.id);
 
@@ -55,7 +55,7 @@ suite('Domain - Images - Get Image Data', () => {
         const image = await getImageFixture({ id: 'internal-error-get-data', extension: 'jpg' });
 
         // First add an image to the collection
-        const metadata = await collection.addImage(image.buffer, `${image.filename}.${image.extension}`);
+        const metadata = await collection.addImage(image.filename, image.buffer);
 
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));

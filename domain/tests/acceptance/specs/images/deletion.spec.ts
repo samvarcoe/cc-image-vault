@@ -16,7 +16,7 @@ suite('Domain - Images - Delete', () => {
         const imageFixture = await getImageFixture({ id: 'deletion-test', extension: 'jpg' });
         
         // First add an image to the collection
-        const addedMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
+        const addedMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
         
         // Verify the image files exist before deletion
         await ImageUtils.assertImageFileExists(testCollectionName, `${addedMetadata.id}.jpg`, 'original');
@@ -72,7 +72,7 @@ suite('Domain - Images - Delete', () => {
         const imageFixture = await getImageFixture({ id: 'internal-error-deletion', extension: 'jpg' });
         
         // First add an image to the collection
-        const addedMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
+        const addedMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
         
         // Verify the image files exist before attempting deletion
         await ImageUtils.assertImageFileExists(testCollectionName, `${addedMetadata.id}.jpg`, 'original');

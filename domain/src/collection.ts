@@ -155,7 +155,7 @@ export class Collection implements CollectionInstance {
     /**
      * Add an image to this Collection
      */
-    async addImage(buffer: Buffer, filename: string): Promise<ImageMetadata> {
+    async addImage(filename: string, buffer: Buffer): Promise<ImageMetadata> {
         try {
             // Validate and normalize file format first
             const { extension, mime } = this.validateAndNormalizeFormat(filename);

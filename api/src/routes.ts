@@ -76,7 +76,7 @@ routes.post('/images/:collectionId', upload.single('file'), async (req, res) => 
         const originalName = req.file.originalname || 'upload';
 
         // Add image through domain layer using buffer directly
-        const metadata = await collection.addImage(req.file.buffer, originalName);
+        const metadata = await collection.addImage(originalName, req.file.buffer);
 
         // Return created image metadata with 201 status
         return res.status(201).json(metadata);

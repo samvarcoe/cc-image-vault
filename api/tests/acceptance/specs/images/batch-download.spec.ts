@@ -21,7 +21,7 @@ suite('API - Images - Batch Download', () => {
             height: 1080,
             extension: 'jpeg'
         });
-        const image1Metadata = await collection.addImage(image1Fixture.buffer, `${image1Fixture.filename}.${image1Fixture.extension}`);
+        const image1Metadata = await collection.addImage(image1Fixture.filename, image1Fixture.buffer);
 
         const image2Fixture = await getImageFixture({
             id: 'photo-2',
@@ -29,7 +29,7 @@ suite('API - Images - Batch Download', () => {
             height: 768,
             extension: 'png'
         });
-        const image2Metadata = await collection.addImage(image2Fixture.buffer, `${image2Fixture.filename}.${image2Fixture.extension}`);
+        const image2Metadata = await collection.addImage(image2Fixture.filename, image2Fixture.buffer);
 
         const image3Fixture = await getImageFixture({
             id: 'photo-3',
@@ -37,7 +37,7 @@ suite('API - Images - Batch Download', () => {
             height: 600,
             extension: 'webp'
         });
-        const image3Metadata = await collection.addImage(image3Fixture.buffer, `${image3Fixture.filename}.${image3Fixture.extension}`);
+        const image3Metadata = await collection.addImage(image3Fixture.filename, image3Fixture.buffer);
 
         // When the client requests POST /api/images/:collectionId/download with valid imageIds array and archiveName
         const response = await api['/api/images/:collectionId/download'].post({
@@ -82,7 +82,7 @@ suite('API - Images - Batch Download', () => {
             height: 1080,
             extension: 'jpeg'
         });
-        const image1Metadata = await collection.addImage(fixture1.buffer, 'photo.jpeg');
+        const image1Metadata = await collection.addImage('photo.jpeg', fixture1.buffer);
 
         const fixture2 = await getImageFixture({
             id: 'photo-2',
@@ -90,7 +90,7 @@ suite('API - Images - Batch Download', () => {
             height: 768,
             extension: 'jpeg'
         });
-        const image2Metadata = await collection.addImage(fixture2.buffer, 'photo.jpeg');
+        const image2Metadata = await collection.addImage('photo.jpeg', fixture2.buffer);
 
         const fixture3 = await getImageFixture({
             id: 'photo-3',
@@ -98,7 +98,7 @@ suite('API - Images - Batch Download', () => {
             height: 600,
             extension: 'jpeg'
         });
-        const image3Metadata = await collection.addImage(fixture3.buffer, 'photo.jpeg');
+        const image3Metadata = await collection.addImage('photo.jpeg', fixture3.buffer);
 
         // When the client requests POST /api/images/:collectionId/download with all three imageIds
         const response = await api['/api/images/:collectionId/download'].post({
@@ -134,7 +134,7 @@ suite('API - Images - Batch Download', () => {
             height: 1080,
             extension: 'jpeg'
         });
-        const image1Metadata = await collection.addImage(image1Fixture.buffer, `${image1Fixture.filename}.${image1Fixture.extension}`);
+        const image1Metadata = await collection.addImage(image1Fixture.filename, image1Fixture.buffer);
 
         // When the client requests POST /api/images/:collectionId/download with the same imageId appearing multiple times
         const response = await api['/api/images/:collectionId/download'].post({
@@ -253,7 +253,7 @@ suite('API - Images - Batch Download', () => {
             height: 600,
             extension: 'jpeg'
         });
-        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // When the client requests POST /api/images/:collectionId/download with archiveName containing special characters
         const response = await api['/api/images/:collectionId/download'].post({
@@ -302,7 +302,7 @@ suite('API - Images - Batch Download', () => {
             height: 1080,
             extension: 'jpeg'
         });
-        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // When the client requests POST /api/images/:collectionId/download with body missing archive name field
         const response = await api['/api/images/:collectionId/download'].post({
@@ -351,7 +351,7 @@ suite('API - Images - Batch Download', () => {
             height: 600,
             extension: 'jpeg'
         });
-        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
+        const imageMetadata = await collection.addImage(imageFixture.filename, imageFixture.buffer);
 
         // Corrupt the database to cause an internal error
         corruptCollectionDB(collection);
