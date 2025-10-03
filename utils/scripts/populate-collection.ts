@@ -110,7 +110,8 @@ async function main(): Promise<void> {
 
             try {
                 LOGGER.log(`  [${i + 1}/${imageFiles.length}] Adding ${fileName}...`);
-                const metadata = await collection.addImage(filePath);
+                const buffer = await fs.readFile(filePath);
+                const metadata = await collection.addImage(buffer, fileName);
                 await collection.updateImage(metadata.id, { status: "COLLECTION"});
                 LOGGER.log(`    ✓ Added as ${metadata.id} (${metadata.width}x${metadata.height})`);
                 successCount++;

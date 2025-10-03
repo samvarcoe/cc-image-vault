@@ -24,7 +24,7 @@ suite('Domain - Images - Addition', () => {
         const collection = Collection.create(testCollectionName);
         const imageFixture = await getImageFixture({ id: 'test-jpg', extension: 'jpg' });
 
-        const metadata = await collection.addImage(imageFixture.filePath);
+        const metadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         ImageUtils.assertImageMetadata(metadata, {
             collection: testCollectionName,
@@ -45,7 +45,7 @@ suite('Domain - Images - Addition', () => {
         const collection = Collection.create(testCollectionName);
         const imageFixture = await getImageFixture({ id: 'test-jpeg', extension: 'jpeg' });
 
-        const metadata = await collection.addImage(imageFixture.filePath);
+        const metadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         ImageUtils.assertImageMetadata(metadata, {
             collection: testCollectionName,
@@ -67,7 +67,7 @@ suite('Domain - Images - Addition', () => {
         const collection = Collection.create(testCollectionName);
         const imageFixture = await getImageFixture({ id: 'test-png', extension: 'png' });
 
-        const metadata = await collection.addImage(imageFixture.filePath);
+        const metadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         ImageUtils.assertImageMetadata(metadata, {
             collection: testCollectionName,
@@ -88,7 +88,7 @@ suite('Domain - Images - Addition', () => {
         const collection = Collection.create(testCollectionName);
         const imageFixture = await getImageFixture({ id: 'test-webp', extension: 'webp' });
 
-        const metadata = await collection.addImage(imageFixture.filePath);
+        const metadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         ImageUtils.assertImageMetadata(metadata, {
             collection: testCollectionName,
@@ -104,31 +104,15 @@ suite('Domain - Images - Addition', () => {
         await ImageUtils.assertImageFileExists(testCollectionName, `${metadata.id}.webp`, 'thumbnail');
     });
 
-    test('User attempts to add an image to a Collection using a path that does not exist', async () => {
-        const collection = Collection.create(testCollectionName);
-        const nonExistentPath = './blah/blah/blah.jpg';
-
-        LOGGER.log('Validating that the correct Error is thrown when attempting to add non-existent image file');
-        const error = await captureAssertableAsyncError(() => collection.addImage(nonExistentPath));
-
-        error
-            .shouldHaveType(ImageAdditionError)
-            .shouldHaveMessage(`Unable to add image to Collection "${testCollectionName}"`)
-            .shouldHaveCause(Error)
-            .shouldHaveCauseMessage(`"${nonExistentPath}" is not a file`);
-
-        await ImageUtils.assertNoImageFilesCreated(testCollectionName);
-    });
-
     test('User attempts to add a duplicate image to Collection', async () => {
         const collection = Collection.create(testCollectionName);
         const imageFixture = await getImageFixture({ id: 'duplicate-test', extension: 'jpg' });
 
         // Add image first time
-        await collection.addImage(imageFixture.filePath);
+        await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         LOGGER.log('Validating that the correct Error is thrown when attempting to add duplicate image');
-        const error = await captureAssertableAsyncError(() => collection.addImage(imageFixture.filePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -146,9 +130,10 @@ suite('Domain - Images - Addition', () => {
     test('User attempts to add an image with unsupported format', async () => {
         const collection = Collection.create(testCollectionName);
         const unsupportedFilePath = await getUnsupportedFileFixture();
+        const unsupportedBuffer = await fsOps.readFile(unsupportedFilePath);
 
         LOGGER.log('Validating that the correct Error is thrown when attempting to add unsupported file type');
-        const error = await captureAssertableAsyncError(() => collection.addImage(unsupportedFilePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(unsupportedBuffer, 'test-file.txt'));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -162,25 +147,27 @@ suite('Domain - Images - Addition', () => {
     test('User attempts to add a corrupted image file', async () => {
         const collection = Collection.create(testCollectionName);
         const corruptedFilePath = await getCorruptedImageFixture('jpg');
+        const corruptedBuffer = await fsOps.readFile(corruptedFilePath);
 
         LOGGER.log('Validating that the correct Error is thrown when attempting to add corrupted image');
-        const error = await captureAssertableAsyncError(() => collection.addImage(corruptedFilePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(corruptedBuffer, 'corrupted-image.jpg'));
 
         error
             .shouldHaveType(ImageAdditionError)
             .shouldHaveMessage(`Unable to add image to Collection "${testCollectionName}"`)
             .shouldHaveCause(Error)
-            .shouldHaveCauseMessage('Invalid or corrupted image file'); 
+            .shouldHaveCauseMessage('Invalid or corrupted image file');
 
         await ImageUtils.assertNoImageFilesCreated(testCollectionName);
     });
 
     test('User attempts to add an image with unsafe filename', async () => {
         const collection = Collection.create(testCollectionName);
-        const unsafeFilePath = './some/path/javascript:alert(1).jpg';
+        const unsafeFilename = 'javascript:alert(1).jpg';
+        const dummyBuffer = Buffer.from('dummy');
 
         LOGGER.log('Validating that the correct Error is thrown when attempting to add image with unsafe filename');
-        const error = await captureAssertableAsyncError(() => collection.addImage(unsafeFilePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(dummyBuffer, unsafeFilename));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -194,10 +181,11 @@ suite('Domain - Images - Addition', () => {
     test('User attempts to add an image with filename that exceeds 256 characters', async () => {
         const collection = Collection.create(testCollectionName);
         const longName = 'a'.repeat(260); // Exceeds 256 character limit
-        const longFilePath = `./some/path/${longName}.jpg`;
+        const longFilename = `${longName}.jpg`;
+        const dummyBuffer = Buffer.from('dummy');
 
         LOGGER.log('Validating that the correct Error is thrown when attempting to add image with long filename');
-        const error = await captureAssertableAsyncError(() => collection.addImage(longFilePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(dummyBuffer, longFilename));
 
         error
             .shouldHaveType(ImageAdditionError)
@@ -216,7 +204,7 @@ suite('Domain - Images - Addition', () => {
         sinon.stub(fsOps, 'writeFile').throws(new Error('Filesystem unavailable'));
 
         LOGGER.log('Validating that the correct Error is thrown when internal error occurs during image addition');
-        const error = await captureAssertableAsyncError(() => collection.addImage(imageFixture.filePath));
+        const error = await captureAssertableAsyncError(() => collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`));
 
         error
             .shouldHaveType(ImageAdditionError)

@@ -16,7 +16,7 @@ suite('API - Images - Individual Download', () => {
             height: 1080,
             extension: 'jpeg'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // When the client requests GET /api/images/:collectionId/:imageId/download
         const response = await api['/api/images/:collectionId/:imageId/download'].get({
@@ -105,7 +105,7 @@ suite('API - Images - Individual Download', () => {
             height: 600,
             extension: 'png'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // Corrupt the database to cause an internal error when reading image metadata
         corruptCollectionDB(collection);

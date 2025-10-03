@@ -16,7 +16,7 @@ suite('Domain - Images - Update', () => {
         const imageFixture = await getImageFixture({ id: 'test-update-image', extension: 'jpg' });
         
         // Add an image to update
-        const originalMetadata = await collection.addImage(imageFixture.filePath);
+        const originalMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
         ImageUtils.assertImageStatus(originalMetadata, 'INBOX');
         
         // Update the image status
@@ -73,7 +73,7 @@ suite('Domain - Images - Update', () => {
         const imageFixture = await getImageFixture({ id: 'test-invalid-status', extension: 'jpg' });
         
         // Add an image to update
-        const originalMetadata = await collection.addImage(imageFixture.filePath);
+        const originalMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
         
         const error = await captureAssertableAsyncError(async () => {
             // TypeScript would normally catch this, but we test runtime validation
@@ -95,7 +95,7 @@ suite('Domain - Images - Update', () => {
         const imageFixture = await getImageFixture({ id: 'test-internal-error', extension: 'jpg' });
         
         // Add an image to update
-        const originalMetadata = await collection.addImage(imageFixture.filePath);
+        const originalMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // Mock database operation to simulate internal error
         sinon.stub(collection as unknown as { getDatabase: () => unknown }, 'getDatabase').throws(new Error('Database connection failed'));

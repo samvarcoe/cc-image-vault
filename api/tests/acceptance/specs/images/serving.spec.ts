@@ -18,7 +18,7 @@ suite('API - Images - Serving', () => {
             height: 600,
             extension: 'jpeg'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // When the client requests GET /api/images/:collectionId/:imageId
         const response = await api['/api/images/:collectionId/:imageId'].get({
@@ -50,7 +50,7 @@ suite('API - Images - Serving', () => {
             height: 1600,
             extension: 'png'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // Read the actual thumbnail buffer from filesystem
         const thumbnailPath = path.join(

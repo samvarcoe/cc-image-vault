@@ -17,7 +17,7 @@ suite('API - Images - Delete', () => {
             extension: 'jpeg'
         });
 
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // When the client requests DELETE /api/images/:collectionId/:imageId
         const deleteResponse = await api['/api/images/:collectionId/:imageId'].delete({
@@ -109,7 +109,7 @@ suite('API - Images - Delete', () => {
             height: 400,
             extension: 'jpeg'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // Corrupt the database to simulate internal error
         corruptCollectionDB(collection);

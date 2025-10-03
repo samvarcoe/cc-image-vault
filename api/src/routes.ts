@@ -1,10 +1,6 @@
 import express from 'express';
 import multer from 'multer';
 import { Collection, CollectionCreateError, CollectionNotFoundError, ImageNotFoundError, ImageRetrievalError, ImageUpdateError, ImageDeletionError, ImageAdditionError } from '@/domain';
-import { writeFileSync, mkdirSync, rmSync } from 'fs';
-import { join } from 'path';
-import { tmpdir } from 'os';
-import { randomUUID } from 'crypto';
 import archiver from 'archiver';
 
 // Configure multer for handling multipart form data uploads
@@ -60,8 +56,6 @@ routes.post('/collections', (req, res) => {
 });
 
 routes.post('/images/:collectionId', upload.single('file'), async (req, res) => {
-    let tempDir: string | null = null;
-
     try {
         const { collectionId } = req.params;
 
@@ -78,19 +72,11 @@ routes.post('/images/:collectionId', upload.single('file'), async (req, res) => 
         // Load collection (this will throw CollectionNotFoundError if not found)
         const collection = Collection.load(collectionId!);
 
-        // Create temporary file for domain processing
-        // Use original filename to preserve the name/extension the domain layer expects
+        // Get original filename
         const originalName = req.file.originalname || 'upload';
-        // Use a UUID for the directory to avoid conflicts while preserving original filename
-        tempDir = join(tmpdir(), randomUUID());
-        const tempFilePath = join(tempDir, originalName);
 
-        // Create temp directory and write buffer to temporary file
-        mkdirSync(tempDir, { recursive: true });
-        writeFileSync(tempFilePath, req.file.buffer);
-
-        // Add image through domain layer
-        const metadata = await collection.addImage(tempFilePath);
+        // Add image through domain layer using buffer directly
+        const metadata = await collection.addImage(req.file.buffer, originalName);
 
         // Return created image metadata with 201 status
         return res.status(201).json(metadata);
@@ -115,16 +101,6 @@ routes.post('/images/:collectionId', upload.single('file'), async (req, res) => 
 
         // All other errors return 500 with generic message
         return res.status(500).json({ message: 'An error occurred whilst uploading the image' });
-
-    } finally {
-        // Clean up temporary directory and file
-        if (tempDir) {
-            try {
-                rmSync(tempDir, { recursive: true, force: true });
-            } catch {
-                // Ignore cleanup errors
-            }
-        }
     }
 });
 

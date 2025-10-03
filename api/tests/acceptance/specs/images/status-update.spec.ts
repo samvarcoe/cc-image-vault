@@ -18,7 +18,7 @@ suite('API - Images - Updating Image Status', () => {
             extension: 'jpeg'
         });
 
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         const updateRequest: ImageUpdateRequest = {
             status: 'COLLECTION'
@@ -134,7 +134,7 @@ suite('API - Images - Updating Image Status', () => {
             height: 300,
             extension: 'png'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         const updateRequest: ImageUpdateRequest = {
             status: 'INVALID_STATUS'
@@ -165,7 +165,7 @@ suite('API - Images - Updating Image Status', () => {
             height: 300,
             extension: 'webp'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // When the client requests PATCH /api/images/:collectionId/:imageId with no request body
         const response = await api['/api/images/:collectionId/:imageId'].patch({
@@ -192,7 +192,7 @@ suite('API - Images - Updating Image Status', () => {
             height: 600,
             extension: 'jpeg'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // When the client requests PATCH /api/images/:collectionId/:imageId with malformed request body
         // We'll simulate this by sending non-JSON content
@@ -224,7 +224,7 @@ suite('API - Images - Updating Image Status', () => {
             height: 400,
             extension: 'png'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // When the client requests PATCH /api/images/:collectionId/:imageId with body missing status field
         const response = await api['/api/images/:collectionId/:imageId'].patch({
@@ -251,7 +251,7 @@ suite('API - Images - Updating Image Status', () => {
             height: 400,
             extension: 'jpeg'
         });
-        const imageMetadata = await collection.addImage(imageFixture.filePath);
+        const imageMetadata = await collection.addImage(imageFixture.buffer, `${imageFixture.filename}.${imageFixture.extension}`);
 
         // Corrupt the database to simulate internal error
         corruptCollectionDB(collection);

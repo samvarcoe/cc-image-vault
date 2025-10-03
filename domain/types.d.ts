@@ -40,8 +40,8 @@ interface CollectionStatic {
 
 interface CollectionInstance {
     readonly name: string;
-    
-    addImage(filePath: string): Promise<ImageMetadata>;
+
+    addImage(buffer: Buffer, filename: string): Promise<ImageMetadata>;
     getImage(imageId: string): Promise<ImageMetadata>;
     updateImage(imageId: string, status: ImageUpdate): Promise<ImageMetadata>;
     deleteImage(imageId: string): Promise<void>;
