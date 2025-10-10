@@ -20,7 +20,7 @@
     "type": "git",
     "url": "git+https://github.com/samvarcoe/cc-image-vault.git"
   },
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/samvarcoe/cc-image-vault/issues"
   },
@@ -63,12 +63,14 @@
     "typescript-eslint": "^8.40.0"
   },
   "dependencies": {
+    "@huggingface/transformers": "^3.7.5",
     "adm-zip": "^0.5.16",
     "archiver": "^7.0.1",
     "better-sqlite3": "^12.2.0",
     "compression": "^1.8.1",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "hnswlib-node": "^3.0.0",
     "multer": "^2.0.2",
     "sharp": "^0.34.3",
     "uuid": "^11.1.0"
