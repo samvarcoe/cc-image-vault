@@ -35,7 +35,7 @@ suite('Domain - Collections - Clearing', () => {
     test('An internal error occurs when the user attempts to clear the Collections directory', async () => {
         Collection.create(collection1);
 
-        sinon.stub(fsOps, 'readdirSync').throws(new Error('Filesystem error'));
+        sinon.stub(fsOps, 'existsSync').throws(new Error('Filesystem error'));
 
         LOGGER.log('Validating that the correct Error is thrown when An internal error occurs when clearing Collections');
         captureAssertableError(() => Collection.clear())

@@ -79,6 +79,8 @@ routes.get('/collection/:name', async (req, res) => {
             return res.status(404).send('Collection not found');
         }
 
+        console.error(error);
+
         const model = new CollectionPageModel({
             name: req.params.name,
             status: (req.query.status as ImageStatus) || 'COLLECTION',

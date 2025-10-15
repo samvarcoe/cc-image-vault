@@ -13,8 +13,8 @@ type Config = {
 export const CONFIG = {
     PORT,
     API_BASE_URL: process.env.API_BASE_URL || `http://localhost:${PORT}`,
-    UI_BASE_URL: process.env.UI_BASE_URL || `http://claude-code:${PORT}`,
-    COLLECTIONS_DIRECTORY: process.env.COLLECTIONS_DIRECTORY || '/workspace/projects/image-vault/private',
+    UI_BASE_URL: process.env.UI_BASE_URL || `http://localhost:${PORT}`,
+    COLLECTIONS_DIRECTORY: process.env.COLLECTIONS_DIRECTORY || './private',
     THUMBNAIL_WIDTH: 400,
     MODE: 'DEV',
     LOGGING_ENABLED: false,

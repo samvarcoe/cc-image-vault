@@ -139,14 +139,14 @@ export class Collection implements CollectionInstance {
      */
     static clear(): void {
         try {
-            const collectionDirs = fsOps.readdirSync(CONFIG.COLLECTIONS_DIRECTORY, { withFileTypes: true })
-                .filter((entry) => entry.isDirectory());
-
-            for (const entry of collectionDirs) {
-                const collectionPath = path.join(CONFIG.COLLECTIONS_DIRECTORY, entry.name);
-                fsOps.rmSync(collectionPath, { recursive: true, force: true });
+            if (fsOps.existsSync(CONFIG.COLLECTIONS_DIRECTORY)) {
+                fsOps.rmSync(CONFIG.COLLECTIONS_DIRECTORY, { 
+                    recursive: true, 
+                    force: true 
+                });
+                // Recreate the directory
+                fsOps.mkdirSync(CONFIG.COLLECTIONS_DIRECTORY, { recursive: true });
             }
-
         } catch (error: unknown) {
             throw new CollectionClearError(error);
         }
