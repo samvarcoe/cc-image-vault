@@ -47,6 +47,7 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                             ${this.statusButton('ARCHIVE', collectionName, currentStatus)}
                         </div>
                         <div class="flex-1 flex justify-end gap-2">
+                            ${this.shuffleButton()}
                             ${this.slideshowButton()}
                             ${this.uploadButton()}
                             ${this.curateButton()}
@@ -92,6 +93,24 @@ export default class CollectionPageView extends View<CollectionPageModel> {
                 ${isUploading ? 'disabled' : ''}
             >
                 ${isUploading ? '⏳' : 'Upload'}
+            </button>
+        `;
+    }
+
+    private shuffleButton(): string {
+        const hasImages = this.model.hasImages();
+        const baseClasses = 'px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer';
+        const stateClasses = hasImages
+            ? 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+            : 'bg-slate-100 text-slate-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500';
+
+        return /*html*/`
+            <button
+                data-id="shuffle-button"
+                class="${baseClasses} ${stateClasses}"
+                ${!hasImages ? 'disabled' : ''}
+            >
+                Shuffle
             </button>
         `;
     }

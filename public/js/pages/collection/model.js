@@ -22,7 +22,7 @@ export default class CollectionPageModel extends Model {
                 isPaused: false,
                 imageSequence: [],
                 currentIndex: 0
-            } }, initialData));
+            }, isShuffled: false }, initialData));
     }
     getCollectionName() {
         return this.data.name;
@@ -35,6 +35,10 @@ export default class CollectionPageModel extends Model {
     }
     hasImages() {
         return this.data.images.length > 0;
+    }
+    shuffleImages() {
+        this.data.images = this.shuffleArray(this.data.images);
+        this.data.isShuffled = true;
     }
     hasError() {
         return !!this.data.error;
@@ -275,12 +279,11 @@ export default class CollectionPageModel extends Model {
             return;
         }
         const imageIds = images.map(img => img.id);
-        const shuffledIds = this.shuffleArray([...imageIds]);
         this.data.slideshow = {
             visible: true,
-            currentImageId: shuffledIds[0],
+            currentImageId: imageIds[0],
             isPaused: false,
-            imageSequence: shuffledIds,
+            imageSequence: imageIds,
             currentIndex: 0
         };
     }
@@ -317,10 +320,9 @@ export default class CollectionPageModel extends Model {
         if (nextIndex >= slideshow.imageSequence.length) {
             const images = this.getImages();
             const imageIds = images.map(img => img.id);
-            const shuffledIds = this.shuffleArray([...imageIds]);
-            slideshow.imageSequence = shuffledIds;
+            slideshow.imageSequence = imageIds;
             slideshow.currentIndex = 0;
-            slideshow.currentImageId = shuffledIds[0];
+            slideshow.currentImageId = imageIds[0];
         }
         else {
             slideshow.currentIndex = nextIndex;
@@ -337,7 +339,7 @@ export default class CollectionPageModel extends Model {
         if (slideshow.imageSequence.length === 0) {
             const images = this.getImages();
             const imageIds = images.map(img => img.id).filter(id => id !== currentImageId);
-            slideshow.imageSequence = this.shuffleArray([...imageIds]);
+            slideshow.imageSequence = imageIds;
             slideshow.currentIndex = 0;
         }
         else {

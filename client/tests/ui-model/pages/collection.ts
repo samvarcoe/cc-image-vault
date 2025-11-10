@@ -118,6 +118,10 @@ class Header extends Element {
         return this.child(Element, 'Curate Button', '[data-id="curate-button"]');
     }
 
+    get shuffleButton(): Element {
+        return this.child(Element, 'Shuffle Button', '[data-id="shuffle-button"]');
+    }
+
     get slideshowButton(): Element {
         return this.child(Element, 'Slideshow Button', '[data-id="slideshow-button"]');
     }
@@ -230,6 +234,11 @@ class Popover extends Element {
     async pressTab(): Promise<void> {
         await this.page.keyboard.press('Tab');
         LOGGER.log('✓ Pressed Tab key in popover');
+    }
+
+    async pressEnter(): Promise<void> {
+        await this.page.keyboard.press('Enter');
+        LOGGER.log('✓ Pressed Enter key in popover');
     }
 
     async pressBackspace(): Promise<void> {
