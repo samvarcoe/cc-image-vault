@@ -1,0 +1,143 @@
+import { test, expect } from '@playwright/test';
+import { ImageVault } from '../../../ui-model/image-vault';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+test.describe('Client - Collection Page - Curate Mode', () => {
+    test.beforeAll(async () => {
+        await createCollectionFixture({ name: 'curate-mode-empty', inboxCount: 0, collectionCount: 0, archiveCount: 0 });
+        await createCollectionFixture({ name: 'curate-mode-large', inboxCount: 0, collectionCount: 24, archiveCount: 0 });
+        await createCollectionFixture({ name: 'curate-mode-small', inboxCount: 0, collectionCount: 3, archiveCount: 0 });
+    });
+    test('User navigates to a Collection page with "?curate=true" set', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-empty');
+        await page.goto(`/collection/${collection.name}?curate=true`);
+        await page.waitForLoadState('networkidle');
+        expect(page.url()).toContain('curate=true');
+        await ui.collectionPage.header.curateButton.shouldBeDisplayed();
+        await ui.collectionPage.header.curateButton.shouldBePressed();
+        await ui.collectionPage.curationMenu.shouldBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User navigates to a Collection page with "?curate=false" set', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-empty');
+        await page.goto(`/collection/${collection.name}?curate=false`);
+        await page.waitForLoadState('networkidle');
+        expect(page.url()).toContain('curate=false');
+        await ui.collectionPage.header.curateButton.shouldBeDisplayed();
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
+        await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User navigates to a Collection page without "?curate" set', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-empty');
+        await page.goto(`/collection/${collection.name}`);
+        expect(page.url()).toContain('curate=false');
+        await ui.collectionPage.header.curateButton.shouldBeDisplayed();
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
+        await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User activates curate mode', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-empty');
+        await ui.collectionPage.visit(collection.name);
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
+        await ui.collectionPage.header.curateButton.click();
+        await ui.collectionPage.header.curateButton.shouldBePressed();
+        await ui.collectionPage.curationMenu.shouldBeDisplayed();
+        expect(page.url()).toContain('curate=true');
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User deactivates curate mode', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-empty');
+        await page.goto(`/collection/${collection.name}?curate=true`);
+        await page.waitForLoadState('networkidle');
+        await ui.collectionPage.header.curateButton.shouldBePressed();
+        await ui.collectionPage.header.curateButton.click();
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
+        await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
+        expect(page.url()).toContain('curate=false');
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User scrolls the Collection page', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-large');
+        await page.goto(`/collection/${collection.name}?curate=true`);
+        await page.waitForLoadState('networkidle');
+        await ui.collectionPage.header.shouldBeSticky();
+        await ui.collectionPage.curationMenu.shouldBeSticky();
+        await ui.collectionPage.curationMenu.shouldBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User clicks on an image with curate mode activated', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-small');
+        const collectionImages = await collection.getImages({ status: "COLLECTION" });
+        const firstImage = collectionImages[0];
+        await page.goto(`/collection/${collection.name}?curate=true`);
+        await page.waitForLoadState('networkidle');
+        await ui.collectionPage.imageGrid.image(firstImage.id).click();
+        await ui.collectionPage.popover.shouldNotBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User navigates between status views with curate mode activated', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-empty');
+        await page.goto(`/collection/${collection.name}?curate=true`);
+        await page.waitForLoadState('networkidle');
+        await ui.collectionPage.header.statusToggle.inboxButton.click();
+        expect(page.url()).toContain('curate=true');
+        await ui.collectionPage.header.curateButton.shouldBePressed();
+        await ui.collectionPage.curationMenu.shouldBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User navigates between status views without curate mode activated', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-empty');
+        await page.goto(`/collection/${collection.name}?curate=false`);
+        await page.waitForLoadState('networkidle');
+        await ui.collectionPage.header.statusToggle.inboxButton.click();
+        expect(page.url()).toContain('curate=false');
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
+        await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User refreshes the Collection page with curate mode activated', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-empty');
+        await page.goto(`/collection/${collection.name}?curate=true`);
+        await page.waitForLoadState('networkidle');
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+        expect(page.url()).toContain('curate=true');
+        await ui.collectionPage.header.curateButton.shouldBePressed();
+        await ui.collectionPage.curationMenu.shouldBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User refreshes the Collection page without curate mode activated', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('curate-mode-empty');
+        await page.goto(`/collection/${collection.name}?curate=false`);
+        await page.waitForLoadState('networkidle');
+        await page.reload();
+        await page.waitForLoadState('networkidle');
+        expect(page.url()).toContain('curate=false');
+        await ui.collectionPage.header.curateButton.shouldNotBePressed();
+        await ui.collectionPage.curationMenu.shouldNotBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+});

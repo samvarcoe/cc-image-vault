@@ -38,6 +38,7 @@ export interface CollectionPageData {
         imageSequence: string[];
         currentIndex: number;
     };
+    isShuffled: boolean;
 }
 
 export default class CollectionPageModel extends Model<CollectionPageData> {
@@ -81,6 +82,7 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
                 imageSequence: [],
                 currentIndex: 0
             },
+            isShuffled: false,
             ...initialData
         });
     }
@@ -100,6 +102,11 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
 
     hasImages(): boolean {
         return this.data.images.length > 0;
+    }
+
+    shuffleImages(): void {
+        this.data.images = this.shuffleArray(this.data.images);
+        this.data.isShuffled = true;
     }
 
     hasError(): boolean {
@@ -414,15 +421,14 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
             return;
         }
 
-        // Create a shuffled sequence of image IDs
+        // Use the current image order (which may already be shuffled)
         const imageIds = images.map(img => img.id);
-        const shuffledIds = this.shuffleArray([...imageIds]);
 
         this.data.slideshow = {
             visible: true,
-            currentImageId: shuffledIds[0],
+            currentImageId: imageIds[0],
             isPaused: false,
-            imageSequence: shuffledIds,
+            imageSequence: imageIds,
             currentIndex: 0
         };
     }
@@ -467,14 +473,13 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         const nextIndex = slideshow.currentIndex + 1;
 
         if (nextIndex >= slideshow.imageSequence.length) {
-            // End of sequence - create new shuffled sequence and restart
+            // End of sequence - restart with current image order
             const images = this.getImages();
             const imageIds = images.map(img => img.id);
-            const shuffledIds = this.shuffleArray([...imageIds]);
 
-            slideshow.imageSequence = shuffledIds;
+            slideshow.imageSequence = imageIds;
             slideshow.currentIndex = 0;
-            slideshow.currentImageId = shuffledIds[0];
+            slideshow.currentImageId = imageIds[0];
         } else {
             // Advance to next image in sequence
             slideshow.currentIndex = nextIndex;
@@ -493,11 +498,11 @@ export default class CollectionPageModel extends Model<CollectionPageData> {
         const currentImageId = slideshow.currentImageId;
         slideshow.imageSequence = slideshow.imageSequence.filter(id => id !== currentImageId);
 
-        // If no images left in sequence, create new sequence
+        // If no images left in sequence, create new sequence from current order
         if (slideshow.imageSequence.length === 0) {
             const images = this.getImages();
             const imageIds = images.map(img => img.id).filter(id => id !== currentImageId);
-            slideshow.imageSequence = this.shuffleArray([...imageIds]);
+            slideshow.imageSequence = imageIds;
             slideshow.currentIndex = 0;
         } else {
             // Adjust index if needed

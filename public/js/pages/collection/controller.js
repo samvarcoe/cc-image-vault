@@ -83,6 +83,12 @@ export default class CollectionPageController {
     }
     attachEventListeners() {
         this.addEventListener(document, 'click', (event) => {
+            const shuffleButton = this.getButtonElement(event.target, '[data-id="shuffle-button"]');
+            if (shuffleButton && !shuffleButton.hasAttribute('disabled')) {
+                this.handleShuffleButtonClick(shuffleButton);
+            }
+        });
+        this.addEventListener(document, 'click', (event) => {
             const slideshowButton = this.getButtonElement(event.target, '[data-id="slideshow-button"]');
             if (slideshowButton && !slideshowButton.hasAttribute('disabled')) {
                 this.handleSlideshowButtonClick();
@@ -486,6 +492,14 @@ export default class CollectionPageController {
         if (allResults.some(r => r.success) && failedFiles.length === 0) {
             window.location.reload();
         }
+    }
+    handleShuffleButtonClick(buttonElement) {
+        buttonElement.classList.add('shuffle-flash');
+        this.model.shuffleImages();
+        this.view.update();
+        setTimeout(() => {
+            buttonElement.classList.remove('shuffle-flash');
+        }, 300);
     }
     handleSlideshowButtonClick() {
         this.model.openSlideshow();

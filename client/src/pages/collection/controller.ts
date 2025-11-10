@@ -106,6 +106,14 @@ export default class CollectionPageController {
     }
 
     private attachEventListeners(): void {
+        // Handle shuffle button clicks
+        this.addEventListener(document, 'click', (event) => {
+            const shuffleButton = this.getButtonElement(event.target, '[data-id="shuffle-button"]');
+            if (shuffleButton && !shuffleButton.hasAttribute('disabled')) {
+                this.handleShuffleButtonClick(shuffleButton);
+            }
+        });
+
         // Handle slideshow button clicks
         this.addEventListener(document, 'click', (event) => {
             const slideshowButton = this.getButtonElement(event.target, '[data-id="slideshow-button"]');
@@ -646,6 +654,20 @@ export default class CollectionPageController {
         }
     }
 
+
+    private handleShuffleButtonClick(buttonElement: Element): void {
+        // Add flash animation class
+        buttonElement.classList.add('shuffle-flash');
+
+        // Shuffle the images
+        this.model.shuffleImages();
+        this.view.update();
+
+        // Remove animation class after animation completes
+        setTimeout(() => {
+            buttonElement.classList.remove('shuffle-flash');
+        }, 300);
+    }
 
     private handleSlideshowButtonClick(): void {
         this.model.openSlideshow();

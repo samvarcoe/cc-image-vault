@@ -1,0 +1,80 @@
+import { test, expect } from '@playwright/test';
+import { ImageVault } from '../../../ui-model/image-vault';
+import { createCollectionFixture, setupCollectionFixture } from '@/utils/fixtures/collection-fixtures';
+test.describe('Client - Collection Page - Header Menu', () => {
+    test.beforeAll(async () => {
+        await createCollectionFixture({ name: 'header-standard', inboxCount: 2, collectionCount: 3, archiveCount: 2 });
+    });
+    test('User navigates to the Collection page', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('header-standard');
+        await ui.collectionPage.visit(collection.name);
+        await ui.collectionPage.header.shouldBeDisplayed();
+        await ui.collectionPage.header.imageVaultLink.shouldBeDisplayed();
+        await ui.collectionPage.header.imageVaultLink.shouldHaveText('Image Vault');
+        await ui.collectionPage.header.statusToggle.shouldBeDisplayed();
+        await ui.collectionPage.header.statusToggle.collectionButton.shouldBeDisplayed();
+        await ui.collectionPage.header.statusToggle.inboxButton.shouldBeDisplayed();
+        await ui.collectionPage.header.statusToggle.archiveButton.shouldBeDisplayed();
+        await ui.collectionPage.header.statusToggle.collectionButton.shouldBePressed();
+        await ui.collectionPage.header.statusToggle.inboxButton.shouldNotBePressed();
+        await ui.collectionPage.header.statusToggle.archiveButton.shouldNotBePressed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User navigates to the Home page via the Image Vault link', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('header-standard');
+        await ui.collectionPage.visit(collection.name);
+        await ui.collectionPage.header.imageVaultLink.click();
+        await expect(page).toHaveURL('/');
+        await ui.homePage.header.shouldNotBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User scrolls the Collection page', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('header-standard');
+        await ui.collectionPage.visit(collection.name);
+        const initialHeaderBounds = await ui.collectionPage.header.getBoundingBox();
+        await page.evaluate(() => window.scrollTo(0, 500));
+        await page.waitForTimeout(100);
+        const scrolledHeaderBounds = await ui.collectionPage.header.getBoundingBox();
+        expect(scrolledHeaderBounds === null || scrolledHeaderBounds === void 0 ? void 0 : scrolledHeaderBounds.y).toBe(initialHeaderBounds === null || initialHeaderBounds === void 0 ? void 0 : initialHeaderBounds.y);
+        await ui.collectionPage.header.shouldBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User navigates between status views', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('header-standard');
+        await ui.collectionPage.visit(collection.name, 'COLLECTION');
+        await ui.collectionPage.header.statusToggle.inboxButton.click();
+        expect(page.url()).toContain('status=INBOX');
+        await ui.collectionPage.header.statusToggle.inboxButton.shouldBePressed();
+        await ui.collectionPage.header.statusToggle.collectionButton.shouldNotBePressed();
+        await ui.collectionPage.header.statusToggle.archiveButton.shouldNotBePressed();
+        await ui.collectionPage.header.statusToggle.archiveButton.click();
+        expect(page.url()).toContain('status=ARCHIVE');
+        await ui.collectionPage.header.statusToggle.archiveButton.shouldBePressed();
+        await ui.collectionPage.header.statusToggle.collectionButton.shouldNotBePressed();
+        await ui.collectionPage.header.statusToggle.inboxButton.shouldNotBePressed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+    test('User opens the fullscreen popover', async ({ page }) => {
+        const ui = new ImageVault(page);
+        const collection = setupCollectionFixture('header-standard');
+        const collectionImages = await collection.getImages({ status: "COLLECTION" });
+        const firstImage = collectionImages[0];
+        await ui.collectionPage.visit(collection.name);
+        await ui.collectionPage.imageGrid.image(firstImage.id).click();
+        await ui.collectionPage.popover.shouldBeDisplayed();
+        const headerZIndex = await ui.collectionPage.header.getZIndex();
+        const popoverZIndex = await ui.collectionPage.popover.getZIndex();
+        expect(popoverZIndex).toBeGreaterThan(headerZIndex);
+        await ui.collectionPage.header.shouldBeDisplayed();
+        await ui.shouldHaveNoConsoleErrors();
+        await ui.shouldHaveNoFailedRequests();
+    });
+});
